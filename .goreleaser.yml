@@ -1,0 +1,12 @@
+builds:
+  - binary: ffuf
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+archive:
+  format: tar.gz
+
+sign:
+  artifacts: checksum
