@@ -47,6 +47,7 @@ func (r *SimpleRunner) Prepare(input []byte) (ffuf.Request, error) {
 	}
 	req.Input = input
 	req.Url = strings.Replace(r.config.Url, "FUZZ", string(input), -1)
+	req.Data = []byte(strings.Replace(r.config.Data, "FUZZ", string(input), -1))
 	return req, nil
 }
 
