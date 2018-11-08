@@ -62,19 +62,19 @@ func main() {
 	//flag.StringVar(&opts.matcherReflect, "mref", "", "Match reflected payload")
 	flag.Parse()
 	if err := prepareConfig(&opts, &conf); err != nil {
-		fmt.Printf("Encountered error(s): %s\n", err)
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		flag.Usage()
 		os.Exit(1)
 	}
 	if err := prepareFilters(&opts, &conf); err != nil {
-		fmt.Printf("Encountered error(s): %s\n", err)
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	job, err := prepareJob(&conf)
 	if err != nil {
-		fmt.Printf("Encountered error(s): %s\n", err)
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -107,10 +107,10 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	var errlist *multierror.Error
 	foundkeyword := false
 	if len(conf.Url) == 0 {
-		errlist = multierror.Append(errlist, fmt.Errorf("-u flag is required."))
+		errlist = multierror.Append(errlist, fmt.Errorf("-u flag is required"))
 	}
 	if len(conf.Wordlist) == 0 {
-		errlist = multierror.Append(errlist, fmt.Errorf("-w flag is required."))
+		errlist = multierror.Append(errlist, fmt.Errorf("-w flag is required"))
 	}
 	//Prepare headers
 	for _, v := range parseOpts.headers {
@@ -130,7 +130,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 				conf.StaticHeaders[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
 			}
 		} else {
-			errlist = multierror.Append(errlist, fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator."))
+			errlist = multierror.Append(errlist, fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
 	}
 	//Search for keyword from URL and POST data too
@@ -142,7 +142,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	if !foundkeyword {
-		errlist = multierror.Append(errlist, fmt.Errorf("No FUZZ keywords found in headers or URL, nothing to do."))
+		errlist = multierror.Append(errlist, fmt.Errorf("No FUZZ keywords found in headers or URL, nothing to do"))
 	}
 	return errlist.ErrorOrNil()
 }

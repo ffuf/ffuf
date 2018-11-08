@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"fmt"
+	"os"
 	"sync"
 )
 
@@ -49,12 +50,12 @@ func (j *Job) Start() {
 func (j *Job) runTask(input []byte) {
 	req, err := j.Runner.Prepare(input)
 	if err != nil {
-		fmt.Printf("Encountered error while preparing request: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Encountered error while preparing request: %s\n", err)
 		return
 	}
 	resp, err := j.Runner.Execute(&req)
 	if err != nil {
-		fmt.Printf("Error in runner: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error in runner: %s\n", err)
 		return
 	}
 	j.Output.Result(resp)
