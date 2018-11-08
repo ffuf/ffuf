@@ -3,6 +3,7 @@ package runner
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -61,7 +62,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 	// Add user agent string if not defined
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		req.Headers["User-Agent"] = "Fuzz Faster You Fool"
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
 	}
 	httpreq = httpreq.WithContext(r.config.Context)
 	for k, v := range req.Headers {
