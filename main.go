@@ -50,6 +50,7 @@ func main() {
 	flag.BoolVar(&conf.TLSSkipVerify, "k", false, "Skip TLS identity verification (insecure)")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size")
+	flag.StringVar(&conf.Data, "d", "", "POST data.")
 	//flag.StringVar(&opts.filterRegex, "fr", "", "Filter regex")
 	//flag.StringVar(&opts.filterReflect, "fref", "", "Filter reflected payload")
 	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307", "Match HTTP status codes from respose")
@@ -132,9 +133,14 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errlist = multierror.Append(errlist, fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator."))
 		}
 	}
+	//Search for keyword from URL and POST data too
 	if strings.Index(conf.Url, "FUZZ") != -1 {
 		foundkeyword = true
 	}
+	if strings.Index(conf.Data, "FUZZ") != -1 {
+		foundkeyword = true
+	}
+
 	if !foundkeyword {
 		errlist = multierror.Append(errlist, fmt.Errorf("No FUZZ keywords found in headers or URL, nothing to do."))
 	}
