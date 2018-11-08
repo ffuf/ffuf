@@ -28,7 +28,7 @@ func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 	simplerunner.client = &http.Client{
 
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-		Timeout:       time.Duration(3 * time.Second),
+		Timeout:       time.Duration(10 * time.Second),
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: conf.TLSSkipVerify,
