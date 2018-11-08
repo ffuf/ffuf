@@ -11,15 +11,11 @@ Usage of ./ffuf:
     	HTTP method to use. (default "GET")
   -fc string
     	Filter HTTP status codes from response
-  -fr string
-    	Filter regex
   -fs string
     	Filter HTTP response size
   -k	Skip TLS identity verification (insecure)
   -mc string
     	Match HTTP status codes from respose (default "200,204,301,302,307")
-  -mr string
-    	Match regex
   -ms string
     	Match HTTP response size
   -s	Do not print additional information (silent mode)
