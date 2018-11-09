@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -42,7 +43,20 @@ func (s *Stdoutput) Banner() error {
 	return nil
 }
 
-func (s *Stdoutput) Result(resp ffuf.Response) {
+func (s *Stdoutput) Error(errstring string) {
+	if s.config.Quiet {
+		fmt.Fprintf(os.Stderr, "%s", errstring)
+	} else {
+		fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, errstring)
+	}
+}
+
+func (s *Stdoutput) Finalize() error {
+	fmt.Fprintf(os.Stderr, "\n")
+	return nil
+}
+
+func (s *Stdoutput) Result(resp ffuf.Response) bool {
 	matched := false
 	for _, m := range s.config.Matchers {
 		match, err := m.Filter(&resp)
@@ -55,7 +69,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	}
 	// The response was not matched, return before running filters
 	if !matched {
-		return
+		return false
 	}
 	for _, f := range s.config.Filters {
 		fv, err := f.Filter(&resp)
@@ -63,11 +77,12 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			continue
 		}
 		if fv {
-			return
+			return false
 		}
 	}
 	// Response survived the filtering, output the result
 	s.printResult(resp)
+	return true
 }
 
 func (s *Stdoutput) printResult(resp ffuf.Response) {
@@ -83,9 +98,10 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	res_str := fmt.Sprintf("%-23s [Status: %d, Size: %d]", resp.Request.Input, resp.StatusCode, resp.ContentLength)
+	res_str := fmt.Sprintf("%s%-23s [Status: %d, Size: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, resp.StatusCode, resp.ContentLength)
 	fmt.Println(res_str)
 }
+
 func printOption(name []byte, value []byte) {
 	fmt.Printf(" :: %-12s : %s\n", name, value)
 }

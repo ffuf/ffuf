@@ -27,16 +27,23 @@ func NewWordlistInput(conf *ffuf.Config) (*WordlistInput, error) {
 	return &wl, err
 }
 
+//Next will increment the cursor position, and return a boolean telling if there's words left in the list
 func (w *WordlistInput) Next() bool {
 	w.position++
-	if w.position >= len(w.data)-1 {
+	if w.position >= len(w.data) {
 		return false
 	}
 	return true
 }
 
+//Value returns the value from wordlist at current cursor position
 func (w *WordlistInput) Value() []byte {
 	return w.data[w.position]
+}
+
+//Total returns the size of wordlist
+func (w *WordlistInput) Total() int {
+	return len(w.data)
 }
 
 //validFile checks that the wordlist file exists and can be read
