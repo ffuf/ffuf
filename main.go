@@ -51,6 +51,7 @@ func main() {
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size")
 	flag.StringVar(&conf.Data, "d", "", "POST data.")
+	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
 	//flag.StringVar(&opts.filterRegex, "fr", "", "Filter regex")
 	//flag.StringVar(&opts.filterReflect, "fref", "", "Filter reflected payload")
 	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401", "Match HTTP status codes from respose")

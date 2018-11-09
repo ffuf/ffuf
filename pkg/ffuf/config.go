@@ -12,6 +12,7 @@ type Config struct {
 	TLSSkipVerify bool
 	Data          string
 	Quiet         bool
+	Colors        bool
 	Wordlist      string
 	Filters       []FilterProvider
 	Matchers      []FilterProvider

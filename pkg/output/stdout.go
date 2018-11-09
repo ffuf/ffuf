@@ -98,8 +98,28 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	res_str := fmt.Sprintf("%s%-23s [Status: %d, Size: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, resp.StatusCode, resp.ContentLength)
+	res_str := fmt.Sprintf("%s%-23s [Status: %s, Size: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength)
 	fmt.Println(res_str)
+}
+
+func (s *Stdoutput) colorizeStatus(status int64) string {
+	if !s.config.Colors {
+		return fmt.Sprintf("%d", status)
+	}
+	colorCode := ANSI_CLEAR
+	if status >= 200 && status < 300 {
+		colorCode = ANSI_GREEN
+	}
+	if status >= 300 && status < 400 {
+		colorCode = ANSI_BLUE
+	}
+	if status >= 400 && status < 500 {
+		colorCode = ANSI_YELLOW
+	}
+	if status >= 500 && status < 600 {
+		colorCode = ANSI_RED
+	}
+	return fmt.Sprintf("%s%d%s", colorCode, status, ANSI_CLEAR)
 }
 
 func printOption(name []byte, value []byte) {
