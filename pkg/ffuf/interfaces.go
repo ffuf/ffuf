@@ -16,10 +16,13 @@ type RunnerProvider interface {
 type InputProvider interface {
 	Next() bool
 	Value() []byte
+	Total() int
 }
 
 //OutputProvider is responsible of providing output from the RunnerProvider
 type OutputProvider interface {
 	Banner() error
-	Result(resp Response)
+	Finalize() error
+	Error(errstring string)
+	Result(resp Response) bool
 }

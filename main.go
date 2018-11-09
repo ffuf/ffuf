@@ -53,7 +53,7 @@ func main() {
 	flag.StringVar(&conf.Data, "d", "", "POST data.")
 	//flag.StringVar(&opts.filterRegex, "fr", "", "Filter regex")
 	//flag.StringVar(&opts.filterReflect, "fref", "", "Filter reflected payload")
-	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307", "Match HTTP status codes from respose")
+	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401", "Match HTTP status codes from respose")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	//flag.StringVar(&opts.matcherRegex, "mr", "", "Match regex")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use.")
