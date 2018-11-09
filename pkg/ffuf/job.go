@@ -70,6 +70,11 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 }
 
 func (j *Job) updateProgress() {
+	//TODO: refactor to use a defined progress struct for future output modules
+	if j.Config.Quiet {
+		// Do not print progress status in silent mode
+		return
+	}
 	dur := time.Now().Sub(j.startTime)
 	hours := dur / time.Hour
 	dur -= hours * time.Hour

@@ -64,6 +64,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if _, ok := req.Headers["User-Agent"]; !ok {
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
 	}
+	// Handle Go http.Request special cases
+	if _, ok := req.Headers["Host"]; ok {
+		httpreq.Host = req.Headers["Host"]
+	}
 	httpreq = httpreq.WithContext(r.config.Context)
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
