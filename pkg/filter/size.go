@@ -17,7 +17,7 @@ func NewSizeFilter(value string) (ffuf.FilterProvider, error) {
 	for _, sv := range strings.Split(value, ",") {
 		intval, err := strconv.ParseInt(sv, 10, 0)
 		if err != nil {
-			return &SizeFilter{}, fmt.Errorf("Size filter (-fs): invalid value: %s", value)
+			return &SizeFilter{}, fmt.Errorf("Size filter or matcher (-fs / -ms): invalid value: %s", value)
 		}
 		intvals = append(intvals, intval)
 	}
