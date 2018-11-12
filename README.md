@@ -72,8 +72,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
 
 ```
 Usage of ./ffuf:
-  -H value
-    	Header name and value, separated by colon. Multiple -H flags are accepted.
+  -H "Name: Value"
+    	Header "Name: Value", separated by colon. Multiple -H flags are accepted.
   -X string
     	HTTP method to use. (default "GET")
   -c	Colorize output.
@@ -81,16 +81,24 @@ Usage of ./ffuf:
     	POST data.
   -fc string
     	Filter HTTP status codes from response
+  -fr string
+    	Filter regexp
   -fs string
     	Filter HTTP response size
+  -fw string
+    	Filter by amount of words in response
   -k	Skip TLS identity verification (insecure)
   -mc string
     	Match HTTP status codes from respose (default "200,204,301,302,307,401")
+  -mr string
+    	Match regexp
   -ms string
     	Match HTTP response size
+  -mw string
+    	Match amount of words in response
   -s	Do not print additional information (silent mode)
   -t int
-    	Number of concurrent threads. (default 20)
+    	Number of concurrent threads. (default 40)
   -u string
     	Target URL
   -w string
@@ -106,7 +114,6 @@ eg. `ffuf -u https://example.org/FUZZ -w /path/to/wordlist`
 
 ## TODO
  - Tests!
- - Filters: word count, regex
  - Option to follow redirects
  - Optional scope for redirects
  - Client / server architecture to queue jobs and fetch the results later

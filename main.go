@@ -44,7 +44,7 @@ func main() {
 	defer cancel()
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
-	flag.Var(&opts.headers, "H", "Header name and value, separated by colon. Multiple -H flags are accepted.")
+	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist path")
 	flag.BoolVar(&conf.TLSSkipVerify, "k", false, "Skip TLS identity verification (insecure)")
@@ -143,7 +143,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	if !foundkeyword {
-		errlist = multierror.Append(errlist, fmt.Errorf("No FUZZ keywords found in headers or URL, nothing to do"))
+		errlist = multierror.Append(errlist, fmt.Errorf("No FUZZ keyword(s) found in headers, URL or POST data, nothing to do"))
 	}
 	return errlist.ErrorOrNil()
 }
