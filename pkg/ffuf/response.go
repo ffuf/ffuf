@@ -10,6 +10,7 @@ type Response struct {
 	Headers       map[string][]string
 	Data          []byte
 	ContentLength int64
+	ContentWords  int64
 	Cancelled     bool
 	Request       *Request
 }

@@ -98,7 +98,7 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	res_str := fmt.Sprintf("%s%-23s [Status: %s, Size: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength)
+	res_str := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
 	fmt.Println(res_str)
 }
 
