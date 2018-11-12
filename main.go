@@ -60,7 +60,7 @@ func main() {
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
-	flag.IntVar(&conf.Threads, "t", 20, "Number of concurrent threads.")
+	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.Parse()
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)

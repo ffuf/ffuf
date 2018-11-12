@@ -75,13 +75,20 @@ func (j *Job) updateProgress() {
 		// Do not print progress status in silent mode
 		return
 	}
+	runningSecs := int((time.Now().Sub(j.startTime)) / time.Second)
+	var reqRate int
+	if runningSecs > 0 {
+		reqRate = int(j.Counter / runningSecs)
+	} else {
+		reqRate = 0
+	}
 	dur := time.Now().Sub(j.startTime)
 	hours := dur / time.Hour
 	dur -= hours * time.Hour
 	mins := dur / time.Minute
 	dur -= mins * time.Minute
 	secs := dur / time.Second
-	progString := fmt.Sprintf(":: Progress: [%d/%d] :: Duration: [%d:%02d:%02d] ::", j.Counter, j.Total, hours, mins, secs)
+	progString := fmt.Sprintf(":: Progress: [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] ::", j.Counter, j.Total, int(reqRate), hours, mins, secs)
 	j.Output.Error(progString)
 }
 
