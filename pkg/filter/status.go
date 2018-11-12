@@ -17,7 +17,7 @@ func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
 	for _, sv := range strings.Split(value, ",") {
 		intval, err := strconv.ParseInt(sv, 10, 0)
 		if err != nil {
-			return &StatusFilter{}, fmt.Errorf("Status filter (-fc): invalid value %s", value)
+			return &StatusFilter{}, fmt.Errorf("Status filter or matcher (-fc / -mc): invalid value %s", value)
 		}
 		intvals = append(intvals, intval)
 	}
