@@ -17,17 +17,15 @@ import (
 )
 
 type cliOptions struct {
-	filterStatus   string
-	filterSize     string
-	filterReflect  string
-	filterRegex    string
-	filterWords    string
-	matcherStatus  string
-	matcherSize    string
-	matcherReflect string
-	matcherRegex   string
-	matcherWords   string
-	headers        headerFlags
+	filterStatus  string
+	filterSize    string
+	filterRegexp  string
+	filterWords   string
+	matcherStatus string
+	matcherSize   string
+	matcherRegexp string
+	matcherWords  string
+	headers       headerFlags
 }
 
 type headerFlags []string
@@ -52,19 +50,17 @@ func main() {
 	flag.BoolVar(&conf.TLSSkipVerify, "k", false, "Skip TLS identity verification (insecure)")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size")
+	flag.StringVar(&opts.filterRegexp, "fr", "", "Filter regexp")
 	flag.StringVar(&opts.filterWords, "fw", "", "Filter by amount of words in response")
 	flag.StringVar(&conf.Data, "d", "", "POST data.")
 	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
-	//flag.StringVar(&opts.filterRegex, "fr", "", "Filter regex")
-	//flag.StringVar(&opts.filterReflect, "fref", "", "Filter reflected payload")
 	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401", "Match HTTP status codes from respose")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
+	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
-	//flag.StringVar(&opts.matcherRegex, "mr", "", "Match regex")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.IntVar(&conf.Threads, "t", 20, "Number of concurrent threads.")
-	//flag.StringVar(&opts.matcherReflect, "mref", "", "Match reflected payload")
 	flag.Parse()
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
@@ -164,6 +160,11 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errlist = multierror.Append(errlist, err)
 		}
 	}
+	if parseOpts.filterRegexp != "" {
+		if err := addFilter(conf, "regexp", parseOpts.filterRegexp); err != nil {
+			errlist = multierror.Append(errlist, err)
+		}
+	}
 	if parseOpts.filterWords != "" {
 		if err := addFilter(conf, "word", parseOpts.filterWords); err != nil {
 			errlist = multierror.Append(errlist, err)
@@ -176,6 +177,11 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.matcherSize != "" {
 		if err := addMatcher(conf, "size", parseOpts.matcherSize); err != nil {
+			errlist = multierror.Append(errlist, err)
+		}
+	}
+	if parseOpts.matcherRegexp != "" {
+		if err := addMatcher(conf, "regexp", parseOpts.matcherRegexp); err != nil {
 			errlist = multierror.Append(errlist, err)
 		}
 	}
