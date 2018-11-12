@@ -16,6 +16,8 @@ Heavily inspired by the great projects [gobuster](https://github.com/OJ/gobuster
 
 ### Typical directory discovery
 
+[![asciicast](https://asciinema.org/a/211350.png)](https://asciinema.org/a/211350)
+
 By using the FUZZ keyword at the end of URL (`-u`):
 
 ```
@@ -23,6 +25,8 @@ ffuf -w /path/to/wordlist -u https://target/FUZZ
 ```
 
 ### Virtual host discovery (without DNS records)
+
+[![asciicast](https://asciinema.org/a/211360.png)](https://asciinema.org/a/211360)
 
 Assuming that the default virtualhost response size is 4242 bytes, we can filter out all the responses of that size (`-fs 4242`)while fuzzing the Host - header:
 
