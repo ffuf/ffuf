@@ -112,6 +112,8 @@ eg. `ffuf -u https://example.org/FUZZ -w /path/to/wordlist`
  or
  - If you have go compiler installed: `go get github.com/ffuf/ffuf`
 
+The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
+
 ## TODO
  - Tests!
  - Option to follow redirects

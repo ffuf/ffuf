@@ -12,8 +12,6 @@ import (
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/output"
 	"github.com/ffuf/ffuf/pkg/runner"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 type cliOptions struct {
@@ -84,14 +82,14 @@ func main() {
 }
 
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
-	var errlist *multierror.Error
+	errs := ffuf.NewMultierror()
 	// TODO: implement error handling for runnerprovider and outputprovider
 	// We only have http runner right now
 	runprovider := runner.NewRunnerByName("http", conf)
 	// We only have wordlist inputprovider right now
 	inputprovider, err := input.NewInputProviderByName("wordlist", conf)
 	if err != nil {
-		errlist = multierror.Append(errlist, fmt.Errorf("%s", err))
+		errs.Add(fmt.Errorf("%s", err))
 	}
 	// We only have stdout outputprovider right now
 	outprovider := output.NewOutputProviderByName("stdout", conf)
@@ -100,18 +98,18 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 		Runner: runprovider,
 		Output: outprovider,
 		Input:  inputprovider,
-	}, errlist.ErrorOrNil()
+	}, errs.ErrorOrNil()
 }
 
 func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	//TODO: refactor in a proper flag library that can handle things like required flags
-	var errlist *multierror.Error
+	errs := ffuf.NewMultierror()
 	foundkeyword := false
 	if len(conf.Url) == 0 {
-		errlist = multierror.Append(errlist, fmt.Errorf("-u flag is required"))
+		errs.Add(fmt.Errorf("-u flag is required"))
 	}
 	if len(conf.Wordlist) == 0 {
-		errlist = multierror.Append(errlist, fmt.Errorf("-w flag is required"))
+		errs.Add(fmt.Errorf("-w flag is required"))
 	}
 	//Prepare headers
 	for _, v := range parseOpts.headers {
@@ -131,7 +129,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 				conf.StaticHeaders[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
 			}
 		} else {
-			errlist = multierror.Append(errlist, fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
+			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
 	}
 	//Search for keyword from URL and POST data too
@@ -143,54 +141,54 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	if !foundkeyword {
-		errlist = multierror.Append(errlist, fmt.Errorf("No FUZZ keyword(s) found in headers, URL or POST data, nothing to do"))
+		errs.Add(fmt.Errorf("No FUZZ keyword(s) found in headers, URL or POST data, nothing to do"))
 	}
-	return errlist.ErrorOrNil()
+	return errs.ErrorOrNil()
 }
 
 func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
-	var errlist *multierror.Error
+	errs := ffuf.NewMultierror()
 	if parseOpts.filterStatus != "" {
 		if err := addFilter(conf, "status", parseOpts.filterStatus); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.filterSize != "" {
 		if err := addFilter(conf, "size", parseOpts.filterSize); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.filterRegexp != "" {
 		if err := addFilter(conf, "regexp", parseOpts.filterRegexp); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.filterWords != "" {
 		if err := addFilter(conf, "word", parseOpts.filterWords); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.matcherStatus != "" {
 		if err := addMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.matcherSize != "" {
 		if err := addMatcher(conf, "size", parseOpts.matcherSize); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.matcherRegexp != "" {
 		if err := addMatcher(conf, "regexp", parseOpts.matcherRegexp); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
 	if parseOpts.matcherWords != "" {
 		if err := addMatcher(conf, "word", parseOpts.matcherWords); err != nil {
-			errlist = multierror.Append(errlist, err)
+			errs.Add(err)
 		}
 	}
-	return errlist.ErrorOrNil()
+	return errs.ErrorOrNil()
 }
 
 func addFilter(conf *ffuf.Config, name string, option string) error {
