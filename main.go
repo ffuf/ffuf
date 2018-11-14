@@ -54,7 +54,7 @@ func main() {
 	flag.StringVar(&opts.filterWords, "fw", "", "Filter by amount of words in response")
 	flag.StringVar(&conf.Data, "d", "", "POST data.")
 	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
-	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401", "Match HTTP status codes from respose")
+	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401,403", "Match HTTP status codes from respose")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
