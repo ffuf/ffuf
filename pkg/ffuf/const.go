@@ -2,5 +2,5 @@ package ffuf
 
 const (
 	//VERSION holds the current version number
-	VERSION = "0.4"
+	VERSION = "0.5"
 )
