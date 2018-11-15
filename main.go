@@ -24,6 +24,7 @@ type cliOptions struct {
 	matcherRegexp string
 	matcherWords  string
 	headers       headerFlags
+	showVersion   bool
 }
 
 type headerFlags []string
@@ -59,7 +60,12 @@ func main() {
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
+	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.Parse()
+	if opts.showVersion {
+		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
+		os.Exit(0)
+	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		flag.Usage()
