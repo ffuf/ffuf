@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -27,6 +28,7 @@ func NewJob(conf *Config) Job {
 
 //Start the execution of the Job
 func (j *Job) Start() {
+	rand.Seed(time.Now().UnixNano())
 	j.Total = j.Input.Total()
 	defer j.Stop()
 	//Show banner if not running in silent mode
@@ -48,6 +50,16 @@ func (j *Job) Start() {
 			defer func() { <-limiter }()
 			defer wg.Done()
 			j.runTask([]byte(nextInput))
+			if j.Config.Delay.HasDelay {
+				var sleepDurationMS time.Duration
+				if j.Config.Delay.IsRange {
+					sTime := j.Config.Delay.Min + rand.Float64()*(j.Config.Delay.Max-j.Config.Delay.Min)
+					sleepDurationMS = time.Duration(sTime * 1000)
+				} else {
+					sleepDurationMS = time.Duration(j.Config.Delay.Min * 1000)
+				}
+				time.Sleep(sleepDurationMS * time.Millisecond)
+			}
 		}()
 	}
 	wg.Wait()
