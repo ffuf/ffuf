@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
@@ -15,6 +16,7 @@ import (
 )
 
 type cliOptions struct {
+	delay         string
 	filterStatus  string
 	filterSize    string
 	filterRegexp  string
@@ -23,18 +25,18 @@ type cliOptions struct {
 	matcherSize   string
 	matcherRegexp string
 	matcherWords  string
-	headers       headerFlags
+	headers       multiStringFlag
 	showVersion   bool
 }
 
-type headerFlags []string
+type multiStringFlag []string
 
-func (h *headerFlags) String() string {
+func (m *multiStringFlag) String() string {
 	return ""
 }
 
-func (h *headerFlags) Set(value string) error {
-	*h = append(*h, value)
+func (m *multiStringFlag) Set(value string) error {
+	*m = append(*m, value)
 	return nil
 }
 
@@ -47,6 +49,7 @@ func main() {
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist path")
 	flag.BoolVar(&conf.TLSSkipVerify, "k", false, "Skip TLS identity verification (insecure)")
+	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size")
 	flag.StringVar(&opts.filterRegexp, "fr", "", "Filter regexp")
@@ -111,6 +114,9 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	//TODO: refactor in a proper flag library that can handle things like required flags
 	errs := ffuf.NewMultierror()
 	foundkeyword := false
+
+	var err error
+	var err2 error
 	if len(conf.Url) == 0 {
 		errs.Add(fmt.Errorf("-u flag is required"))
 	}
@@ -138,6 +144,27 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
 	}
+	//Prepare delay
+	d := strings.Split(parseOpts.delay, "-")
+	if len(d) > 2 {
+		errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
+	} else if len(d) == 2 {
+		conf.Delay.IsRange = true
+		conf.Delay.HasDelay = true
+		conf.Delay.Min, err = strconv.ParseFloat(d[0], 64)
+		conf.Delay.Max, err2 = strconv.ParseFloat(d[1], 64)
+		if err != nil || err2 != nil {
+			errs.Add(fmt.Errorf("Delay range min and max values need to be valid floats. For example: 0.1-0.5"))
+		}
+	} else if len(parseOpts.delay) > 0 {
+		conf.Delay.IsRange = false
+		conf.Delay.HasDelay = true
+		conf.Delay.Min, err = strconv.ParseFloat(parseOpts.delay, 64)
+		if err != nil {
+			errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
+		}
+	}
+
 	//Search for keyword from URL and POST data too
 	if strings.Index(conf.Url, "FUZZ") != -1 {
 		foundkeyword = true

@@ -71,9 +71,9 @@ ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" https:/
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Usage of ./ffuf:
   -H "Name: Value"
     	Header "Name: Value", separated by colon. Multiple -H flags are accepted.
+  -V	Show version information.
   -X string
     	HTTP method to use. (default "GET")
   -c	Colorize output.
@@ -89,13 +89,15 @@ Usage of ./ffuf:
     	Filter by amount of words in response
   -k	Skip TLS identity verification (insecure)
   -mc string
-    	Match HTTP status codes from respose (default "200,204,301,302,307,401")
+    	Match HTTP status codes from respose (default "200,204,301,302,307,401,403")
   -mr string
     	Match regexp
   -ms string
     	Match HTTP response size
   -mw string
     	Match amount of words in response
+  -p delay
+    	Seconds of delay between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -s	Do not print additional information (silent mode)
   -t int
     	Number of concurrent threads. (default 40)
