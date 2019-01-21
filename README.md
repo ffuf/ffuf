@@ -105,6 +105,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Target URL
   -w string
     	Wordlist path
+  -x string
+    	HTTP Proxy URL
 ```
 eg. `ffuf -u https://example.org/FUZZ -w /path/to/wordlist`
 

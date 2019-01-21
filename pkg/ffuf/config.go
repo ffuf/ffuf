@@ -2,6 +2,8 @@ package ffuf
 
 import (
 	"context"
+	"net/http"
+	"net/url"
 )
 
 //optRange stores either a single float, in which case the value is stored in min and IsRange is false,
@@ -28,6 +30,7 @@ type Config struct {
 	Matchers      []FilterProvider
 	Threads       int
 	Context       context.Context
+	ProxyURL      func(*http.Request) (*url.URL, error)
 }
 
 func NewConfig(ctx context.Context) Config {
@@ -40,6 +43,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.TLSSkipVerify = false
 	conf.Data = ""
 	conf.Quiet = false
+	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}
 	return conf
