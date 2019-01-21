@@ -30,6 +30,7 @@ func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(10 * time.Second),
 		Transport: &http.Transport{
+			Proxy:               conf.ProxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
 			MaxConnsPerHost:     500,

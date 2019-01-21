@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -25,6 +27,7 @@ type cliOptions struct {
 	matcherSize   string
 	matcherRegexp string
 	matcherWords  string
+	proxyURL      string
 	headers       multiStringFlag
 	showVersion   bool
 }
@@ -60,7 +63,8 @@ func main() {
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
-	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use.")
+	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
+	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
@@ -162,6 +166,16 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		conf.Delay.Min, err = strconv.ParseFloat(parseOpts.delay, 64)
 		if err != nil {
 			errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
+		}
+	}
+
+	// Verify proxy url format
+	if len(parseOpts.proxyURL) > 0 {
+		pu, err := url.Parse(parseOpts.proxyURL)
+		if err != nil {
+			errs.Add(fmt.Errorf("Bad proxy url (-x) format: %s", err))
+		} else {
+			conf.ProxyURL = http.ProxyURL(pu)
 		}
 	}
 
