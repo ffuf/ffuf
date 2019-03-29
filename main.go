@@ -28,6 +28,7 @@ type cliOptions struct {
 	matcherRegexp string
 	matcherWords  string
 	proxyURL      string
+	outputFormat  string
 	headers       multiStringFlag
 	showVersion   bool
 }
@@ -65,6 +66,8 @@ func main() {
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
+	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
+	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 90% of responses return 403 Forbidden")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
@@ -180,6 +183,24 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 
+	//Check the output file format option
+	if conf.OutputFile != "" {
+		//No need to check / error out if output file isn't defined
+		outputFormats := []string{"json"}
+		found := false
+		for _, f := range outputFormats {
+			if f == parseOpts.outputFormat {
+				conf.OutputFormat = f
+				found = true
+			}
+		}
+		if !found {
+			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.outputFormat))
+		}
+	}
+
+	conf.CommandLine = strings.Join(os.Args, " ")
+
 	//Search for keyword from URL and POST data too
 	if strings.Index(conf.Url, "FUZZ") != -1 {
 		foundkeyword = true
@@ -191,6 +212,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	if !foundkeyword {
 		errs.Add(fmt.Errorf("No FUZZ keyword(s) found in headers, URL or POST data, nothing to do"))
 	}
+
 	return errs.ErrorOrNil()
 }
 

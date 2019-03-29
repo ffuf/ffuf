@@ -20,12 +20,21 @@ const (
 )
 
 type Stdoutput struct {
-	config *ffuf.Config
+	config  *ffuf.Config
+	Results []Result
+}
+
+type Result struct {
+	Input         string `json:"input"`
+	StatusCode    int64  `json:"status"`
+	ContentLength int64  `json:"length"`
+	ContentWords  int64  `json:"words"`
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	var outp Stdoutput
 	outp.config = conf
+	outp.Results = []Result{}
 	return &outp
 }
 
@@ -77,6 +86,15 @@ func (s *Stdoutput) Warning(warnstring string) {
 }
 
 func (s *Stdoutput) Finalize() error {
+	var err error
+	if s.config.OutputFile != "" {
+		if s.config.OutputFormat == "json" {
+			err = writeJSON(s.config, s.Results)
+		}
+		if err != nil {
+			s.Error(fmt.Sprintf("%s", err))
+		}
+	}
 	fmt.Fprintf(os.Stderr, "\n")
 	return nil
 }
@@ -107,6 +125,16 @@ func (s *Stdoutput) Result(resp ffuf.Response) bool {
 	}
 	// Response survived the filtering, output the result
 	s.printResult(resp)
+	if s.config.OutputFile != "" {
+		// No need to store results if we're not going to use them later
+		sResult := Result{
+			Input:         string(resp.Request.Input),
+			StatusCode:    resp.StatusCode,
+			ContentLength: resp.ContentLength,
+			ContentWords:  resp.ContentWords,
+		}
+		s.Results = append(s.Results, sResult)
+	}
 	return true
 }
 
