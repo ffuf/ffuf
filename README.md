@@ -75,7 +75,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Header "Name: Value", separated by colon. Multiple -H flags are accepted.
   -V	Show version information.
   -X string
-    	HTTP method to use. (default "GET")
+    	HTTP method to use (default "GET")
   -c	Colorize output.
   -d string
     	POST data.
@@ -96,9 +96,15 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Match HTTP response size
   -mw string
     	Match amount of words in response
+  -o string
+    	Write output to file
+  -of string
+    	Output file format. Available formats: json (default "json")
   -p delay
     	Seconds of delay between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -s	Do not print additional information (silent mode)
+  -sf
+    	Stop when > 90% of responses return 403 Forbidden
   -t int
     	Number of concurrent threads. (default 40)
   -u string
@@ -117,6 +123,15 @@ eg. `ffuf -u https://example.org/FUZZ -w /path/to/wordlist`
  - If you have go compiler installed: `go get github.com/ffuf/ffuf`
 
 The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
+
+## Changelog
+
+- v0.8
+   - New
+      - New CLI flag to write output to a file in JSON format
+      - New CLI flag to stop on spurious 403 responses
+   - Changed
+      - Regex matching / filtering now matches the headers alongside of the response body
 
 ## TODO
  - Tests!
