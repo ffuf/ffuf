@@ -21,7 +21,15 @@ func NewRegexpFilter(value string) (ffuf.FilterProvider, error) {
 }
 
 func (f *RegexpFilter) Filter(response *ffuf.Response) (bool, error) {
-	return f.Value.Match(response.Data), nil
+	matchheaders := ""
+	for k, v := range response.Headers {
+		for _, iv := range v {
+			matchheaders += k + ": " + iv + "\r\n"
+		}
+	}
+	matchdata := []byte(matchheaders)
+	matchdata = append(matchdata, response.Data...)
+	return f.Value.Match(matchdata), nil
 }
 
 func (f *RegexpFilter) Repr() string {
