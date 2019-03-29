@@ -25,6 +25,8 @@ type Config struct {
 	Quiet         bool
 	Colors        bool
 	Wordlist      string
+	OutputFile    string
+	OutputFormat  string
 	StopOn403     bool
 	Delay         optRange
 	Filters       []FilterProvider
@@ -32,6 +34,7 @@ type Config struct {
 	Threads       int
 	Context       context.Context
 	ProxyURL      func(*http.Request) (*url.URL, error)
+	CommandLine   string
 }
 
 func NewConfig(ctx context.Context) Config {
