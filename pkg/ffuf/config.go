@@ -25,12 +25,15 @@ type Config struct {
 	Quiet         bool
 	Colors        bool
 	Wordlist      string
+	OutputFile    string
+	OutputFormat  string
 	Delay         optRange
 	Filters       []FilterProvider
 	Matchers      []FilterProvider
 	Threads       int
 	Context       context.Context
 	ProxyURL      func(*http.Request) (*url.URL, error)
+	CommandLine   string
 }
 
 func NewConfig(ctx context.Context) Config {
