@@ -69,6 +69,7 @@ func main() {
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
+	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 90% of responses return 403 Forbidden")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.Parse()

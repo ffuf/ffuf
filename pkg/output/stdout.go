@@ -52,11 +52,36 @@ func (s *Stdoutput) Banner() error {
 	return nil
 }
 
+func (s *Stdoutput) Progress(status string) {
+	if s.config.Quiet {
+		// No progress for quiet mode
+		return
+	} else {
+		fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, status)
+	}
+}
+
 func (s *Stdoutput) Error(errstring string) {
 	if s.config.Quiet {
 		fmt.Fprintf(os.Stderr, "%s", errstring)
 	} else {
-		fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, errstring)
+		if !s.config.Colors {
+			fmt.Fprintf(os.Stderr, "%s[ERR] %s\n", TERMINAL_CLEAR_LINE, errstring)
+		} else {
+			fmt.Fprintf(os.Stderr, "%s[%sERR%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_RED, ANSI_CLEAR, errstring)
+		}
+	}
+}
+
+func (s *Stdoutput) Warning(warnstring string) {
+	if s.config.Quiet {
+		fmt.Fprintf(os.Stderr, "%s", warnstring)
+	} else {
+		if !s.config.Colors {
+			fmt.Fprintf(os.Stderr, "%s[WARN] %s", TERMINAL_CLEAR_LINE, warnstring)
+		} else {
+			fmt.Fprintf(os.Stderr, "%s[%sWARN%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_RED, ANSI_CLEAR, warnstring)
+		}
 	}
 }
 
