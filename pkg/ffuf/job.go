@@ -16,6 +16,8 @@ type Job struct {
 	Counter   int
 	Total     int
 	Running   bool
+	Count403  int
+	Error     string
 	startTime time.Time
 }
 
@@ -42,6 +44,12 @@ func (j *Job) Start() {
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
 	limiter := make(chan bool, j.Config.Threads)
 	for j.Input.Next() {
+		// Check if we should stop the process
+		j.CheckStop()
+		if !j.Running {
+			defer j.Output.Warning(j.Error)
+			break
+		}
 		limiter <- true
 		nextInput := j.Input.Value()
 		wg.Add(1)
@@ -73,6 +81,9 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 	j.startTime = time.Now()
 	totalProgress := j.Input.Total()
 	for j.Counter <= totalProgress {
+		if !j.Running {
+			break
+		}
 		j.updateProgress()
 		if j.Counter == totalProgress {
 			return
@@ -82,11 +93,6 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 }
 
 func (j *Job) updateProgress() {
-	//TODO: refactor to use a defined progress struct for future output modules
-	if j.Config.Quiet {
-		// Do not print progress status in silent mode
-		return
-	}
 	runningSecs := int((time.Now().Sub(j.startTime)) / time.Second)
 	var reqRate int
 	if runningSecs > 0 {
@@ -101,7 +107,7 @@ func (j *Job) updateProgress() {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 	progString := fmt.Sprintf(":: Progress: [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] ::", j.Counter, j.Total, int(reqRate), hours, mins, secs)
-	j.Output.Error(progString)
+	j.Output.Progress(progString)
 }
 
 func (j *Job) runTask(input []byte) {
@@ -115,11 +121,28 @@ func (j *Job) runTask(input []byte) {
 		j.Output.Error(fmt.Sprintf("Error in runner: %s\n", err))
 		return
 	}
+	if j.Config.StopOn403 {
+		// Incremnt Forbidden counter if we encountered one
+		if resp.StatusCode == 403 {
+			j.Count403 += 1
+		}
+	}
 	if j.Output.Result(resp) {
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 	}
 	return
+}
+
+func (j *Job) CheckStop() {
+	if j.Counter > 50 {
+		// We have enough samples
+		if float64(j.Count403)/float64(j.Counter) > 0.95 {
+			// Over 95% of requests are 403
+			j.Error = "Getting unusual amount of 403 responses, exiting."
+			j.Stop()
+		}
+	}
 }
 
 //Stop the execution of the Job
