@@ -25,6 +25,7 @@ type Config struct {
 	Quiet         bool
 	Colors        bool
 	Wordlist      string
+	StopOn403     bool
 	Delay         optRange
 	Filters       []FilterProvider
 	Matchers      []FilterProvider
@@ -43,6 +44,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.TLSSkipVerify = false
 	conf.Data = ""
 	conf.Quiet = false
+	conf.StopOn403 = false
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}

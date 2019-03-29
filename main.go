@@ -66,6 +66,7 @@ func main() {
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
+	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 90% of responses return 403 Forbidden")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.Parse()
