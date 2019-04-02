@@ -38,6 +38,10 @@ func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 				InsecureSkipVerify: conf.TLSSkipVerify,
 			},
 		}}
+
+	if conf.FollowRedirects {
+		simplerunner.client.CheckRedirect = nil
+	}
 	return &simplerunner
 }
 
