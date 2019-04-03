@@ -69,7 +69,6 @@ ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" https:/
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
-
 ```
   -H "Name: Value"
     	Header "Name: Value", separated by colon. Multiple -H flags are accepted.
@@ -104,6 +103,10 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Seconds of delay between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -r	Follow redirects
   -s	Do not print additional information (silent mode)
+  -sa
+    	Stop on all error cases. Implies -sf and -se
+  -se
+    	Stop on spurious errors
   -sf
     	Stop when > 90% of responses return 403 Forbidden
   -t int
@@ -132,6 +135,9 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
    - New
       - New output file formats: CSV and eCSV (CSV with base64 encoded input field to avoid CSV breakage with payloads containing a comma)
       - New CLI flag to follow redirects
+      - Erroring connections will be retried once
+      - Error counter in status bar
+      - New CLI flags: -se (stop on spurious errors) and -sa (stop on all errors, implies -se and -sf)
 - v0.8
    - New
       - New CLI flag to write output to a file in JSON format
