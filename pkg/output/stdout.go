@@ -90,6 +90,10 @@ func (s *Stdoutput) Finalize() error {
 	if s.config.OutputFile != "" {
 		if s.config.OutputFormat == "json" {
 			err = writeJSON(s.config, s.Results)
+		} else if s.config.OutputFormat == "csv" {
+			err = writeCSV(s.config, s.Results, false)
+		} else if s.config.OutputFormat == "ecsv" {
+			err = writeCSV(s.config, s.Results, true)
 		}
 		if err != nil {
 			s.Error(fmt.Sprintf("%s", err))

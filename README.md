@@ -99,7 +99,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -o string
     	Write output to file
   -of string
-    	Output file format. Available formats: json (default "json")
+    	Output file format. Available formats: json, csv, ecsv (default "json")
   -p delay
     	Seconds of delay between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -s	Do not print additional information (silent mode)
