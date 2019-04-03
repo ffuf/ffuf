@@ -28,6 +28,8 @@ type Config struct {
 	OutputFile      string
 	OutputFormat    string
 	StopOn403       bool
+	StopOnErrors    bool
+	StopOnAll       bool
 	FollowRedirects bool
 	Delay           optRange
 	Filters         []FilterProvider
@@ -49,6 +51,8 @@ func NewConfig(ctx context.Context) Config {
 	conf.Data = ""
 	conf.Quiet = false
 	conf.StopOn403 = false
+	conf.StopOnErrors = false
+	conf.StopOnAll = false
 	conf.FollowRedirects = false
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
