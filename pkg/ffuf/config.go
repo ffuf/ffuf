@@ -16,25 +16,26 @@ type optRange struct {
 }
 
 type Config struct {
-	StaticHeaders map[string]string
-	FuzzHeaders   map[string]string
-	Method        string
-	Url           string
-	TLSSkipVerify bool
-	Data          string
-	Quiet         bool
-	Colors        bool
-	Wordlist      string
-	OutputFile    string
-	OutputFormat  string
-	StopOn403     bool
-	Delay         optRange
-	Filters       []FilterProvider
-	Matchers      []FilterProvider
-	Threads       int
-	Context       context.Context
-	ProxyURL      func(*http.Request) (*url.URL, error)
-	CommandLine   string
+	StaticHeaders   map[string]string
+	FuzzHeaders     map[string]string
+	Method          string
+	Url             string
+	TLSSkipVerify   bool
+	Data            string
+	Quiet           bool
+	Colors          bool
+	Wordlist        string
+	OutputFile      string
+	OutputFormat    string
+	StopOn403       bool
+	FollowRedirects bool
+	Delay           optRange
+	Filters         []FilterProvider
+	Matchers        []FilterProvider
+	Threads         int
+	Context         context.Context
+	ProxyURL        func(*http.Request) (*url.URL, error)
+	CommandLine     string
 }
 
 func NewConfig(ctx context.Context) Config {
@@ -48,6 +49,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.Data = ""
 	conf.Quiet = false
 	conf.StopOn403 = false
+	conf.FollowRedirects = false
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}
