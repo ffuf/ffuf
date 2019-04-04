@@ -182,7 +182,7 @@ func (j *Job) CheckStop() {
 		if j.Config.StopOnErrors || j.Config.StopOnAll {
 			if j.SpuriousErrorCounter > j.Config.Threads*2 {
 				// Most of the requests are erroring
-				j.Error = "Recieving spurious errors, exiting."
+				j.Error = "Receiving spurious errors, exiting."
 				j.Stop()
 			}
 
