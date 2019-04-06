@@ -31,6 +31,7 @@ type Config struct {
 	StopOnErrors    bool
 	StopOnAll       bool
 	FollowRedirects bool
+	AltOutput       bool
 	Delay           optRange
 	Filters         []FilterProvider
 	Matchers        []FilterProvider
@@ -54,6 +55,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.StopOnErrors = false
 	conf.StopOnAll = false
 	conf.FollowRedirects = false
+	conf.AltOutput = false
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}

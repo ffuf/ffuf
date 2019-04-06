@@ -206,6 +206,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	//Search for keyword from URL and POST data too
 	if strings.Index(conf.Url, "FUZZ") != -1 {
+		s.config.AltOutput = true
 		foundkeyword = true
 	}
 	if strings.Index(conf.Data, "FUZZ") != -1 {
