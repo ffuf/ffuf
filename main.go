@@ -52,7 +52,7 @@ func main() {
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist path")
-	flag.BoolVar(&conf.TLSSkipVerify, "k", false, "Skip TLS identity verification (insecure)")
+	flag.BoolVar(&conf.TLSSkipVerify, "k", true, "Skip TLS identity verification (insecure)")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size")
