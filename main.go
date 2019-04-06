@@ -18,6 +18,7 @@ import (
 )
 
 type cliOptions struct {
+	extensions    string
 	delay         string
 	filterStatus  string
 	filterSize    string
@@ -49,6 +50,7 @@ func main() {
 	defer cancel()
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
+	flag.StringVar(&opts.extensions, "e", "", "extensions to bruteforce separated by a comma. `\"wordlist must contain %EXT%\"`")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist path")
@@ -134,6 +136,12 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	if len(conf.Wordlist) == 0 {
 		errs.Add(fmt.Errorf("-w flag is required"))
 	}
+	// prepare extensions
+	if parseOpts.extensions != "" {
+		extensions := strings.Split(parseOpts.extensions, ",")
+		conf.Extensions = extensions
+	}
+
 	//Prepare headers
 	for _, v := range parseOpts.headers {
 		hs := strings.SplitN(v, ":", 2)

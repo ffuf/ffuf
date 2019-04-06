@@ -3,6 +3,7 @@ package input
 import (
 	"bufio"
 	"os"
+	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -71,7 +72,15 @@ func (w *WordlistInput) readFile(path string) error {
 	var data [][]byte
 	reader := bufio.NewScanner(file)
 	for reader.Scan() {
-		data = append(data, []byte(reader.Text()))
+		if strings.Index(reader.Text(), "%EXT%") != -1 {
+			extensions := w.config.Extensions
+			for _, ext := range extensions {
+				contnt := strings.Replace(reader.Text(), "%EXT%", ext, -1)
+				data = append(data, []byte(contnt))
+			}
+		} else {
+			data = append(data, []byte(reader.Text()))
+		}
 	}
 	w.data = data
 	return reader.Err()
