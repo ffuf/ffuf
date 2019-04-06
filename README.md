@@ -86,7 +86,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Filter HTTP response size
   -fw string
     	Filter by amount of words in response
-  -k	Skip TLS identity verification (insecure)
+  -k	TLS identity verification
   -mc string
     	Match HTTP status codes from respose (default "200,204,301,302,307,401,403")
   -mr string
