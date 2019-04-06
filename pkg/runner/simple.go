@@ -103,6 +103,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	wordsSize := len(strings.Split(string(resp.Data), " "))
 	resp.ContentWords = int64(wordsSize)
+	resp.Url = req.Url
 
 	return resp, nil
 }
