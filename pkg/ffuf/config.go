@@ -47,7 +47,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.FuzzHeaders = make(map[string]string)
 	conf.Method = "GET"
 	conf.Url = ""
-	conf.TLSSkipVerify = false
+	conf.TLSSkipVerify = true
 	conf.Data = ""
 	conf.Quiet = false
 	conf.StopOn403 = false
