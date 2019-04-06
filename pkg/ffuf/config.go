@@ -18,6 +18,7 @@ type optRange struct {
 type Config struct {
 	StaticHeaders   map[string]string
 	FuzzHeaders     map[string]string
+	Extensions      []string
 	Method          string
 	Url             string
 	TLSVerify       bool
@@ -57,5 +58,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}
+	conf.Extensions = make([]string, 0)
 	return conf
 }
