@@ -31,7 +31,7 @@ type Config struct {
 	StopOnErrors    bool
 	StopOnAll       bool
 	FollowRedirects bool
-	AltOutput       bool
+	UrlOutput       bool
 	Delay           optRange
 	Filters         []FilterProvider
 	Matchers        []FilterProvider

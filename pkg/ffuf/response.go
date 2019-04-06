@@ -12,7 +12,6 @@ type Response struct {
 	ContentLength int64
 	ContentWords  int64
 	Cancelled     bool
-	Url           string
 	Request       *Request
 }
 
@@ -22,6 +21,5 @@ func NewResponse(httpresp *http.Response, req *Request) Response {
 	resp.StatusCode = int64(httpresp.StatusCode)
 	resp.Headers = httpresp.Header
 	resp.Cancelled = false
-	resp.Url = ""
 	return resp
 }
