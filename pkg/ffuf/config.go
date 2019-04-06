@@ -20,7 +20,7 @@ type Config struct {
 	FuzzHeaders     map[string]string
 	Method          string
 	Url             string
-	TLSSkipVerify   bool
+	TLSVerify       bool
 	Data            string
 	Quiet           bool
 	Colors          bool
@@ -47,7 +47,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.FuzzHeaders = make(map[string]string)
 	conf.Method = "GET"
 	conf.Url = ""
-	conf.TLSSkipVerify = true
+	conf.TLSVerify = false
 	conf.Data = ""
 	conf.Quiet = false
 	conf.StopOn403 = false
