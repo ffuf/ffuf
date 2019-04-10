@@ -72,11 +72,16 @@ func (w *WordlistInput) readFile(path string) error {
 	var data [][]byte
 	reader := bufio.NewScanner(file)
 	for reader.Scan() {
-		if strings.Index(reader.Text(), "%EXT%") != -1 {
-			extensions := w.config.Extensions
-			for _, ext := range extensions {
-				contnt := strings.Replace(reader.Text(), "%EXT%", ext, -1)
-				data = append(data, []byte(contnt))
+		if w.config.DirSearchCompat && len(w.config.Extensions) > 0 {
+			if strings.Index(reader.Text(), "%EXT%") != -1 {
+				for _, ext := range w.config.Extensions {
+					contnt := strings.Replace(reader.Text(), "%EXT%", ext, -1)
+					data = append(data, []byte(contnt))
+				}
+			}
+		} else if len(w.config.Extensions) > 0 {
+			for _, ext := range w.config.Extensions {
+				data = append(data, []byte(reader.Text()+ext))
 			}
 		} else {
 			data = append(data, []byte(reader.Text()))

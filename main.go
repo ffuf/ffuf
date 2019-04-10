@@ -50,7 +50,8 @@ func main() {
 	defer cancel()
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
-	flag.StringVar(&opts.extensions, "e", "", "extensions to bruteforce separated by a comma. `\"wordlist must contain %EXT%\"`")
+	flag.StringVar(&opts.extensions, "e", "", "List of extensions to apply. Each extension provided will extend the wordlist entry once.")
+	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist path")
