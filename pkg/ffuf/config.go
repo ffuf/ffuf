@@ -19,6 +19,7 @@ type Config struct {
 	StaticHeaders   map[string]string
 	FuzzHeaders     map[string]string
 	Extensions      []string
+	DirSearchCompat bool
 	Method          string
 	Url             string
 	TLSVerify       bool
@@ -59,5 +60,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}
 	conf.Extensions = make([]string, 0)
+	conf.DirSearchCompat = false
 	return conf
 }
