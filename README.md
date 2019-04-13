@@ -91,7 +91,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Filter by amount of words in response
   -k	TLS identity verification
   -mc string
-    	Match HTTP status codes from respose (default "200,204,301,302,307,401,403")
+    	Match HTTP status codes from respose, use "all" to match every response code. (default "200,204,301,302,307,401,403")
   -mr string
     	Match regexp
   -ms string
@@ -142,6 +142,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - Error counter in status bar
       - New CLI flags: -se (stop on spurious errors) and -sa (stop on all errors, implies -se and -sf)
       - New CLI flags: -e to provide a list of extensions to add to wordlist entries, and -D to provide DirSearch wordlist format compatibility.
+      - Wildcard option for response status code matcher.
 - v0.8
    - New
       - New CLI flag to write output to a file in JSON format
