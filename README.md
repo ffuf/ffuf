@@ -134,6 +134,11 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
 ## Changelog
 
+- master
+   - New
+
+   - Changed
+
 - v0.9
    - New
       - New output file formats: CSV and eCSV (CSV with base64 encoded input field to avoid CSV breakage with payloads containing a comma)
