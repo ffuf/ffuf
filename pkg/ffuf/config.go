@@ -33,6 +33,7 @@ type Config struct {
 	StopOnErrors    bool
 	StopOnAll       bool
 	FollowRedirects bool
+	AutoCalibration bool
 	Delay           optRange
 	Filters         []FilterProvider
 	Matchers        []FilterProvider
