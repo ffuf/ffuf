@@ -76,6 +76,7 @@ func main() {
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
 	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
+	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.Parse()
@@ -100,8 +101,42 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	if conf.AutoCalibration {
+		// Handle the calibration
+		responses, err := job.CalibrateResponses()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
+			os.Exit(1)
+		}
+		if len(responses) > 0 {
+			calibrateFilters(responses, &conf)
+		}
+	}
+
 	// Job handles waiting for goroutines to complete itself
 	job.Start()
+}
+
+func calibrateFilters(responses []ffuf.Response, conf *ffuf.Config) {
+	sizeCalib := make([]string, 0)
+	wordCalib := make([]string, 0)
+	for _, r := range responses {
+		if r.ContentLength > 1 {
+			// Only add if we have an actual size of responses
+			sizeCalib = append(sizeCalib, strconv.FormatInt(r.ContentLength, 10))
+		}
+		if r.ContentWords > 1 {
+			// Only add if we have an actual word length of response
+			wordCalib = append(wordCalib, strconv.FormatInt(r.ContentWords, 10))
+		}
+	}
+	if len(sizeCalib) > 0 {
+		addFilter(conf, "size", strings.Join(sizeCalib, ","))
+	}
+	if len(wordCalib) > 0 {
+		addFilter(conf, "word", strings.Join(wordCalib, ","))
+	}
 }
 
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
