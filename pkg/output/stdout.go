@@ -103,32 +103,10 @@ func (s *Stdoutput) Finalize() error {
 	return nil
 }
 
-func (s *Stdoutput) Result(resp ffuf.Response) bool {
-	matched := false
-	for _, m := range s.config.Matchers {
-		match, err := m.Filter(&resp)
-		if err != nil {
-			continue
-		}
-		if match {
-			matched = true
-		}
-	}
-	// The response was not matched, return before running filters
-	if !matched {
-		return false
-	}
-	for _, f := range s.config.Filters {
-		fv, err := f.Filter(&resp)
-		if err != nil {
-			continue
-		}
-		if fv {
-			return false
-		}
-	}
-	// Response survived the filtering, output the result
+func (s *Stdoutput) Result(resp ffuf.Response) {
+	// Output the result
 	s.printResult(resp)
+	// Check if we need the data later
 	if s.config.OutputFile != "" {
 		// No need to store results if we're not going to use them later
 		sResult := Result{
@@ -139,7 +117,6 @@ func (s *Stdoutput) Result(resp ffuf.Response) bool {
 		}
 		s.Results = append(s.Results, sResult)
 	}
-	return true
 }
 
 func (s *Stdoutput) printResult(resp ffuf.Response) {
