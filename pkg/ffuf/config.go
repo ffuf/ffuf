@@ -34,6 +34,7 @@ type Config struct {
 	StopOnAll       bool
 	FollowRedirects bool
 	AutoCalibration bool
+	Timeout         int
 	Delay           optRange
 	Filters         []FilterProvider
 	Matchers        []FilterProvider
@@ -61,6 +62,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}
 	conf.Extensions = make([]string, 0)
+	conf.Timeout = 10
 	conf.DirSearchCompat = false
 	return conf
 }
