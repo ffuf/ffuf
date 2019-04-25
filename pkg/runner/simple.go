@@ -25,7 +25,6 @@ type SimpleRunner struct {
 func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 	var simplerunner SimpleRunner
 	simplerunner.config = conf
-	fmt.Println("Timeout:", conf.Timeout)
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
