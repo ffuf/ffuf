@@ -137,6 +137,62 @@ func (j *Job) updateProgress() {
 	j.Output.Progress(progString)
 }
 
+//Calibrate runs a self-calibration task for filtering options, requesting random resources and acting accordingly
+func (j *Job) CalibrateResponses() ([]Response, error) {
+	cInputs := make([]string, 0)
+	cInputs = append(cInputs, "admin"+randomString(16)+"/")
+	cInputs = append(cInputs, ".htaccess"+randomString(16))
+	cInputs = append(cInputs, randomString(16)+"/")
+	cInputs = append(cInputs, randomString(16))
+
+	results := make([]Response, 0)
+	for _, input := range cInputs {
+		req, err := j.Runner.Prepare([]byte(input))
+		if err != nil {
+			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
+			j.incError()
+			return results, err
+		}
+		resp, err := j.Runner.Execute(&req)
+		if err != nil {
+			return results, err
+		}
+
+		// Only calibrate on responses that would be matched otherwise
+		if j.isMatch(resp) {
+			results = append(results, resp)
+		}
+	}
+	return results, nil
+}
+
+func (j *Job) isMatch(resp Response) bool {
+	matched := false
+	for _, m := range j.Config.Matchers {
+		match, err := m.Filter(&resp)
+		if err != nil {
+			continue
+		}
+		if match {
+			matched = true
+		}
+	}
+	// The response was not matched, return before running filters
+	if !matched {
+		return false
+	}
+	for _, f := range j.Config.Filters {
+		fv, err := f.Filter(&resp)
+		if err != nil {
+			continue
+		}
+		if fv {
+			return false
+		}
+	}
+	return true
+}
+
 func (j *Job) runTask(input []byte, retried bool) {
 	req, err := j.Runner.Prepare(input)
 	if err != nil {
@@ -162,7 +218,8 @@ func (j *Job) runTask(input []byte, retried bool) {
 			j.inc403()
 		}
 	}
-	if j.Output.Result(resp) {
+	if j.isMatch(resp) {
+		j.Output.Result(resp)
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 	}

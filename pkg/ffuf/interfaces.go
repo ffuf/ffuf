@@ -26,5 +26,5 @@ type OutputProvider interface {
 	Progress(status string)
 	Error(errstring string)
 	Warning(warnstring string)
-	Result(resp Response) bool
+	Result(resp Response)
 }
