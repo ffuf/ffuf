@@ -23,7 +23,7 @@ type InputProvider interface {
 type OutputProvider interface {
 	Banner() error
 	Finalize() error
-	Progress(status string)
+	Progress(status Progress)
 	Error(errstring string)
 	Warning(warnstring string)
 	Result(resp Response)
