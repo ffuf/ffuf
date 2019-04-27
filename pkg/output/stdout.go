@@ -3,6 +3,7 @@ package output
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -52,13 +53,28 @@ func (s *Stdoutput) Banner() error {
 	return nil
 }
 
-func (s *Stdoutput) Progress(status string) {
+func (s *Stdoutput) Progress(status ffuf.Progress) {
 	if s.config.Quiet {
 		// No progress for quiet mode
 		return
-	} else {
-		fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, status)
 	}
+
+	dur := time.Now().Sub(status.StartedAt)
+	runningSecs := int(dur / time.Second)
+	var reqRate int
+	if runningSecs > 0 {
+		reqRate = int(status.ReqCount / runningSecs)
+	} else {
+		reqRate = 0
+	}
+
+	hours := dur / time.Hour
+	dur -= hours * time.Hour
+	mins := dur / time.Minute
+	dur -= mins * time.Minute
+	secs := dur / time.Second
+
+	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Error(errstring string) {
