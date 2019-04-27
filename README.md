@@ -76,6 +76,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -V	Show version information.
   -X string
     	HTTP method to use (default "GET")
+  -ac
+    	Automatically calibrate filtering options
   -c	Colorize output.
   -d string
     	POST data.
@@ -111,9 +113,11 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -se
     	Stop on spurious errors
   -sf
-    	Stop when > 90% of responses return 403 Forbidden
+    	Stop when > 95% of responses return 403 Forbidden
   -t int
     	Number of concurrent threads. (default 40)
+  -timeout int
+    	HTTP request timeout in seconds. (default 10)
   -u string
     	Target URL
   -w string
