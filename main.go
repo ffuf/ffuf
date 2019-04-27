@@ -50,7 +50,7 @@ func main() {
 	defer cancel()
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
-	flag.StringVar(&opts.extensions, "e", "", "List of extensions to apply. Each extension provided will extend the wordlist entry once.")
+	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once.")
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
@@ -72,7 +72,7 @@ func main() {
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, csv, ecsv")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
-	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 90% of responses return 403 Forbidden")
+	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
 	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
