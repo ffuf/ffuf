@@ -78,6 +78,7 @@ func main() {
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
+	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.Parse()
 	if opts.showVersion {
