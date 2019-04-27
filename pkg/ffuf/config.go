@@ -16,32 +16,33 @@ type optRange struct {
 }
 
 type Config struct {
-	StaticHeaders   map[string]string
-	FuzzHeaders     map[string]string
-	Extensions      []string
-	DirSearchCompat bool
-	Method          string
-	Url             string
-	TLSVerify       bool
-	Data            string
-	Quiet           bool
-	Colors          bool
-	Wordlist        string
-	OutputFile      string
-	OutputFormat    string
-	StopOn403       bool
-	StopOnErrors    bool
-	StopOnAll       bool
-	FollowRedirects bool
-	AutoCalibration bool
-	Timeout         int
-	Delay           optRange
-	Filters         []FilterProvider
-	Matchers        []FilterProvider
-	Threads         int
-	Context         context.Context
-	ProxyURL        func(*http.Request) (*url.URL, error)
-	CommandLine     string
+	StaticHeaders     map[string]string
+	FuzzHeaders       map[string]string
+	Extensions        []string
+	DirSearchCompat   bool
+	Method            string
+	Url               string
+	TLSVerify         bool
+	Data              string
+	Quiet             bool
+	Colors            bool
+	Wordlist          string
+	OutputFile        string
+	OutputFormat      string
+	StopOn403         bool
+	StopOnErrors      bool
+	StopOnAll         bool
+	FollowRedirects   bool
+	AutoCalibration   bool
+	Timeout           int
+	ProgressFrequency int
+	Delay             optRange
+	Filters           []FilterProvider
+	Matchers          []FilterProvider
+	Threads           int
+	Context           context.Context
+	ProxyURL          func(*http.Request) (*url.URL, error)
+	CommandLine       string
 }
 
 func NewConfig(ctx context.Context) Config {
@@ -63,6 +64,8 @@ func NewConfig(ctx context.Context) Config {
 	conf.Delay = optRange{0, 0, false, false}
 	conf.Extensions = make([]string, 0)
 	conf.Timeout = 10
+	// Progress update frequency, in milliseconds
+	conf.ProgressFrequency = 100
 	conf.DirSearchCompat = false
 	return conf
 }

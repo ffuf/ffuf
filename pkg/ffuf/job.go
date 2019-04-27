@@ -115,26 +115,18 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 		if j.Counter == totalProgress {
 			return
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * time.Duration(j.Config.ProgressFrequency))
 	}
 }
 
 func (j *Job) updateProgress() {
-	runningSecs := int((time.Now().Sub(j.startTime)) / time.Second)
-	var reqRate int
-	if runningSecs > 0 {
-		reqRate = int(j.Counter / runningSecs)
-	} else {
-		reqRate = 0
+	prog := Progress{
+		StartedAt:  j.startTime,
+		ReqCount:   j.Counter,
+		ReqTotal:   j.Input.Total(),
+		ErrorCount: j.ErrorCounter,
 	}
-	dur := time.Now().Sub(j.startTime)
-	hours := dur / time.Hour
-	dur -= hours * time.Hour
-	mins := dur / time.Minute
-	dur -= mins * time.Minute
-	secs := dur / time.Second
-	progString := fmt.Sprintf(":: Progress: [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", j.Counter, j.Total, int(reqRate), hours, mins, secs, j.ErrorCounter)
-	j.Output.Progress(progString)
+	j.Output.Progress(prog)
 }
 
 //Calibrate runs a self-calibration task for filtering options, requesting random resources and acting accordingly
