@@ -90,54 +90,25 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if err := prepareFilters(&opts, &conf); err != nil {
-		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		flag.Usage()
-		os.Exit(1)
-	}
-
 	job, err := prepareJob(&conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		flag.Usage()
 		os.Exit(1)
 	}
+	if err := prepareFilters(&opts, &conf); err != nil {
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
+		flag.Usage()
+		os.Exit(1)
+	}
 
-	if conf.AutoCalibration {
-		// Handle the calibration
-		responses, err := job.CalibrateResponses()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
-			os.Exit(1)
-		}
-		if len(responses) > 0 {
-			calibrateFilters(responses, &conf)
-		}
+	if err := filter.CalibrateIfNeeded(job); err != nil {
+		fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
+		os.Exit(1)
 	}
 
 	// Job handles waiting for goroutines to complete itself
 	job.Start()
-}
-
-func calibrateFilters(responses []ffuf.Response, conf *ffuf.Config) {
-	sizeCalib := make([]string, 0)
-	wordCalib := make([]string, 0)
-	for _, r := range responses {
-		if r.ContentLength > 1 {
-			// Only add if we have an actual size of responses
-			sizeCalib = append(sizeCalib, strconv.FormatInt(r.ContentLength, 10))
-		}
-		if r.ContentWords > 1 {
-			// Only add if we have an actual word length of response
-			wordCalib = append(wordCalib, strconv.FormatInt(r.ContentWords, 10))
-		}
-	}
-	if len(sizeCalib) > 0 {
-		addFilter(conf, "size", strings.Join(sizeCalib, ","))
-	}
-	if len(wordCalib) > 0 {
-		addFilter(conf, "word", strings.Join(wordCalib, ","))
-	}
 }
 
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
@@ -158,6 +129,51 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 		Output: outprovider,
 		Input:  inputprovider,
 	}, errs.ErrorOrNil()
+}
+
+func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
+	errs := ffuf.NewMultierror()
+	if parseOpts.filterStatus != "" {
+		if err := filter.AddFilter(conf, "status", parseOpts.filterStatus); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.filterSize != "" {
+		if err := filter.AddFilter(conf, "size", parseOpts.filterSize); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.filterRegexp != "" {
+		if err := filter.AddFilter(conf, "regexp", parseOpts.filterRegexp); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.filterWords != "" {
+		if err := filter.AddFilter(conf, "word", parseOpts.filterWords); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.matcherStatus != "" {
+		if err := filter.AddMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.matcherSize != "" {
+		if err := filter.AddMatcher(conf, "size", parseOpts.matcherSize); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.matcherRegexp != "" {
+		if err := filter.AddMatcher(conf, "regexp", parseOpts.matcherRegexp); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.matcherWords != "" {
+		if err := filter.AddMatcher(conf, "word", parseOpts.matcherWords); err != nil {
+			errs.Add(err)
+		}
+	}
+	return errs.ErrorOrNil()
 }
 
 func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
@@ -262,65 +278,4 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	return errs.ErrorOrNil()
-}
-
-func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
-	errs := ffuf.NewMultierror()
-	if parseOpts.filterStatus != "" {
-		if err := addFilter(conf, "status", parseOpts.filterStatus); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.filterSize != "" {
-		if err := addFilter(conf, "size", parseOpts.filterSize); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.filterRegexp != "" {
-		if err := addFilter(conf, "regexp", parseOpts.filterRegexp); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.filterWords != "" {
-		if err := addFilter(conf, "word", parseOpts.filterWords); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.matcherStatus != "" {
-		if err := addMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.matcherSize != "" {
-		if err := addMatcher(conf, "size", parseOpts.matcherSize); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.matcherRegexp != "" {
-		if err := addMatcher(conf, "regexp", parseOpts.matcherRegexp); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.matcherWords != "" {
-		if err := addMatcher(conf, "word", parseOpts.matcherWords); err != nil {
-			errs.Add(err)
-		}
-	}
-	return errs.ErrorOrNil()
-}
-
-func addFilter(conf *ffuf.Config, name string, option string) error {
-	newf, err := filter.NewFilterByName(name, option)
-	if err == nil {
-		conf.Filters = append(conf.Filters, newf)
-	}
-	return err
-}
-
-func addMatcher(conf *ffuf.Config, name string, option string) error {
-	newf, err := filter.NewFilterByName(name, option)
-	if err == nil {
-		conf.Matchers = append(conf.Matchers, newf)
-	}
-	return err
 }
