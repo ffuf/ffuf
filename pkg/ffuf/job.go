@@ -129,35 +129,6 @@ func (j *Job) updateProgress() {
 	j.Output.Progress(prog)
 }
 
-//Calibrate runs a self-calibration task for filtering options, requesting random resources and acting accordingly
-func (j *Job) CalibrateResponses() ([]Response, error) {
-	cInputs := make([]string, 0)
-	cInputs = append(cInputs, "admin"+randomString(16)+"/")
-	cInputs = append(cInputs, ".htaccess"+randomString(16))
-	cInputs = append(cInputs, randomString(16)+"/")
-	cInputs = append(cInputs, randomString(16))
-
-	results := make([]Response, 0)
-	for _, input := range cInputs {
-		req, err := j.Runner.Prepare([]byte(input))
-		if err != nil {
-			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
-			j.incError()
-			return results, err
-		}
-		resp, err := j.Runner.Execute(&req)
-		if err != nil {
-			return results, err
-		}
-
-		// Only calibrate on responses that would be matched otherwise
-		if j.isMatch(resp) {
-			results = append(results, resp)
-		}
-	}
-	return results, nil
-}
-
 func (j *Job) isMatch(resp Response) bool {
 	matched := false
 	for _, m := range j.Config.Matchers {
@@ -216,6 +187,35 @@ func (j *Job) runTask(input []byte, retried bool) {
 		j.updateProgress()
 	}
 	return
+}
+
+//CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
+func (j *Job) CalibrateResponses() ([]Response, error) {
+	cInputs := make([]string, 0)
+	cInputs = append(cInputs, "admin"+RandomString(16)+"/")
+	cInputs = append(cInputs, ".htaccess"+RandomString(16))
+	cInputs = append(cInputs, RandomString(16)+"/")
+	cInputs = append(cInputs, RandomString(16))
+
+	results := make([]Response, 0)
+	for _, input := range cInputs {
+		req, err := j.Runner.Prepare([]byte(input))
+		if err != nil {
+			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
+			j.incError()
+			return results, err
+		}
+		resp, err := j.Runner.Execute(&req)
+		if err != nil {
+			return results, err
+		}
+
+		// Only calibrate on responses that would be matched otherwise
+		if j.isMatch(resp) {
+			results = append(results, resp)
+		}
+	}
+	return results, nil
 }
 
 func (j *Job) CheckStop() {

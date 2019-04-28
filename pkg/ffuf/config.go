@@ -69,3 +69,31 @@ func NewConfig(ctx context.Context) Config {
 	conf.DirSearchCompat = false
 	return conf
 }
+
+type CliOptions struct {
+	extensions    string
+	delay         string
+	filterStatus  string
+	filterSize    string
+	filterRegexp  string
+	filterWords   string
+	matcherStatus string
+	matcherSize   string
+	matcherRegexp string
+	matcherWords  string
+	proxyURL      string
+	outputFormat  string
+	headers       multiStringFlag
+	showVersion   bool
+}
+
+type multiStringFlag []string
+
+func (m *multiStringFlag) String() string {
+	return ""
+}
+
+func (m *multiStringFlag) Set(value string) error {
+	*m = append(*m, value)
+	return nil
+}
