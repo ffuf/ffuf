@@ -18,7 +18,16 @@ func NewWordlistInput(conf *ffuf.Config) (*WordlistInput, error) {
 	var wl WordlistInput
 	wl.config = conf
 	wl.position = -1
-	valid, err := wl.validFile(conf.Wordlist)
+	var valid bool
+	var err error
+	// stdin?
+	if conf.Wordlist == "-" {
+		// yes
+		valid = true
+	} else {
+		// no
+		valid, err = wl.validFile(conf.Wordlist)
+	}
 	if err != nil {
 		return &wl, err
 	}
@@ -63,9 +72,15 @@ func (w *WordlistInput) validFile(path string) (bool, error) {
 
 //readFile reads the file line by line to a byte slice
 func (w *WordlistInput) readFile(path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
+	var file *os.File
+	var err error
+	if path == "-" {
+		file = os.Stdin
+	} else {
+		file, err = os.Open(path)
+		if err != nil {
+			return err
+		}
 	}
 	defer file.Close()
 

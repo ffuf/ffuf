@@ -121,7 +121,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -u string
     	Target URL
   -w string
-    	Wordlist path
+    	Wordlist file path or - to read from standard input
   -x string
     	HTTP Proxy URL
 ```
@@ -143,8 +143,8 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
 
-
    - Changed
+      - Wordlist can also be read from standard input
 
 - v0.9
    - New
