@@ -144,7 +144,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
 
    - Changed
-      - Wordlist can be read also from standard input
+      - Wordlist can also be read from standard input
 
 - v0.9
    - New
