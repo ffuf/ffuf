@@ -143,8 +143,8 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
 
-
    - Changed
+      - Wordlist can be read also from standard input
 
 - v0.9
    - New
