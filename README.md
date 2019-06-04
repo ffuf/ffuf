@@ -142,9 +142,12 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
    - New
       - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
+      - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
+      - New CLI flag: --compress, dummy flag that does nothing. for compatibility with copy as curl.
 
    - Changed
       - Wordlist can also be read from standard input
+      - Defining -d or --data implies POST method if -X doesn't set it to something else than GET
 
 - v0.9
    - New
