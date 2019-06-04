@@ -50,19 +50,22 @@ func main() {
 	defer cancel()
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
+	var ignored bool
 	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once.")
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
-	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist file path or - to read from standard input")
+	flag.StringVar(&conf.Wordlist, "w", "", "Wordlist path")
 	flag.BoolVar(&conf.TLSVerify, "k", false, "TLS identity verification")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size")
 	flag.StringVar(&opts.filterRegexp, "fr", "", "Filter regexp")
 	flag.StringVar(&opts.filterWords, "fw", "", "Filter by amount of words in response")
-	flag.StringVar(&conf.Data, "d", "", "POST data.")
+	flag.StringVar(&conf.Data, "d", "", "POST data")
+	flag.StringVar(&conf.Data, "data", "", "POST data (alias of -d)")
 	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
+	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401,403", "Match HTTP status codes from respose, use \"all\" to match every response code.")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
@@ -260,6 +263,13 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 		if !found {
 			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.outputFormat))
+		}
+	}
+
+	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything bug GET, NOOP
+	if conf.Method == "GET" {
+		if len(conf.Data) > 0 {
+			conf.Method = "POST"
 		}
 	}
 
