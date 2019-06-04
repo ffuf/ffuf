@@ -121,7 +121,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -u string
     	Target URL
   -w string
-    	Wordlist path
+    	Wordlist path. Use - to read from standard input
   -x string
     	HTTP Proxy URL
 ```
