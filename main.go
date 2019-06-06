@@ -31,6 +31,7 @@ type cliOptions struct {
 	proxyURL      string
 	outputFormat  string
 	headers       multiStringFlag
+	cookies       multiStringFlag
 	showVersion   bool
 }
 
@@ -64,10 +65,15 @@ func main() {
 	flag.StringVar(&opts.filterWords, "fw", "", "Filter by amount of words in response")
 	flag.StringVar(&conf.Data, "d", "", "POST data")
 	flag.StringVar(&conf.Data, "data", "", "POST data (alias of -d)")
+	flag.StringVar(&conf.Data, "data-ascii", "", "POST data (alias of -d)")
+	flag.StringVar(&conf.Data, "data-binary", "", "POST data (alias of -d)")
 	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.StringVar(&conf.InputCommand, "input-cmd", "", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.IntVar(&conf.InputNum, "input-num", 100, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
+	flag.Var(&opts.cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.\nResults unpredictable when combined with -H \"Cookie: ...\"")
+	flag.Var(&opts.cookies, "cookie", "Cookie data (alias of -b)")
 	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401,403", "Match HTTP status codes from respose, use \"all\" to match every response code.")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
@@ -206,6 +212,10 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		conf.Extensions = extensions
 	}
 
+	// Convert cookies to a header
+	if len(parseOpts.cookies) > 0 {
+		parseOpts.headers.Set("Cookie: " + strings.Join(parseOpts.cookies, "; "))
+	}
 	//Prepare headers
 	for _, v := range parseOpts.headers {
 		hs := strings.SplitN(v, ":", 2)
