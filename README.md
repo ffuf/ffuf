@@ -1,16 +1,16 @@
 ```
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
 ```
 
 
 # ffuf - Fuzz Faster U Fool
 
-A fast web fuzzer written in Go. 
+A fast web fuzzer written in Go.
 
 Heavily inspired by the great projects [gobuster](https://github.com/OJ/gobuster) and [wfuzz](https://github.com/xmendez/wfuzz).
 
@@ -101,6 +101,9 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	HTTP method to use (default "GET")
   -ac
     	Automatically calibrate filtering options
+  -b "NAME1=VALUE1; NAME2=VALUE2"
+    	Cookie data "NAME1=VALUE1; NAME2=VALUE2" for copy as curl functionality.
+    	Results unpredictable when combined with -H "Cookie: ..."
   -c	Colorize output.
   -compressed
     	Dummy flag for copy as curl functionality (ignored) (default true)
@@ -172,6 +175,8 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 - master
    - New
    - Changed
+      - New CLI flags: --compressed and -i, dummy flags that do nothing. for compatibility with copy as curl.
+      - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
 
 - v0.10
    - New
