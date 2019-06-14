@@ -69,6 +69,7 @@ ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" https:/
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
+
 ```
   -D	DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.
   -H "Name: Value"
@@ -79,8 +80,12 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -ac
     	Automatically calibrate filtering options
   -c	Colorize output.
+  -compressed
+    	Dummy flag for copy as curl functionality (ignored) (default true)
   -d string
-    	POST data.
+    	POST data
+  -data string
+    	POST data (alias of -d)
   -e string
     	Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once.
   -fc string
@@ -91,6 +96,12 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Filter HTTP response size
   -fw string
     	Filter by amount of words in response
+  -input-cmd string
+    	Command producing the input. --input-num is required when using this input method. Overrides -w.
+  -input-cmd-shell string
+    	Shell to use to execute input command. (default "/bin/sh")
+  -input-num int
+    	Number of inputs to test. Used in conjunction with --input-cmd. (default 100)
   -k	TLS identity verification
   -mc string
     	Match HTTP status codes from respose, use "all" to match every response code. (default "200,204,301,302,307,401,403")
@@ -121,7 +132,7 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -u string
     	Target URL
   -w string
-    	Wordlist file path or - to read from standard input
+    	Wordlist path
   -x string
     	HTTP Proxy URL
 ```
@@ -144,6 +155,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
       - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
       - New CLI flag: --compress, dummy flag that does nothing. for compatibility with copy as curl.
+      - New CLI flags: --input-cmd, --input-cmd-shell and --input-num to handle input generation using external commands. Mutators for example.
 
    - Changed
       - Wordlist can also be read from standard input
