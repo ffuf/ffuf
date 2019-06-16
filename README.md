@@ -154,6 +154,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
       - New CLI flag: --compress, dummy flag that does nothing. for compatibility with copy as curl.
       - New CLI flags: --input-cmd, and --input-num to handle input generation using external commands. Mutators for example. Environment variable FFUF_NUM will be updated on every call of the command.
+      - When --input-cmd is used, display position instead of the payload in results. The output file (of all formats) will include the payload in addition to the position however.
 
    - Changed
       - Wordlist can also be read from standard input
