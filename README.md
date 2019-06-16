@@ -171,6 +171,10 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
 - master
    - New
+   - Changed
+
+- v0.10
+   - New
       - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
       - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
