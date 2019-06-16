@@ -5,6 +5,10 @@ import (
 )
 
 func NewInputProviderByName(name string, conf *ffuf.Config) (ffuf.InputProvider, error) {
-	// We have only one inputprovider at the moment
-	return NewWordlistInput(conf)
+	if name == "command" {
+		return NewCommandInput(conf)
+	} else {
+		// Default to wordlist
+		return NewWordlistInput(conf)
+	}
 }

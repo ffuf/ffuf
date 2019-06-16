@@ -66,9 +66,32 @@ This is a very straightforward operation, again by using the `FUZZ` keyword. Thi
 ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" https://target/login.php -fc 401
 ```
 
+### Using external mutator to produce test cases
+
+For this example, we'll fuzz JSON data that's sent over POST. [Radamsa](https://gitlab.com/akihe/radamsa) is used as the mutator.
+
+When `--input-cmd` is used, ffuf will display matches as their position. This same position value will be available for the callee as an environment variable `$FFUF_NUM`. We'll use this position value as the seed for the mutator. Files example1.txt and example2.txt contain valid JSON payloads. We are matching all the responses, but filtering out response code `400 - Bad request`:
+
+```
+ffuf --input-cmd 'radamsa --seed $FFUF_NUM example1.txt example2.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
+```
+
+It of course isn't very efficient to call the mutator for each payload, so we can also pre-generate the payloads, still using [Radamsa](https://gitlab.com/akihe/radamsa) as an example:
+
+```
+# Generate 1000 example payloads
+radamsa -n 1000 -o %n.txt example1.txt example2.txt
+
+# This results into files 1.txt ... 1000.txt
+# Now we can just read the payload data in a loop from file for ffuf
+
+ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
+```
+
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
+
 ```
   -D	DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.
   -H "Name: Value"
@@ -79,8 +102,12 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -ac
     	Automatically calibrate filtering options
   -c	Colorize output.
+  -compressed
+    	Dummy flag for copy as curl functionality (ignored) (default true)
   -d string
-    	POST data.
+    	POST data
+  -data string
+    	POST data (alias of -d)
   -e string
     	Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once.
   -fc string
@@ -91,6 +118,10 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Filter HTTP response size
   -fw string
     	Filter by amount of words in response
+  -input-cmd string
+    	Command producing the input. --input-num is required when using this input method. Overrides -w.
+  -input-num int
+    	Number of inputs to test. Used in conjunction with --input-cmd. (default 100)
   -k	TLS identity verification
   -mc string
     	Match HTTP status codes from respose, use "all" to match every response code. (default "200,204,301,302,307,401,403")
@@ -144,6 +175,8 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
       - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
       - New CLI flag: --compress, dummy flag that does nothing. for compatibility with copy as curl.
+      - New CLI flags: --input-cmd, and --input-num to handle input generation using external commands. Mutators for example. Environment variable FFUF_NUM will be updated on every call of the command.
+      - When --input-cmd is used, display position instead of the payload in results. The output file (of all formats) will include the payload in addition to the position however.
 
    - Changed
       - Wordlist can also be read from standard input

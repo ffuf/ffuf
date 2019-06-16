@@ -27,6 +27,8 @@ type Config struct {
 	Quiet             bool
 	Colors            bool
 	Wordlist          string
+	InputCommand      string
+	InputNum          int
 	OutputFile        string
 	OutputFormat      string
 	StopOn403         bool
@@ -59,6 +61,8 @@ func NewConfig(ctx context.Context) Config {
 	conf.StopOnErrors = false
 	conf.StopOnAll = false
 	conf.FollowRedirects = false
+	conf.InputCommand = ""
+	conf.InputNum = 0
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)
 	conf.Delay = optRange{0, 0, false, false}

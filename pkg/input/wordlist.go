@@ -37,6 +37,11 @@ func NewWordlistInput(conf *ffuf.Config) (*WordlistInput, error) {
 	return &wl, err
 }
 
+//Position will return the current position in the input list
+func (w *WordlistInput) Position() int {
+	return w.position
+}
+
 //Next will increment the cursor position, and return a boolean telling if there's words left in the list
 func (w *WordlistInput) Next() bool {
 	w.position++

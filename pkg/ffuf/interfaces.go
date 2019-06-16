@@ -15,6 +15,7 @@ type RunnerProvider interface {
 //InputProvider interface handles the input data for RunnerProvider
 type InputProvider interface {
 	Next() bool
+	Position() int
 	Value() []byte
 	Total() int
 }

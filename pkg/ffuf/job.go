@@ -79,12 +79,13 @@ func (j *Job) Start() {
 		}
 		limiter <- true
 		nextInput := j.Input.Value()
+		nextPosition := j.Input.Position()
 		wg.Add(1)
 		j.Counter++
 		go func() {
 			defer func() { <-limiter }()
 			defer wg.Done()
-			j.runTask([]byte(nextInput), false)
+			j.runTask([]byte(nextInput), nextPosition, false)
 			if j.Config.Delay.HasDelay {
 				var sleepDurationMS time.Duration
 				if j.Config.Delay.IsRange {
@@ -156,8 +157,9 @@ func (j *Job) isMatch(resp Response) bool {
 	return true
 }
 
-func (j *Job) runTask(input []byte, retried bool) {
+func (j *Job) runTask(input []byte, position int, retried bool) {
 	req, err := j.Runner.Prepare(input)
+	req.Position = position
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
 		j.incError()
@@ -168,7 +170,7 @@ func (j *Job) runTask(input []byte, retried bool) {
 		if retried {
 			j.incError()
 		} else {
-			j.runTask(input, true)
+			j.runTask(input, position, true)
 		}
 		return
 	}
