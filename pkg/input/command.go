@@ -2,7 +2,9 @@ package input
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -31,7 +33,8 @@ func (c *CommandInput) Next() bool {
 //Value returns the input from command stdoutput
 func (c *CommandInput) Value() []byte {
 	var stdout bytes.Buffer
-	cmd := exec.Command(c.config.InputCommandShell, "-c", c.config.InputCommand)
+	os.Setenv("FFUF_NUM", strconv.Itoa(c.count))
+	cmd := exec.Command(SHELL_CMD, SHELL_ARG, c.config.InputCommand)
 	cmd.Stdout = &stdout
 	err := cmd.Run()
 	if err != nil {

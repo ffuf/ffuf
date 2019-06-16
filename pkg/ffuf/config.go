@@ -28,7 +28,6 @@ type Config struct {
 	Colors            bool
 	Wordlist          string
 	InputCommand      string
-	InputCommandShell string
 	InputNum          int
 	OutputFile        string
 	OutputFormat      string
@@ -63,7 +62,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.StopOnAll = false
 	conf.FollowRedirects = false
 	conf.InputCommand = ""
-	conf.InputCommandShell = ""
 	conf.InputNum = 0
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)

@@ -67,7 +67,6 @@ func main() {
 	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.StringVar(&conf.InputCommand, "input-cmd", "", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
-	flag.StringVar(&conf.InputCommandShell, "input-cmd-shell", "/bin/sh", "Shell to use to execute input command.")
 	flag.IntVar(&conf.InputNum, "input-num", 100, "Number of inputs to test. Used in conjunction with --input-cmd.")
 	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401,403", "Match HTTP status codes from respose, use \"all\" to match every response code.")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
