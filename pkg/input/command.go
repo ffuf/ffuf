@@ -21,6 +21,11 @@ func NewCommandInput(conf *ffuf.Config) (*CommandInput, error) {
 	return &cmd, nil
 }
 
+//Position will return the current position in the input list
+func (c *CommandInput) Position() int {
+	return c.count
+}
+
 //Next will increment the cursor position, and return a boolean telling if there's iterations left
 func (c *CommandInput) Next() bool {
 	c.count++
