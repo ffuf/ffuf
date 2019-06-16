@@ -3,6 +3,7 @@ package output
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
@@ -27,6 +28,7 @@ type Stdoutput struct {
 
 type Result struct {
 	Input         string `json:"input"`
+	Position      int    `json:"position"`
 	StatusCode    int64  `json:"status"`
 	ContentLength int64  `json:"length"`
 	ContentWords  int64  `json:"words"`
@@ -127,6 +129,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		// No need to store results if we're not going to use them later
 		sResult := Result{
 			Input:         string(resp.Request.Input),
+			Position:      resp.Request.Position,
 			StatusCode:    resp.StatusCode,
 			ContentLength: resp.ContentLength,
 			ContentWords:  resp.ContentWords,
@@ -144,11 +147,22 @@ func (s *Stdoutput) printResult(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
-	fmt.Println(string(resp.Request.Input))
+	if len(s.config.InputCommand) > 0 {
+		// If we're using external command for input, display the position instead of input
+		fmt.Println(strconv.Itoa(resp.Request.Position))
+	} else {
+		fmt.Println(string(resp.Request.Input))
+	}
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	res_str := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+	var res_str string
+	if len(s.config.InputCommand) > 0 {
+		// If we're using external command for input, display the position instead of input
+		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, strconv.Itoa(resp.Request.Position), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+	} else {
+		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+	}
 	fmt.Println(res_str)
 }
 
