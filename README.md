@@ -101,9 +101,13 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	HTTP method to use (default "GET")
   -ac
     	Automatically calibrate filtering options
+  -i
+      Dummy flag for copy as curl functionality (ignored)
   -b "NAME1=VALUE1; NAME2=VALUE2"
     	Cookie data "NAME1=VALUE1; NAME2=VALUE2" for copy as curl functionality.
     	Results unpredictable when combined with -H "Cookie: ..."
+  -cookie
+      Cookie data (alias of -b)
   -c	Colorize output.
   -compressed
     	Dummy flag for copy as curl functionality (ignored) (default true)
@@ -175,7 +179,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 - master
    - New
    - Changed
-      - New CLI flags: --compressed and -i, dummy flags that do nothing. for compatibility with copy as curl.
+      - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
       - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
 
 - v0.10
@@ -183,7 +187,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
       - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
       - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
       - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
-      - New CLI flag: --compress, dummy flag that does nothing. for compatibility with copy as curl.
+      - New CLI flag: --compressed, dummy flag that does nothing. for compatibility with copy as curl.
       - New CLI flags: --input-cmd, and --input-num to handle input generation using external commands. Mutators for example. Environment variable FFUF_NUM will be updated on every call of the command.
       - When --input-cmd is used, display position instead of the payload in results. The output file (of all formats) will include the payload in addition to the position however.
 
