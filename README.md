@@ -113,6 +113,10 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Dummy flag for copy as curl functionality (ignored) (default true)
   -d string
     	POST data
+  -data-ascii
+      POST data (alias of -d)
+  -data-binary
+      POST data (alias of -d)
   -data string
     	POST data (alias of -d)
   -e string
