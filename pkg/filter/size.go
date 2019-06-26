@@ -9,24 +9,25 @@ import (
 )
 
 type SizeFilter struct {
-	Value []int64
+	Value []ValueRange
 }
 
 func NewSizeFilter(value string) (ffuf.FilterProvider, error) {
-	var intvals []int64
+	var intranges []ValueRange
 	for _, sv := range strings.Split(value, ",") {
-		intval, err := strconv.ParseInt(sv, 10, 0)
+		vr, err := ValueRangeFromString(sv)
 		if err != nil {
-			return &SizeFilter{}, fmt.Errorf("Size filter or matcher (-fs / -ms): invalid value: %s", value)
+			return &SizeFilter{}, fmt.Errorf("Size filter or matcher (-fs / -ms): invalid value: %s", sv)
 		}
-		intvals = append(intvals, intval)
+
+		intranges = append(intranges, vr)
 	}
-	return &SizeFilter{Value: intvals}, nil
+	return &SizeFilter{Value: intranges}, nil
 }
 
 func (f *SizeFilter) Filter(response *ffuf.Response) (bool, error) {
 	for _, iv := range f.Value {
-		if iv == response.ContentLength {
+		if iv.min <= response.ContentLength && response.ContentLength <= iv.max {
 			return true, nil
 		}
 	}
@@ -36,7 +37,11 @@ func (f *SizeFilter) Filter(response *ffuf.Response) (bool, error) {
 func (f *SizeFilter) Repr() string {
 	var strval []string
 	for _, iv := range f.Value {
-		strval = append(strval, strconv.Itoa(int(iv)))
+		if iv.min == iv.max {
+			strval = append(strval, strconv.Itoa(int(iv.min)))
+		} else {
+			strval = append(strval, strconv.Itoa(int(iv.min))+"-"+strconv.Itoa(int(iv.max)))
+		}
 	}
 	return fmt.Sprintf("Response size: %s", strings.Join(strval, ","))
 }
