@@ -1,4 +1,4 @@
-package filter
+package ffuf
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 type ValueRange struct {
-	min, max int64
+	Min, Max int64
 }
 
 func ValueRangeFromString(instr string) (ValueRange, error) {

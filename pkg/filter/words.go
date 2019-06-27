@@ -9,13 +9,13 @@ import (
 )
 
 type WordFilter struct {
-	Value []ValueRange
+	Value []ffuf.ValueRange
 }
 
 func NewWordFilter(value string) (ffuf.FilterProvider, error) {
-	var intranges []ValueRange
+	var intranges []ffuf.ValueRange
 	for _, sv := range strings.Split(value, ",") {
-		vr, err := ValueRangeFromString(sv)
+		vr, err := ffuf.ValueRangeFromString(sv)
 		if err != nil {
 			return &WordFilter{}, fmt.Errorf("Word filter or matcher (-fw / -mw): invalid value: %s", sv)
 		}
@@ -27,7 +27,7 @@ func NewWordFilter(value string) (ffuf.FilterProvider, error) {
 func (f *WordFilter) Filter(response *ffuf.Response) (bool, error) {
 	wordsSize := len(strings.Split(string(response.Data), " "))
 	for _, iv := range f.Value {
-		if iv.min <= int64(wordsSize) && int64(wordsSize) <= iv.max {
+		if iv.Min <= int64(wordsSize) && int64(wordsSize) <= iv.Max {
 			return true, nil
 		}
 	}
@@ -37,10 +37,10 @@ func (f *WordFilter) Filter(response *ffuf.Response) (bool, error) {
 func (f *WordFilter) Repr() string {
 	var strval []string
 	for _, iv := range f.Value {
-		if iv.min == iv.max {
-			strval = append(strval, strconv.Itoa(int(iv.min)))
+		if iv.Min == iv.Max {
+			strval = append(strval, strconv.Itoa(int(iv.Min)))
 		} else {
-			strval = append(strval, strconv.Itoa(int(iv.min))+"-"+strconv.Itoa(int(iv.max)))
+			strval = append(strval, strconv.Itoa(int(iv.Min))+"-"+strconv.Itoa(int(iv.Max)))
 		}
 	}
 	return fmt.Sprintf("Response words: %s", strings.Join(strval, ","))
