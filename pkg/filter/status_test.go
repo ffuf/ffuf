@@ -8,10 +8,10 @@ import (
 )
 
 func TestNewStatusFilter(t *testing.T) {
-	f, _ := NewStatusFilter("200,301,500")
+	f, _ := NewStatusFilter("200,301,400-410,500")
 	statusRepr := f.Repr()
-	if strings.Index(statusRepr, "200,301,500") == -1 {
-		t.Errorf("Status filter was expected to have 3 values")
+	if strings.Index(statusRepr, "200,301,400-410,500") == -1 {
+		t.Errorf("Status filter was expected to have 4 values")
 	}
 }
 
@@ -23,7 +23,7 @@ func TestNewStatusFilterError(t *testing.T) {
 }
 
 func TestStatusFiltering(t *testing.T) {
-	f, _ := NewStatusFilter("200,301,500")
+	f, _ := NewStatusFilter("200,301,400-498,500")
 	for i, test := range []struct {
 		input  int64
 		output bool
@@ -32,9 +32,12 @@ func TestStatusFiltering(t *testing.T) {
 		{301, true},
 		{500, true},
 		{4, false},
-		{444, false},
+		{399, false},
+		{400, true},
+		{444, true},
+		{498, true},
+		{499, false},
 		{302, false},
-		{401, false},
 	} {
 		resp := ffuf.Response{StatusCode: test.input}
 		filterReturn, _ := f.Filter(&resp)

@@ -8,10 +8,10 @@ import (
 )
 
 func TestNewSizeFilter(t *testing.T) {
-	f, _ := NewSizeFilter("1,2,3,444")
+	f, _ := NewSizeFilter("1,2,3,444,5-90")
 	sizeRepr := f.Repr()
-	if strings.Index(sizeRepr, "1,2,3,444") == -1 {
-		t.Errorf("Size filter was expected to have 4 values")
+	if strings.Index(sizeRepr, "1,2,3,444,5-90") == -1 {
+		t.Errorf("Size filter was expected to have 5 values")
 	}
 }
 
@@ -23,7 +23,7 @@ func TestNewSizeFilterError(t *testing.T) {
 }
 
 func TestFiltering(t *testing.T) {
-	f, _ := NewSizeFilter("1,2,3,444")
+	f, _ := NewSizeFilter("1,2,3,5-90,444")
 	for i, test := range []struct {
 		input  int64
 		output bool
@@ -32,6 +32,10 @@ func TestFiltering(t *testing.T) {
 		{2, true},
 		{3, true},
 		{4, false},
+		{5, true},
+		{70, true},
+		{90, true},
+		{91, false},
 		{444, true},
 	} {
 		resp := ffuf.Response{ContentLength: test.input}
