@@ -8,33 +8,35 @@ import (
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
+const AllStatuses = 0
+
 type StatusFilter struct {
-	Value []int64
+	Value []ffuf.ValueRange
 }
 
 func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
-	var intvals []int64
+	var intranges []ffuf.ValueRange
 	for _, sv := range strings.Split(value, ",") {
 		if sv == "all" {
-			intvals = append(intvals, 0)
+			intranges = append(intranges, ffuf.ValueRange{AllStatuses, AllStatuses})
 		} else {
-			intval, err := strconv.ParseInt(sv, 10, 0)
+			vr, err := ffuf.ValueRangeFromString(sv)
 			if err != nil {
-				return &StatusFilter{}, fmt.Errorf("Status filter or matcher (-fc / -mc): invalid value %s", value)
+				return &StatusFilter{}, fmt.Errorf("Status filter or matcher (-fc / -mc): invalid value %s", sv)
 			}
-			intvals = append(intvals, intval)
+			intranges = append(intranges, vr)
 		}
 	}
-	return &StatusFilter{Value: intvals}, nil
+	return &StatusFilter{Value: intranges}, nil
 }
 
 func (f *StatusFilter) Filter(response *ffuf.Response) (bool, error) {
 	for _, iv := range f.Value {
-		if iv == 0 {
+		if iv.Min == AllStatuses && iv.Max == AllStatuses {
 			// Handle the "all" case
 			return true, nil
 		}
-		if iv == response.StatusCode {
+		if iv.Min <= response.StatusCode && response.StatusCode <= iv.Max {
 			return true, nil
 		}
 	}
@@ -44,10 +46,12 @@ func (f *StatusFilter) Filter(response *ffuf.Response) (bool, error) {
 func (f *StatusFilter) Repr() string {
 	var strval []string
 	for _, iv := range f.Value {
-		if iv == 0 {
+		if iv.Min == AllStatuses && iv.Max == AllStatuses {
 			strval = append(strval, "all")
+		} else if iv.Min == iv.Max {
+			strval = append(strval, strconv.Itoa(int(iv.Min)))
 		} else {
-			strval = append(strval, strconv.Itoa(int(iv)))
+			strval = append(strval, strconv.Itoa(int(iv.Min))+"-"+strconv.Itoa(int(iv.Max)))
 		}
 	}
 	return fmt.Sprintf("Response status: %s", strings.Join(strval, ","))

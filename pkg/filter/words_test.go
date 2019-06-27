@@ -8,10 +8,10 @@ import (
 )
 
 func TestNewWordFilter(t *testing.T) {
-	f, _ := NewWordFilter("200,301,500")
+	f, _ := NewWordFilter("200,301,400-410,500")
 	wordsRepr := f.Repr()
-	if strings.Index(wordsRepr, "200,301,500") == -1 {
-		t.Errorf("Word filter was expected to have 3 values")
+	if strings.Index(wordsRepr, "200,301,400-410,500") == -1 {
+		t.Errorf("Word filter was expected to have 4 values")
 	}
 }
 
@@ -23,7 +23,7 @@ func TestNewWordFilterError(t *testing.T) {
 }
 
 func TestWordFiltering(t *testing.T) {
-	f, _ := NewWordFilter("200,301,500")
+	f, _ := NewWordFilter("200,301,402-450,500")
 	for i, test := range []struct {
 		input  int64
 		output bool
@@ -32,9 +32,12 @@ func TestWordFiltering(t *testing.T) {
 		{301, true},
 		{500, true},
 		{4, false},
-		{444, false},
+		{444, true},
 		{302, false},
 		{401, false},
+		{402, true},
+		{450, true},
+		{451, false},
 	} {
 		var data []string
 		for i := int64(0); i < test.input; i++ {

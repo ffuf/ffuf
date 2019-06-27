@@ -122,13 +122,13 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
   -e string
     	Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once.
   -fc string
-    	Filter HTTP status codes from response
+    	Filter HTTP status codes from response. Comma separated list of codes and ranges
   -fr string
     	Filter regexp
   -fs string
-    	Filter HTTP response size
+    	Filter HTTP response size. Comma separated list of sizes and ranges
   -fw string
-    	Filter by amount of words in response
+    	Filter by amount of words in response. Comma separated list of word counts and ranges
   -input-cmd string
     	Command producing the input. --input-num is required when using this input method. Overrides -w.
   -input-num int
@@ -185,6 +185,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
    - Changed
       - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
       - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
+      - Filtering and matching by status code, response size or word count now allow using ranges in addition to single values
 
 - v0.10
    - New
