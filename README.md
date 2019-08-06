@@ -100,6 +100,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	HTTP method to use (default "GET")
   -ac
     	Automatically calibrate filtering options
+  -acc
+      Custom auto-calibration string. Can be used multiple times. Implies -ac
   -i
       Dummy flag for copy as curl functionality (ignored)
   -b "NAME1=VALUE1; NAME2=VALUE2"

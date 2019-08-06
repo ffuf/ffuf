@@ -194,10 +194,19 @@ func (j *Job) runTask(input []byte, position int, retried bool) {
 //CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
 func (j *Job) CalibrateResponses() ([]Response, error) {
 	cInputs := make([]string, 0)
-	cInputs = append(cInputs, "admin"+RandomString(16)+"/")
-	cInputs = append(cInputs, ".htaccess"+RandomString(16))
-	cInputs = append(cInputs, RandomString(16)+"/")
-	cInputs = append(cInputs, RandomString(16))
+	if len(j.Config.AutoCalibrationStrings) < 1 {
+		cInputs = append(cInputs, "admin"+RandomString(16)+"/")
+		cInputs = append(cInputs, ".htaccess"+RandomString(16))
+		cInputs = append(cInputs, RandomString(16)+"/")
+		cInputs = append(cInputs, RandomString(16))
+	} else {
+		for _, str := range j.Config.AutoCalibrationStrings {
+			cInputs = append(cInputs, "admin"+str+"/")
+			cInputs = append(cInputs, ".htaccess"+str)
+			cInputs = append(cInputs, str+"/")
+			cInputs = append(cInputs, str)
+		}
+	}
 
 	results := make([]Response, 0)
 	for _, input := range cInputs {
