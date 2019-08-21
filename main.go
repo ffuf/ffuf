@@ -82,6 +82,7 @@ func main() {
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, csv, ecsv")
+	flag.BoolVar(&conf.ShowRedirectLocation, "l", false, "Show redirects response locations")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
