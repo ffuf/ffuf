@@ -15,7 +15,7 @@ type htmlFileOutput struct {
 }
 
 const (
-	myTemplate = `
+	htmlTemplate = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -122,7 +122,7 @@ func writeHTML(config *ffuf.Config, res []Result) error {
 
 	templateName := "output.html"
 	t := template.New(templateName).Delims("{{", "}}")
-	t.Parse(myTemplate)
+	t.Parse(htmlTemplate)
 	t.Execute(f, outHTML)
 	return nil
 }
