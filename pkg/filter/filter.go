@@ -62,11 +62,11 @@ func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) {
 	sizeCalib := make([]string, 0)
 	wordCalib := make([]string, 0)
 	for _, r := range responses {
-		if r.ContentLength > 1 {
+		if r.ContentLength > 0 {
 			// Only add if we have an actual size of responses
 			sizeCalib = append(sizeCalib, strconv.FormatInt(r.ContentLength, 10))
 		}
-		if r.ContentWords > 1 {
+		if r.ContentWords > 0 {
 			// Only add if we have an actual word length of response
 			wordCalib = append(wordCalib, strconv.FormatInt(r.ContentWords, 10))
 		}
