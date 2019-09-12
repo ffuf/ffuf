@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
-	"github.com/ffuf/ffuf/pkg/filter"
-	"github.com/ffuf/ffuf/pkg/input"
-	"github.com/ffuf/ffuf/pkg/output"
-	"github.com/ffuf/ffuf/pkg/runner"
+	"github.com/fang0654/ffuf/pkg/ffuf"
+	"github.com/fang0654/ffuf/pkg/filter"
+	"github.com/fang0654/ffuf/pkg/input"
+	"github.com/fang0654/ffuf/pkg/output"
+	"github.com/fang0654/ffuf/pkg/runner"
 )
 
 type cliOptions struct {

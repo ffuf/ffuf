@@ -1,3 +1,3 @@
-module github.com/ffuf/ffuf
+module github.com/fang0654/ffuf
 
 go 1.11
