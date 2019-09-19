@@ -200,12 +200,7 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 		cInputs = append(cInputs, RandomString(16)+"/")
 		cInputs = append(cInputs, RandomString(16))
 	} else {
-		for _, str := range j.Config.AutoCalibrationStrings {
-			cInputs = append(cInputs, "admin"+str+"/")
-			cInputs = append(cInputs, ".htaccess"+str)
-			cInputs = append(cInputs, str+"/")
-			cInputs = append(cInputs, str)
-		}
+		cInputs = append(cInputs, j.Config.AutoCalibrationStrings...)
 	}
 
 	results := make([]Response, 0)
