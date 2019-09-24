@@ -155,16 +155,6 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 	}
 }
 
-func (s *Stdoutput) getRedirectLocation(resp *ffuf.Response) string {
-
-	redirectLocation := ""
-	if resp.StatusCode >= 300 && resp.StatusCode <= 399 && s.config.ShowRedirectLocation == true {
-		redirectLocation = resp.Headers["Location"][0]
-	}
-
-	return redirectLocation
-}
-
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var responseString string
 	if len(s.config.InputCommand) > 0 {
@@ -178,9 +168,11 @@ func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 
 // addRedirectLocation returns a formatted string containing the Redirect location or returns an empty string
 func (s *Stdoutput) addRedirectLocation(resp ffuf.Response) string {
-	redirectLocation := s.getRedirectLocation(&resp)
-	if redirectLocation != "" {
-		return fmt.Sprintf(", Redirect: %s", redirectLocation)
+	if s.config.ShowRedirectLocation == true {
+		redirectLocation := resp.GetRedirectLocation()
+		if redirectLocation != "" {
+			return fmt.Sprintf(", Redirect: %s", redirectLocation)
+		}
 	}
 	return ""
 }
