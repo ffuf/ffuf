@@ -58,9 +58,9 @@ const (
    <table>
         <thead>
           <tr>
+              <th>Status</th>
               <th>Input</th>
               <th>Position</th>
-              <th>Status</th>
               <th>Length</th>
               <th>Words</th>
           </tr>
@@ -68,10 +68,10 @@ const (
 
         <tbody>
             {{range .Results}}
-                <tr>
+                <tr style="background-color: {{.HTMLColor}};">
+                  <td><font color="black">{{ .StatusCode }}</font></td>
                   <td>{{ .Input }}</td>
                   <td>{{ .Position }}</td>
-                  <td>{{ .StatusCode }}</td>
                   <td>{{ .ContentLength }}</td>
                   <td>{{ .ContentWords }}</td>
                 </tr>
@@ -104,14 +104,48 @@ const (
 	`
 )
 
-func writeHTML(config *ffuf.Config, res []Result) error {
+// colorizeResults returns a new slice with HTMLColor attribute
+func colorizeResults(results []Result) []Result {
+	newResults := make([]Result, 0)
+
+	for _, r := range results {
+		result := r
+		result.HTMLColor = "black"
+
+		s := result.StatusCode
+
+		if s >= 200 && s <= 299 {
+			result.HTMLColor = "#adea9e"
+		}
+
+		if s >= 300 && s <= 399 {
+			result.HTMLColor = "#bbbbe6"
+		}
+
+		if s >= 400 && s <= 499 {
+			result.HTMLColor = "#d2cb7e"
+		}
+
+		if s >= 500 && s <= 599 {
+			result.HTMLColor = "#de8dc1"
+		}
+
+		newResults = append(newResults, result)
+	}
+
+	return newResults
+}
+
+func writeHTML(config *ffuf.Config, results []Result) error {
+
+	results = colorizeResults(results)
 
 	ti := time.Now()
 
 	outHTML := htmlFileOutput{
 		CommandLine: config.CommandLine,
 		Time:        ti.Format(time.RFC3339),
-		Results:     res,
+		Results:     results,
 	}
 
 	f, err := os.Create(config.OutputFile)
