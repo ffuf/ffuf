@@ -32,6 +32,7 @@ type Result struct {
 	StatusCode    int64  `json:"status"`
 	ContentLength int64  `json:"length"`
 	ContentWords  int64  `json:"words"`
+	ContentLines  int64  `json:"lines"`
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -133,6 +134,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			StatusCode:    resp.StatusCode,
 			ContentLength: resp.ContentLength,
 			ContentWords:  resp.ContentWords,
+			ContentLines:  resp.ContentLines,
 		}
 		s.Results = append(s.Results, sResult)
 	}
@@ -159,9 +161,9 @@ func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var res_str string
 	if len(s.config.InputCommand) > 0 {
 		// If we're using external command for input, display the position instead of input
-		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, strconv.Itoa(resp.Request.Position), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, strconv.Itoa(resp.Request.Position), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
 	} else {
-		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
 	}
 	fmt.Println(res_str)
 }

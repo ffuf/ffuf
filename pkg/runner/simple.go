@@ -101,7 +101,9 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	wordsSize := len(strings.Split(string(resp.Data), " "))
+	linesSize := len(strings.Split(string(resp.Data), "\n"))
 	resp.ContentWords = int64(wordsSize)
+	resp.ContentLines = int64(linesSize)
 
 	return resp, nil
 }

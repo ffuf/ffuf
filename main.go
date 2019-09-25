@@ -24,10 +24,12 @@ type cliOptions struct {
 	filterSize    string
 	filterRegexp  string
 	filterWords   string
+	filterLines   string
 	matcherStatus string
 	matcherSize   string
 	matcherRegexp string
 	matcherWords  string
+	matcherLines  string
 	proxyURL      string
 	outputFormat  string
 	headers       multiStringFlag
@@ -63,6 +65,7 @@ func main() {
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size. Comma separated list of sizes and ranges")
 	flag.StringVar(&opts.filterRegexp, "fr", "", "Filter regexp")
 	flag.StringVar(&opts.filterWords, "fw", "", "Filter by amount of words in response. Comma separated list of word counts and ranges")
+	flag.StringVar(&opts.filterLines, "fl", "", "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&conf.Data, "d", "", "POST data")
 	flag.StringVar(&conf.Data, "data", "", "POST data (alias of -d)")
 	flag.StringVar(&conf.Data, "data-ascii", "", "POST data (alias of -d)")
@@ -78,6 +81,7 @@ func main() {
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
+	flag.StringVar(&opts.matcherWords, "ml", "", "Match amount of lines in response")
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
@@ -170,6 +174,11 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errs.Add(err)
 		}
 	}
+	if parseOpts.filterLines != "" {
+		if err := filter.AddFilter(conf, "line", parseOpts.filterLines); err != nil {
+			errs.Add(err)
+		}
+	}
 	if parseOpts.matcherStatus != "" {
 		if err := filter.AddMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
 			errs.Add(err)
@@ -187,6 +196,11 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.matcherWords != "" {
 		if err := filter.AddMatcher(conf, "word", parseOpts.matcherWords); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.matcherLines != "" {
+		if err := filter.AddMatcher(conf, "line", parseOpts.matcherLines); err != nil {
 			errs.Add(err)
 		}
 	}
