@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,21 +20,23 @@ import (
 )
 
 type cliOptions struct {
-	extensions    string
-	delay         string
-	filterStatus  string
-	filterSize    string
-	filterRegexp  string
-	filterWords   string
-	matcherStatus string
-	matcherSize   string
-	matcherRegexp string
-	matcherWords  string
-	proxyURL      string
-	outputFormat  string
-	headers       multiStringFlag
-	cookies       multiStringFlag
-	showVersion   bool
+	extensions     string
+	delay          string
+	filterStatus   string
+	filterSize     string
+	filterRegexp   string
+	filterWords    string
+	matcherStatus  string
+	matcherSize    string
+	matcherRegexp  string
+	matcherWords   string
+	proxyURL       string
+	outputFormat   string
+	headers        multiStringFlag
+	cookies        multiStringFlag
+	showVersion    bool
+	disableLogging bool
+	logFile        string
 }
 
 type multiStringFlag []string
@@ -91,10 +95,23 @@ func main() {
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
+	flag.BoolVar(&opts.disableLogging, "disable-logging", false, "Disable internal logging.")
+	flag.StringVar(&opts.logFile, "l", "", "Write all internal logging to a file.")
+	flag.StringVar(&opts.logFile, "log-file", "", "Alias for -l.")
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
 		os.Exit(0)
+	}
+	if opts.disableLogging {
+		log.SetOutput(ioutil.Discard)
+	} else if len(opts.logFile) != 0 {
+		f, err := os.OpenFile(opts.logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
+		}
+		log.SetOutput(f)
+		defer f.Close()
 	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
