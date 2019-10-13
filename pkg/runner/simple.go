@@ -44,22 +44,26 @@ func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 	return &simplerunner
 }
 
-func (r *SimpleRunner) Prepare(input []byte) (ffuf.Request, error) {
+func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 	req := ffuf.NewRequest(r.config)
-	// should we fuzz the http method
-	if r.config.Method == "FUZZ" {
-		req.Method = string(input)
+
+	req.Headers = r.config.Headers
+	req.Url = r.config.Url
+	req.Method = r.config.Method
+	req.Data = []byte(r.config.Data)
+
+	for keyword, inputitem := range input {
+		req.Method = strings.Replace(req.Method, keyword, string(inputitem), -1)
+		headers := make(map[string]string, 0)
+		for h, v := range req.Headers {
+			headers[strings.Replace(h, keyword, string(inputitem), -1)] = strings.Replace(v, keyword, string(inputitem), -1)
+		}
+		req.Headers = headers
+		req.Url = strings.Replace(req.Url, keyword, string(inputitem), -1)
+		req.Data = []byte(strings.Replace(string(req.Data), keyword, string(inputitem), -1))
 	}
 
-	for h, v := range r.config.StaticHeaders {
-		req.Headers[h] = v
-	}
-	for h, v := range r.config.FuzzHeaders {
-		req.Headers[strings.Replace(h, "FUZZ", string(input), -1)] = strings.Replace(v, "FUZZ", string(input), -1)
-	}
 	req.Input = input
-	req.Url = strings.Replace(r.config.Url, "FUZZ", string(input), -1)
-	req.Data = []byte(strings.Replace(r.config.Data, "FUZZ", string(input), -1))
 	return req, nil
 }
 

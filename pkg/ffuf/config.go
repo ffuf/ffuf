@@ -16,8 +16,7 @@ type optRange struct {
 }
 
 type Config struct {
-	StaticHeaders     map[string]string
-	FuzzHeaders       map[string]string
+	Headers           map[string]string
 	Extensions        []string
 	DirSearchCompat   bool
 	Method            string
@@ -26,8 +25,9 @@ type Config struct {
 	Data              string
 	Quiet             bool
 	Colors            bool
+	InputProviders    []InputProviderConfig
+	CommandKeywords   []string
 	Wordlist          string
-	InputCommand      string
 	InputNum          int
 	OutputFile        string
 	OutputFormat      string
@@ -47,11 +47,16 @@ type Config struct {
 	CommandLine       string
 }
 
+type InputProviderConfig struct {
+	Name    string
+	Keyword string
+	Value   string
+}
+
 func NewConfig(ctx context.Context) Config {
 	var conf Config
 	conf.Context = ctx
-	conf.StaticHeaders = make(map[string]string)
-	conf.FuzzHeaders = make(map[string]string)
+	conf.Headers = make(map[string]string)
 	conf.Method = "GET"
 	conf.Url = ""
 	conf.TLSVerify = false
@@ -61,7 +66,8 @@ func NewConfig(ctx context.Context) Config {
 	conf.StopOnErrors = false
 	conf.StopOnAll = false
 	conf.FollowRedirects = false
-	conf.InputCommand = ""
+	conf.InputProviders = make([]InputProviderConfig, 0)
+	conf.CommandKeywords = make([]string, 0)
 	conf.InputNum = 0
 	conf.ProxyURL = http.ProxyFromEnvironment
 	conf.Filters = make([]FilterProvider, 0)

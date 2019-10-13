@@ -27,11 +27,11 @@ type Stdoutput struct {
 }
 
 type Result struct {
-	Input         string `json:"input"`
-	Position      int    `json:"position"`
-	StatusCode    int64  `json:"status"`
-	ContentLength int64  `json:"length"`
-	ContentWords  int64  `json:"words"`
+	Input         map[string][]byte `json:"input"`
+	Position      int               `json:"position"`
+	StatusCode    int64             `json:"status"`
+	ContentLength int64             `json:"length"`
+	ContentWords  int64             `json:"words"`
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -127,8 +127,12 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	// Check if we need the data later
 	if s.config.OutputFile != "" {
 		// No need to store results if we're not going to use them later
+		inputs := make(map[string][]byte, 0)
+		for k, v := range resp.Request.Input {
+			inputs[k] = v
+		}
 		sResult := Result{
-			Input:         string(resp.Request.Input),
+			Input:         inputs,
 			Position:      resp.Request.Position,
 			StatusCode:    resp.StatusCode,
 			ContentLength: resp.ContentLength,
@@ -146,23 +150,37 @@ func (s *Stdoutput) printResult(resp ffuf.Response) {
 	}
 }
 
-func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
-	if len(s.config.InputCommand) > 0 {
-		// If we're using external command for input, display the position instead of input
-		fmt.Println(strconv.Itoa(resp.Request.Position))
+func (s *Stdoutput) prepareInputs(resp ffuf.Response) string {
+	inputs := ""
+	if len(resp.Request.Input) > 1 {
+		for k, v := range resp.Request.Input {
+			if inSlice(k, s.config.CommandKeywords) {
+				// If we're using external command for input, display the position instead of input
+				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(resp.Request.Position))
+			} else {
+				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, v)
+			}
+		}
 	} else {
-		fmt.Println(string(resp.Request.Input))
+		for k, v := range resp.Request.Input {
+			if inSlice(k, s.config.CommandKeywords) {
+				// If we're using external command for input, display the position instead of input
+				inputs = strconv.Itoa(resp.Request.Position)
+			} else {
+				inputs = string(v)
+			}
+		}
 	}
+	return inputs
+}
+
+func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
+	fmt.Println(s.prepareInputs(resp))
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var res_str string
-	if len(s.config.InputCommand) > 0 {
-		// If we're using external command for input, display the position instead of input
-		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, strconv.Itoa(resp.Request.Position), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
-	} else {
-		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
-	}
+	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, s.prepareInputs(resp), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
 	fmt.Println(res_str)
 }
 
@@ -188,4 +206,13 @@ func (s *Stdoutput) colorizeStatus(status int64) string {
 
 func printOption(name []byte, value []byte) {
 	fmt.Printf(" :: %-12s : %s\n", name, value)
+}
+
+func inSlice(key string, slice []string) bool {
+	for _, v := range slice {
+		if v == key {
+			return true
+		}
+	}
+	return false
 }

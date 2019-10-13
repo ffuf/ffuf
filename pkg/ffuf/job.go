@@ -85,7 +85,7 @@ func (j *Job) Start() {
 		go func() {
 			defer func() { <-limiter }()
 			defer wg.Done()
-			j.runTask([]byte(nextInput), nextPosition, false)
+			j.runTask(nextInput, nextPosition, false)
 			if j.Config.Delay.HasDelay {
 				var sleepDurationMS time.Duration
 				if j.Config.Delay.IsRange {
@@ -157,7 +157,7 @@ func (j *Job) isMatch(resp Response) bool {
 	return true
 }
 
-func (j *Job) runTask(input []byte, position int, retried bool) {
+func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	req, err := j.Runner.Prepare(input)
 	req.Position = position
 	if err != nil {
@@ -201,7 +201,12 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 
 	results := make([]Response, 0)
 	for _, input := range cInputs {
-		req, err := j.Runner.Prepare([]byte(input))
+		inputs := make(map[string][]byte, 0)
+		for _, v := range j.Config.InputProviders {
+			inputs[v.Keyword] = []byte(input)
+		}
+
+		req, err := j.Runner.Prepare(inputs)
 		if err != nil {
 			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
 			j.incError()

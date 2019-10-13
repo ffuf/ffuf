@@ -6,7 +6,7 @@ type Request struct {
 	Url      string
 	Headers  map[string]string
 	Data     []byte
-	Input    []byte
+	Input    map[string][]byte
 	Position int
 }
 

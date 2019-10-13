@@ -26,7 +26,11 @@ func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
 	}
 	for _, r := range res {
 		if encode {
-			r.Input = base64encode(r.Input)
+			inputs := make(map[string][]byte, 0)
+			for k, v := range r.Input {
+				inputs[k] = []byte(base64encode(v))
+			}
+			r.Input = inputs
 		}
 
 		err := w.Write(toCSV(r))
@@ -37,16 +41,18 @@ func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
 	return nil
 }
 
-func base64encode(in string) string {
-	return base64.StdEncoding.EncodeToString([]byte(in))
+func base64encode(in []byte) string {
+	return base64.StdEncoding.EncodeToString(in)
 }
 
 func toCSV(r Result) []string {
-	return []string{
-		r.Input,
-		strconv.Itoa(r.Position),
-		strconv.FormatInt(r.StatusCode, 10),
-		strconv.FormatInt(r.ContentLength, 10),
-		strconv.FormatInt(r.ContentWords, 10),
+	res := make([]string, 0)
+	for k, v := range r.Input {
+		res = append(res, k+":"+string(v))
 	}
+	res = append(res, strconv.Itoa(r.Position))
+	res = append(res, strconv.FormatInt(r.StatusCode, 10))
+	res = append(res, strconv.FormatInt(r.ContentLength, 10))
+	res = append(res, strconv.FormatInt(r.ContentWords, 10))
+	return res
 }
