@@ -171,7 +171,7 @@ func (s *Stdoutput) addRedirectLocation(resp ffuf.Response) string {
 	if s.config.ShowRedirectLocation == true {
 		redirectLocation := resp.GetRedirectLocation()
 		if redirectLocation != "" {
-			return fmt.Sprintf(", Redirect: %s", redirectLocation)
+			return fmt.Sprintf(", ->: %s", redirectLocation)
 		}
 	}
 	return ""
