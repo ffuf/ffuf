@@ -15,6 +15,17 @@ type Response struct {
 	Request       *Request
 }
 
+// GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response
+func (resp *Response) GetRedirectLocation() string {
+
+	redirectLocation := ""
+	if resp.StatusCode >= 300 && resp.StatusCode <= 399 {
+		redirectLocation = resp.Headers["Location"][0]
+	}
+
+	return redirectLocation
+}
+
 func NewResponse(httpresp *http.Response, req *Request) Response {
 	var resp Response
 	resp.Request = req
