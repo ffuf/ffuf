@@ -46,6 +46,11 @@ func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 
 func (r *SimpleRunner) Prepare(input []byte) (ffuf.Request, error) {
 	req := ffuf.NewRequest(r.config)
+	// should we fuzz the http method
+	if r.config.Method == "FUZZ" {
+		req.Method = string(input)
+	}
+
 	for h, v := range r.config.StaticHeaders {
 		req.Headers[h] = v
 	}
