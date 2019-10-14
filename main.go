@@ -20,23 +20,22 @@ import (
 )
 
 type cliOptions struct {
-	extensions     string
-	delay          string
-	filterStatus   string
-	filterSize     string
-	filterRegexp   string
-	filterWords    string
-	matcherStatus  string
-	matcherSize    string
-	matcherRegexp  string
-	matcherWords   string
-	proxyURL       string
-	outputFormat   string
-	headers        multiStringFlag
-	cookies        multiStringFlag
-	showVersion    bool
-	disableLogging bool
-	logFile        string
+	extensions    string
+	delay         string
+	filterStatus  string
+	filterSize    string
+	filterRegexp  string
+	filterWords   string
+	matcherStatus string
+	matcherSize   string
+	matcherRegexp string
+	matcherWords  string
+	proxyURL      string
+	outputFormat  string
+	headers       multiStringFlag
+	cookies       multiStringFlag
+	showVersion   bool
+	debugLog      string
 }
 
 type multiStringFlag []string
@@ -95,23 +94,23 @@ func main() {
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
-	flag.BoolVar(&opts.disableLogging, "disable-logging", false, "Disable internal logging.")
-	flag.StringVar(&opts.logFile, "l", "", "Write all internal logging to a file.")
-	flag.StringVar(&opts.logFile, "log-file", "", "Alias for -l.")
+	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
 		os.Exit(0)
 	}
-	if opts.disableLogging {
-		log.SetOutput(ioutil.Discard)
-	} else if len(opts.logFile) != 0 {
-		f, err := os.OpenFile(opts.logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if len(opts.debugLog) != 0 {
+		f, err := os.OpenFile(opts.debugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
+			fmt.Fprintf(os.Stderr, "Disabling logging, encountered error(s): %s\n", err)
+			log.SetOutput(ioutil.Discard)
+		} else {
+			log.SetOutput(f)
+			defer f.Close()
 		}
-		log.SetOutput(f)
-		defer f.Close()
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
