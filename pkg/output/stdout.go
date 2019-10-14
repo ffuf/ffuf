@@ -161,14 +161,25 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	var res_str string
+	var responseString string
 	if len(s.config.InputCommand) > 0 {
 		// If we're using external command for input, display the position instead of input
-		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, strconv.Itoa(resp.Request.Position), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+		responseString = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d%s]", TERMINAL_CLEAR_LINE, strconv.Itoa(resp.Request.Position), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, s.addRedirectLocation(resp))
 	} else {
-		res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords)
+		responseString = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d%s]", TERMINAL_CLEAR_LINE, resp.Request.Input, s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, s.addRedirectLocation(resp))
 	}
-	fmt.Println(res_str)
+	fmt.Println(responseString)
+}
+
+// addRedirectLocation returns a formatted string containing the Redirect location or returns an empty string
+func (s *Stdoutput) addRedirectLocation(resp ffuf.Response) string {
+	if s.config.ShowRedirectLocation == true {
+		redirectLocation := resp.GetRedirectLocation()
+		if redirectLocation != "" {
+			return fmt.Sprintf(", ->: %s", redirectLocation)
+		}
+	}
+	return ""
 }
 
 func (s *Stdoutput) colorizeStatus(status int64) string {
