@@ -100,6 +100,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	HTTP method to use (default "GET")
   -ac
     	Automatically calibrate filtering options
+  -acc
+      Custom auto-calibration string. Can be used multiple times. Implies -ac
   -i
       Dummy flag for copy as curl functionality (ignored)
   -b "NAME1=VALUE1; NAME2=VALUE2"
@@ -185,12 +187,14 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
   - New
     - New CLI flag: -l, shows target location of redirect responses
+    - New CLI flac: -acc, custom auto-calibration strings
     - New CLI flag: -debug-log, writes the debug logging to the specified file.
+
   - Changed
     - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
     - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
     - Filtering and matching by status code, response size or word count now allow using ranges in addition to single values
-    - Changed the internal logging information to be discarded, and can be written to a file with the new `-debug-log` flag.
+    - The internal logging information to be discarded, and can be written to a file with the new `-debug-log` flag.
 
 - v0.10
 

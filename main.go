@@ -20,22 +20,23 @@ import (
 )
 
 type cliOptions struct {
-	extensions    string
-	delay         string
-	filterStatus  string
-	filterSize    string
-	filterRegexp  string
-	filterWords   string
-	matcherStatus string
-	matcherSize   string
-	matcherRegexp string
-	matcherWords  string
-	proxyURL      string
-	outputFormat  string
-	headers       multiStringFlag
-	cookies       multiStringFlag
-	showVersion   bool
-	debugLog      string
+	extensions             string
+	delay                  string
+	filterStatus           string
+	filterSize             string
+	filterRegexp           string
+	filterWords            string
+	matcherStatus          string
+	matcherSize            string
+	matcherRegexp          string
+	matcherWords           string
+	proxyURL               string
+	outputFormat           string
+	headers                multiStringFlag
+	cookies                multiStringFlag
+	AutoCalibrationStrings multiStringFlag
+	showVersion            bool
+	debugLog               string
 }
 
 type multiStringFlag []string
@@ -92,6 +93,7 @@ func main() {
 	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
+	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
@@ -299,6 +301,13 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if !found {
 			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.outputFormat))
 		}
+	}
+
+	// Auto-calibration strings
+	conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
+	// Using -acc implies -ac
+	if len(conf.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibration = true
 	}
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
