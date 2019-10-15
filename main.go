@@ -82,6 +82,7 @@ func main() {
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, html, md, csv, ecsv")
+	flag.BoolVar(&conf.ShowRedirectLocation, "l", false, "Show target location of redirect responses")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
@@ -284,7 +285,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 
-	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything bug GET, NOOP
+	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
 	if conf.Method == "GET" {
 		if len(conf.Data) > 0 {
 			conf.Method = "POST"
@@ -293,7 +294,10 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	conf.CommandLine = strings.Join(os.Args, " ")
 
-	//Search for keyword from URL and POST data too
+	//Search for keyword from HTTP method, URL and POST data too
+	if conf.Method == "FUZZ" {
+		foundkeyword = true
+	}
 	if strings.Index(conf.Url, "FUZZ") != -1 {
 		foundkeyword = true
 	}
@@ -302,7 +306,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	if !foundkeyword {
-		errs.Add(fmt.Errorf("No FUZZ keyword(s) found in headers, URL or POST data, nothing to do"))
+		errs.Add(fmt.Errorf("No FUZZ keyword(s) found in headers, method, URL or POST data, nothing to do"))
 	}
 
 	return errs.ErrorOrNil()
