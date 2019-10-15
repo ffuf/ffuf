@@ -185,6 +185,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
   - New
     - New CLI flag: -l, shows target location of redirect responses
+    - New CLI flac: -acc, custom auto-calibration strings
   - Changed
     - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
     - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
