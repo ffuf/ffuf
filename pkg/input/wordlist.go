@@ -98,6 +98,11 @@ func (w *WordlistInput) readFile(path string) error {
 					contnt := strings.Replace(reader.Text(), "%EXT%", ext, -1)
 					data = append(data, []byte(contnt))
 				}
+			} else if strings.Index(reader.Text(), "%ext%") != -1 {
+				for _, ext := range w.config.Extensions {
+					contnt := strings.Replace(reader.Text(), "%ext%", ext, -1)
+					data = append(data, []byte(contnt))
+				}
 			} else {
 				data = append(data, []byte(reader.Text()))
 			}
