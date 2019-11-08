@@ -31,6 +31,7 @@ type cliOptions struct {
 	matcherSize            string
 	matcherRegexp          string
 	matcherWords           string
+	matcherLines           string
 	proxyURL               string
 	outputFormat           string
 	headers                multiStringFlag
@@ -84,7 +85,7 @@ func main() {
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
-	flag.StringVar(&opts.matcherWords, "ml", "", "Match amount of lines in response")
+	flag.StringVar(&opts.matcherLines, "ml", "", "Match amount of lines in response")
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
