@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -34,6 +36,7 @@ type cliOptions struct {
 	cookies                multiStringFlag
 	AutoCalibrationStrings multiStringFlag
 	showVersion            bool
+	debugLog               string
 }
 
 type multiStringFlag []string
@@ -94,10 +97,23 @@ func main() {
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
+	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
 		os.Exit(0)
+	}
+	if len(opts.debugLog) != 0 {
+		f, err := os.OpenFile(opts.debugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Disabling logging, encountered error(s): %s\n", err)
+			log.SetOutput(ioutil.Discard)
+		} else {
+			log.SetOutput(f)
+			defer f.Close()
+		}
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)

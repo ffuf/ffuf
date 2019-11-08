@@ -167,6 +167,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Wordlist file path or - to read from standard input
   -x string
     	HTTP Proxy URL
+  -debug-log string
+      Write the debug logging information to the specified file.
 ```
 
 eg. `ffuf -u https://example.org/FUZZ -w /path/to/wordlist`
@@ -186,12 +188,15 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
   - New
     - New CLI flag: -l, shows target location of redirect responses
     - New CLI flac: -acc, custom auto-calibration strings
+    - New CLI flag: -debug-log, writes the debug logging to the specified file.
+
   - Changed
     - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
     - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
     - New Output format are available: HTML and Markdown table.
     - New CLI flag: -l, shows target location of redirect responses
     - Filtering and matching by status code, response size or word count now allow using ranges in addition to single values
+    - The internal logging information to be discarded, and can be written to a file with the new `-debug-log` flag.
 
 - v0.10
 
