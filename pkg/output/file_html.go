@@ -68,15 +68,8 @@ const (
 
         <tbody>
             {{range .Results}}
-                <tr style="background-color: {{.HTMLColor}};">
-                  <td><font color="black">{{ .StatusCode }}</font></td>
-                  <td>{{ .Input }}</td>
-                  <td>{{ .Position }}</td>
-                  <td>{{ .ContentLength }}</td>
-                  <td>{{ .ContentWords }}</td>
-                </tr>
+                <tr class="result-{{ .StatusCode }}" style="background-color: {{.HTMLColor}};"><td><font color="black" class="status-code">{{ .StatusCode }}</font></td><td>{{ .Input }}</td><td>{{ .Position }}</td><td>{{ .ContentLength }}</td><td>{{ .ContentWords }}</td></tr>
             {{end}}
-
         </tbody>
       </table>
 
