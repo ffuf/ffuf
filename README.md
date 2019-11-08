@@ -15,19 +15,11 @@ Heavily inspired by the great projects [gobuster](https://github.com/OJ/gobuster
 
 ## Features
 
-<<<<<<< HEAD
-
 - Fast!
 - Allows fuzzing of HTTP header values, POST data, and different parts of URL, including GET parameter names and values
 - Silent mode (`-s`) for clean output that's easy to use in pipes to other processes.
 - Modularized architecture that allows integration with existing toolchains with reasonable effort
-- # Easy-to-add filters and matchers (they are interoperable)
-- Fast!
-- Allows fuzzing of HTTP header values, HTTP method, POST data, and different parts of URL, including GET parameter names and values
-- Silent mode (`-s`) for clean output that's easy to use in pipes to other processes.
-- Modularized architecture that allows integration with existing toolchains with reasonable effort
 - Easy-to-add filters and matchers (they are interoperable)
-  > > > > > > > 9343b14a6fa7b95240019dc2a42d38cbaa846049
 
 ## Example cases
 
