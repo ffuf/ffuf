@@ -15,11 +15,11 @@ Heavily inspired by the great projects [gobuster](https://github.com/OJ/gobuster
 
 ## Features
 
- - Fast!
- - Allows fuzzing of HTTP header values, HTTP method, POST data, and different parts of URL, including GET parameter names and values
- - Silent mode (`-s`) for clean output that's easy to use in pipes to other processes.
- - Modularized architecture that allows integration with existing toolchains with reasonable effort
- - Easy-to-add filters and matchers (they are interoperable)
+- Fast!
+- Allows fuzzing of HTTP header values, POST data, and different parts of URL, including GET parameter names and values
+- Silent mode (`-s`) for clean output that's easy to use in pipes to other processes.
+- Modularized architecture that allows integration with existing toolchains with reasonable effort
+- Easy-to-add filters and matchers (they are interoperable)
 
 ## Example cases
 
@@ -193,6 +193,8 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
   - Changed
     - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
     - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
+    - New Output format are available: HTML and Markdown table.
+    - New CLI flag: -l, shows target location of redirect responses
     - Filtering and matching by status code, response size or word count now allow using ranges in addition to single values
     - The internal logging information to be discarded, and can be written to a file with the new `-debug-log` flag.
 
