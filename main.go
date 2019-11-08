@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,23 +20,24 @@ import (
 )
 
 type cliOptions struct {
-	extensions    string
-	delay         string
-	filterStatus  string
-	filterSize    string
-	filterRegexp  string
-	filterWords   string
-	filterLines   string
-	matcherStatus string
-	matcherSize   string
-	matcherRegexp string
-	matcherWords  string
-	matcherLines  string
-	proxyURL      string
-	outputFormat  string
-	headers       multiStringFlag
-	cookies       multiStringFlag
-	showVersion   bool
+	extensions             string
+	delay                  string
+	filterStatus           string
+	filterSize             string
+	filterRegexp           string
+	filterWords            string
+	filterLines            string
+	matcherStatus          string
+	matcherSize            string
+	matcherRegexp          string
+	matcherWords           string
+	proxyURL               string
+	outputFormat           string
+	headers                multiStringFlag
+	cookies                multiStringFlag
+	AutoCalibrationStrings multiStringFlag
+	showVersion            bool
+	debugLog               string
 }
 
 type multiStringFlag []string
@@ -85,20 +88,35 @@ func main() {
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
-	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, csv, ecsv")
+	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, html, md, csv, ecsv")
+	flag.BoolVar(&conf.ShowRedirectLocation, "l", false, "Show target location of redirect responses")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
 	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
+	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
+	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
 		os.Exit(0)
+	}
+	if len(opts.debugLog) != 0 {
+		f, err := os.OpenFile(opts.debugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Disabling logging, encountered error(s): %s\n", err)
+			log.SetOutput(ioutil.Discard)
+		} else {
+			log.SetOutput(f)
+			defer f.Close()
+		}
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
@@ -285,7 +303,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	//Check the output file format option
 	if conf.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
-		outputFormats := []string{"json", "csv", "ecsv"}
+		outputFormats := []string{"json", "html", "md", "csv", "ecsv"}
 		found := false
 		for _, f := range outputFormats {
 			if f == parseOpts.outputFormat {
@@ -298,7 +316,14 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 
-	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything bug GET, NOOP
+	// Auto-calibration strings
+	conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
+	// Using -acc implies -ac
+	if len(conf.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibration = true
+	}
+
+	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
 	if conf.Method == "GET" {
 		if len(conf.Data) > 0 {
 			conf.Method = "POST"
@@ -307,7 +332,10 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	conf.CommandLine = strings.Join(os.Args, " ")
 
-	//Search for keyword from URL and POST data too
+	//Search for keyword from HTTP method, URL and POST data too
+	if conf.Method == "FUZZ" {
+		foundkeyword = true
+	}
 	if strings.Index(conf.Url, "FUZZ") != -1 {
 		foundkeyword = true
 	}
@@ -316,7 +344,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	if !foundkeyword {
-		errs.Add(fmt.Errorf("No FUZZ keyword(s) found in headers, URL or POST data, nothing to do"))
+		errs.Add(fmt.Errorf("No FUZZ keyword(s) found in headers, method, URL or POST data, nothing to do"))
 	}
 
 	return errs.ErrorOrNil()
