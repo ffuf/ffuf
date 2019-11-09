@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,23 +20,27 @@ import (
 )
 
 type cliOptions struct {
-	extensions    string
-	delay         string
-	filterStatus  string
-	filterSize    string
-	filterRegexp  string
-	filterWords   string
-	matcherStatus string
-	matcherSize   string
-	matcherRegexp string
-	matcherWords  string
-	proxyURL      string
-	outputFormat  string
-	wordlists     multiStringFlag
-	inputcommands multiStringFlag
-	headers       multiStringFlag
-	cookies       multiStringFlag
-	showVersion   bool
+	extensions             string
+	delay                  string
+	filterStatus           string
+	filterSize             string
+	filterRegexp           string
+	filterWords            string
+	filterLines            string
+	matcherStatus          string
+	matcherSize            string
+	matcherRegexp          string
+	matcherWords           string
+	matcherLines           string
+	proxyURL               string
+	outputFormat           string
+	wordlists              multiStringFlag
+	inputcommands          multiStringFlag
+	headers                multiStringFlag
+	cookies                multiStringFlag
+	AutoCalibrationStrings multiStringFlag
+	showVersion            bool
+	debugLog               string
 }
 
 type multiStringFlag []string
@@ -65,6 +71,7 @@ func main() {
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size. Comma separated list of sizes and ranges")
 	flag.StringVar(&opts.filterRegexp, "fr", "", "Filter regexp")
 	flag.StringVar(&opts.filterWords, "fw", "", "Filter by amount of words in response. Comma separated list of word counts and ranges")
+	flag.StringVar(&opts.filterLines, "fl", "", "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&conf.Data, "d", "", "POST data")
 	flag.StringVar(&conf.Data, "data", "", "POST data (alias of -d)")
 	flag.StringVar(&conf.Data, "data-ascii", "", "POST data (alias of -d)")
@@ -80,23 +87,39 @@ func main() {
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
+	flag.StringVar(&opts.matcherLines, "ml", "", "Match amount of lines in response")
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
-	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, csv, ecsv")
+	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, html, md, csv, ecsv")
+	flag.BoolVar(&conf.ShowRedirectLocation, "l", false, "Show target location of redirect responses")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
 	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
+	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
+	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
 		os.Exit(0)
+	}
+	if len(opts.debugLog) != 0 {
+		f, err := os.OpenFile(opts.debugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Disabling logging, encountered error(s): %s\n", err)
+			log.SetOutput(ioutil.Discard)
+		} else {
+			log.SetOutput(f)
+			defer f.Close()
+		}
+	} else {
+		log.SetOutput(ioutil.Discard)
 	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
@@ -170,6 +193,11 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errs.Add(err)
 		}
 	}
+	if parseOpts.filterLines != "" {
+		if err := filter.AddFilter(conf, "line", parseOpts.filterLines); err != nil {
+			errs.Add(err)
+		}
+	}
 	if parseOpts.matcherStatus != "" {
 		if err := filter.AddMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
 			errs.Add(err)
@@ -187,6 +215,11 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.matcherWords != "" {
 		if err := filter.AddMatcher(conf, "word", parseOpts.matcherWords); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.matcherLines != "" {
+		if err := filter.AddMatcher(conf, "line", parseOpts.matcherLines); err != nil {
 			errs.Add(err)
 		}
 	}
@@ -296,7 +329,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	//Check the output file format option
 	if conf.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
-		outputFormats := []string{"json", "csv", "ecsv"}
+		outputFormats := []string{"json", "html", "md", "csv", "ecsv"}
 		found := false
 		for _, f := range outputFormats {
 			if f == parseOpts.outputFormat {
@@ -307,6 +340,13 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if !found {
 			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.outputFormat))
 		}
+	}
+
+	// Auto-calibration strings
+	conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
+	// Using -acc implies -ac
+	if len(conf.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibration = true
 	}
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP

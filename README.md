@@ -7,7 +7,6 @@
           \/_/    \/_/   \/___/    \/_/
 ```
 
-
 # ffuf - Fuzz Faster U Fool
 
 A fast web fuzzer written in Go.
@@ -16,11 +15,11 @@ Heavily inspired by the great projects [gobuster](https://github.com/OJ/gobuster
 
 ## Features
 
- - Fast!
- - Allows fuzzing of HTTP header values, HTTP method, POST data, and different parts of URL, including GET parameter names and values
- - Silent mode (`-s`) for clean output that's easy to use in pipes to other processes.
- - Modularized architecture that allows integration with existing toolchains with reasonable effort
- - Easy-to-add filters and matchers (they are interoperable)
+- Fast!
+- Allows fuzzing of HTTP header values, POST data, and different parts of URL, including GET parameter names and values
+- Silent mode (`-s`) for clean output that's easy to use in pipes to other processes.
+- Modularized architecture that allows integration with existing toolchains with reasonable effort
+- Easy-to-add filters and matchers (they are interoperable)
 
 ## Example cases
 
@@ -101,6 +100,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	HTTP method to use (default "GET")
   -ac
     	Automatically calibrate filtering options
+  -acc
+      Custom auto-calibration string. Can be used multiple times. Implies -ac
   -i
       Dummy flag for copy as curl functionality (ignored)
   -b "NAME1=VALUE1; NAME2=VALUE2"
@@ -129,6 +130,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Filter HTTP response size. Comma separated list of sizes and ranges
   -fw string
     	Filter by amount of words in response. Comma separated list of word counts and ranges
+  -fl string
+    	Filter by amount of lines in response. Comma separated list of line counts and ranges
   -input-cmd string
     	Command producing the input. --input-num is required when using this input method. Overrides -w.
   -input-num int
@@ -142,6 +145,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Match HTTP response size
   -mw string
     	Match amount of words in response
+  -ml string
+    	Match amount of lines in response
   -o string
     	Write output to file
   -of string
@@ -166,59 +171,75 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Wordlist file path or - to read from standard input
   -x string
     	HTTP Proxy URL
+  -debug-log string
+      Write the debug logging information to the specified file.
 ```
 
 eg. `ffuf -u https://example.org/FUZZ -w /path/to/wordlist`
 
 ## Installation
 
- - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
- or
- - If you have go compiler installed: `go get github.com/ffuf/ffuf`
+- [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
+  or
+- If you have go compiler installed: `go get github.com/ffuf/ffuf`
 
 The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
 
 ## Changelog
 
 - master
-   - New
-   - Changed
-      - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
-      - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
-      - Filtering and matching by status code, response size or word count now allow using ranges in addition to single values
+
+  - New
+
+    - New CLI flag: -l, shows target location of redirect responses
+    - New CLI flac: -acc, custom auto-calibration strings
+    - New CLI flag: -debug-log, writes the debug logging to the specified file.
+    - New CLI flags -ml and -fl, filters/matches line count in response
+
+  - Changed
+
+    - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
+    - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
+    - New Output format are available: HTML and Markdown table.
+    - New CLI flag: -l, shows target location of redirect responses
+    - Filtering and matching by status code, response size or word count now allow using ranges in addition to single values
+    - The internal logging information to be discarded, and can be written to a file with the new `-debug-log` flag.
 
 - v0.10
-   - New
-      - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
-      - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
-      - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
-      - New CLI flag: --compressed, dummy flag that does nothing. for compatibility with copy as curl.
-      - New CLI flags: --input-cmd, and --input-num to handle input generation using external commands. Mutators for example. Environment variable FFUF_NUM will be updated on every call of the command.
-      - When --input-cmd is used, display position instead of the payload in results. The output file (of all formats) will include the payload in addition to the position however.
 
-   - Changed
-      - Wordlist can also be read from standard input
-      - Defining -d or --data implies POST method if -X doesn't set it to something else than GET
+  - New
+
+    - New CLI flag: -ac to autocalibrate response size and word filters based on few preset URLs.
+    - New CLI flag: -timeout to specify custom timeouts for all HTTP requests.
+    - New CLI flag: --data for compatibility with copy as curl functionality of browsers.
+    - New CLI flag: --compressed, dummy flag that does nothing. for compatibility with copy as curl.
+    - New CLI flags: --input-cmd, and --input-num to handle input generation using external commands. Mutators for example. Environment variable FFUF_NUM will be updated on every call of the command.
+    - When --input-cmd is used, display position instead of the payload in results. The output file (of all formats) will include the payload in addition to the position however.
+
+  - Changed
+    - Wordlist can also be read from standard input
+    - Defining -d or --data implies POST method if -X doesn't set it to something else than GET
 
 - v0.9
-   - New
-      - New output file formats: CSV and eCSV (CSV with base64 encoded input field to avoid CSV breakage with payloads containing a comma)
-      - New CLI flag to follow redirects
-      - Erroring connections will be retried once
-      - Error counter in status bar
-      - New CLI flags: -se (stop on spurious errors) and -sa (stop on all errors, implies -se and -sf)
-      - New CLI flags: -e to provide a list of extensions to add to wordlist entries, and -D to provide DirSearch wordlist format compatibility.
-      - Wildcard option for response status code matcher.
+  - New
+    - New output file formats: CSV and eCSV (CSV with base64 encoded input field to avoid CSV breakage with payloads containing a comma)
+    - New CLI flag to follow redirects
+    - Erroring connections will be retried once
+    - Error counter in status bar
+    - New CLI flags: -se (stop on spurious errors) and -sa (stop on all errors, implies -se and -sf)
+    - New CLI flags: -e to provide a list of extensions to add to wordlist entries, and -D to provide DirSearch wordlist format compatibility.
+    - Wildcard option for response status code matcher.
 - v0.8
-   - New
-      - New CLI flag to write output to a file in JSON format
-      - New CLI flag to stop on spurious 403 responses
-   - Changed
-      - Regex matching / filtering now matches the headers alongside of the response body
+  - New
+    - New CLI flag to write output to a file in JSON format
+    - New CLI flag to stop on spurious 403 responses
+  - Changed
+    - Regex matching / filtering now matches the headers alongside of the response body
 
 ## TODO
- - Tests!
- - Optional scope for redirects
- - Client / server architecture to queue jobs and fetch the results later
- - Fuzzing multiple values at the same time
- - Output module to push the results to an HTTP API
+
+- Tests!
+- Optional scope for redirects
+- Client / server architecture to queue jobs and fetch the results later
+- Fuzzing multiple values at the same time
+- Output module to push the results to an HTTP API
