@@ -130,6 +130,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Filter HTTP response size. Comma separated list of sizes and ranges
   -fw string
     	Filter by amount of words in response. Comma separated list of word counts and ranges
+  -fl string
+    	Filter by amount of lines in response. Comma separated list of line counts and ranges
   -input-cmd string
     	Command producing the input. --input-num is required when using this input method. Overrides -w.
   -input-num int
@@ -143,6 +145,8 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
     	Match HTTP response size
   -mw string
     	Match amount of words in response
+  -ml string
+    	Match amount of lines in response
   -o string
     	Write output to file
   -of string
@@ -186,11 +190,14 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 - master
 
   - New
+
     - New CLI flag: -l, shows target location of redirect responses
     - New CLI flac: -acc, custom auto-calibration strings
     - New CLI flag: -debug-log, writes the debug logging to the specified file.
+    - New CLI flags -ml and -fl, filters/matches line count in response
 
   - Changed
+
     - New CLI flag: -i, dummy flag that does nothing. for compatibility with copy as curl.
     - New CLI flag: -b/--cookie, cookie data for compatibility with copy as curl.
     - New Output format are available: HTML and Markdown table.

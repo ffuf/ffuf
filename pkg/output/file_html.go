@@ -58,7 +58,7 @@ const (
    <table>
         <thead>
         <div style="display:none">
-|result_raw|StatusCode|Input|Position|ContentLength|ContentWords| 
+|result_raw|StatusCode|Input|Position|ContentLength|ContentWords|ContentLines|
         </div>
           <tr>
               <th>Status</th>
@@ -66,15 +66,16 @@ const (
               <th>Position</th>
               <th>Length</th>
               <th>Words</th>
+              <th>Lines</th>
           </tr>
         </thead>
 
         <tbody>
             {{range .Results}}
                 <div style="display:none">
-|result_raw|{{ .StatusCode }}|{{ .Input }}|{{ .Position }}|{{ .ContentLength }}|{{ .ContentWords }}| 
+|result_raw|{{ .StatusCode }}|{{ .Input }}|{{ .Position }}|{{ .ContentLength }}|{{ .ContentWords }}|{{ .ContentLines }}|
                 </div>
-                <tr class="result-{{ .StatusCode }}" style="background-color: {{.HTMLColor}};"><td><font color="black" class="status-code">{{ .StatusCode }}</font></td><td>{{ .Input }}</td><td>{{ .Position }}</td><td>{{ .ContentLength }}</td><td>{{ .ContentWords }}</td></tr>
+                <tr class="result-{{ .StatusCode }}" style="background-color: {{.HTMLColor}};"><td><font color="black" class="status-code">{{ .StatusCode }}</font></td><td>{{ .Input }}</td><td>{{ .Position }}</td><td>{{ .ContentLength }}</td><td>{{ .ContentWords }}</td><td>{{ .ContentLines }}</td></tr>
             {{end}}
         </tbody>
       </table>

@@ -18,6 +18,9 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "word" {
 		return NewWordFilter(value)
 	}
+	if name == "line" {
+		return NewLineFilter(value)
+	}
 	if name == "regexp" {
 		return NewRegexpFilter(value)
 	}
@@ -61,6 +64,7 @@ func CalibrateIfNeeded(j *ffuf.Job) error {
 func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) {
 	sizeCalib := make([]string, 0)
 	wordCalib := make([]string, 0)
+	lineCalib := make([]string, 0)
 	for _, r := range responses {
 		if r.ContentLength > 0 {
 			// Only add if we have an actual size of responses
@@ -70,16 +74,24 @@ func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) {
 			// Only add if we have an actual word length of response
 			wordCalib = append(wordCalib, strconv.FormatInt(r.ContentWords, 10))
 		}
+		if r.ContentLines > 1 {
+			// Only add if we have an actual word length of response
+			lineCalib = append(lineCalib, strconv.FormatInt(r.ContentLines, 10))
+		}
 	}
 
 	//Remove duplicates
 	sizeCalib = ffuf.UniqStringSlice(sizeCalib)
 	wordCalib = ffuf.UniqStringSlice(wordCalib)
+	lineCalib = ffuf.UniqStringSlice(lineCalib)
 
 	if len(sizeCalib) > 0 {
 		AddFilter(j.Config, "size", strings.Join(sizeCalib, ","))
 	}
 	if len(wordCalib) > 0 {
 		AddFilter(j.Config, "word", strings.Join(wordCalib, ","))
+	}
+	if len(lineCalib) > 0 {
+		AddFilter(j.Config, "line", strings.Join(lineCalib, ","))
 	}
 }

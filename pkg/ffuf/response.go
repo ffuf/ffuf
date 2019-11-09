@@ -11,6 +11,7 @@ type Response struct {
 	Data          []byte
 	ContentLength int64
 	ContentWords  int64
+	ContentLines  int64
 	Cancelled     bool
 	Request       *Request
 }

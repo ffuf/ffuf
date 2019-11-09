@@ -9,7 +9,7 @@ import (
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
-var header = []string{"input", "position", "status_code", "content_length", "content_words"}
+var header = []string{"input", "position", "status_code", "content_length", "content_words", "content_lines"}
 
 func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
 	f, err := os.Create(config.OutputFile)
@@ -48,5 +48,6 @@ func toCSV(r Result) []string {
 		strconv.FormatInt(r.StatusCode, 10),
 		strconv.FormatInt(r.ContentLength, 10),
 		strconv.FormatInt(r.ContentWords, 10),
+		strconv.FormatInt(r.ContentLines, 10),
 	}
 }

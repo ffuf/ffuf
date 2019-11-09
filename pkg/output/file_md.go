@@ -20,9 +20,9 @@ const (
   Command line : ` + "`{{.CommandLine}}`" + `
   Time: ` + "{{ .Time }}" + `
 
-  | Input | Position | Status Code | Content Length | Content Words |
-  | :---- | :------- | :---------- | :------------- | :------------ |
-  {{range .Results}}| {{ .Input }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} |
+  | Input | Position | Status Code | Content Length | Content Words | Content Lines |
+  | :---- | :------- | :---------- | :------------- | :------------ | :------------ |
+  {{range .Results}}| {{ .Input }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} |
   {{end}}
 	` // The template format is not pretty but follows the markdown guide
 )

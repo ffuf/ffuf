@@ -20,6 +20,11 @@ func TestNewFilterByName(t *testing.T) {
 		t.Errorf("Was expecting wordfilter")
 	}
 
+	lf, _ := NewFilterByName("line", "200")
+	if _, ok := lf.(*LineFilter); !ok {
+		t.Errorf("Was expecting linefilter")
+	}
+
 	ref, _ := NewFilterByName("regexp", "200")
 	if _, ok := ref.(*RegexpFilter); !ok {
 		t.Errorf("Was expecting regexpfilter")
