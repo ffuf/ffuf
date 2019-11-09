@@ -36,10 +36,10 @@ func (i *MainInputProvider) Position() int {
 
 //Next will increment the cursor position, and return a boolean telling if there's inputs left
 func (i *MainInputProvider) Next() bool {
-	i.position++
 	if i.position >= i.Total() {
 		return false
 	}
+	i.position++
 	return true
 }
 
