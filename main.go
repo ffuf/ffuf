@@ -156,10 +156,10 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	runprovider := runner.NewRunnerByName("http", conf)
 	// Initialize the correct inputprovider
 	for _, v := range conf.InputProviders {
-		inputprovider.AddProvider(v)
-	}
-	if err != nil {
-		errs.Add(fmt.Errorf("%s", err))
+		err = inputprovider.AddProvider(v)
+		if err != nil {
+			errs.Add(fmt.Errorf("%s", err))
+		}
 	}
 	// We only have stdout outputprovider right now
 	outprovider := output.NewOutputProviderByName("stdout", conf)
