@@ -187,7 +187,7 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var res_str string
-	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputs(resp), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
+	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, s.prepareInputs(resp), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
 	fmt.Println(res_str)
 }
 
