@@ -9,9 +9,10 @@ import (
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
-var header = []string{"input", "position", "status_code", "content_length", "content_words", "content_lines"}
+var staticheaders = []string{"position", "status_code", "content_length", "content_words", "content_lines"}
 
 func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
+	header := make([]string, 0)
 	f, err := os.Create(config.OutputFile)
 	if err != nil {
 		return err
@@ -20,6 +21,14 @@ func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
 
 	w := csv.NewWriter(f)
 	defer w.Flush()
+
+	for _, inputprovider := range config.InputProviders {
+		header = append(header, inputprovider.Keyword)
+	}
+
+	for _, item := range staticheaders {
+		header = append(header, item)
+	}
 
 	if err := w.Write(header); err != nil {
 		return err
@@ -47,8 +56,8 @@ func base64encode(in []byte) string {
 
 func toCSV(r Result) []string {
 	res := make([]string, 0)
-	for k, v := range r.Input {
-		res = append(res, k+":"+string(v))
+	for _, v := range r.Input {
+		res = append(res, string(v))
 	}
 	res = append(res, strconv.Itoa(r.Position))
 	res = append(res, strconv.FormatInt(r.StatusCode, 10))

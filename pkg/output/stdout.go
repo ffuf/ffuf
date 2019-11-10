@@ -33,7 +33,7 @@ type Result struct {
 	ContentLength int64             `json:"length"`
 	ContentWords  int64             `json:"words"`
 	ContentLines  int64             `json:"lines"`
-	HTMLColor     string            `json:"html_color"`
+	HTMLColor     string            `json:"-"`
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
