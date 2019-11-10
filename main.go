@@ -64,7 +64,7 @@ func main() {
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
-	flag.Var(&opts.wordlists, "w", "Wordlist file path or - to read from standard input")
+	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) custom fuzz keyword, using colon as delimiter. Use file path '-' to read from standard input. Can be supplied multiple times. Format: '/path/to/wordlist:KEYWORD'")
 	flag.BoolVar(&conf.TLSVerify, "k", false, "TLS identity verification")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response. Comma separated list of codes and ranges")
@@ -252,14 +252,14 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if len(wl) == 2 {
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "wordlist",
-				Keyword: wl[0],
-				Value:   wl[1],
+				Value:   wl[0],
+				Keyword: wl[1],
 			})
 		} else {
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "wordlist",
-				Keyword: "FUZZ",
 				Value:   wl[0],
+				Keyword: "FUZZ",
 			})
 		}
 	}
@@ -268,15 +268,15 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if len(ic) == 2 {
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "command",
-				Keyword: ic[0],
-				Value:   ic[1],
+				Value:   ic[0],
+				Keyword: ic[1],
 			})
 			conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
 		} else {
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "command",
-				Keyword: "FUZZ",
 				Value:   ic[0],
+				Keyword: "FUZZ",
 			})
 			conf.CommandKeywords = append(conf.CommandKeywords, "FUZZ")
 		}
