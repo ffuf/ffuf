@@ -189,6 +189,10 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 ## Changelog
 
 - master
+  - New
+  - Changed
+
+- v0.11
 
   - New
 
