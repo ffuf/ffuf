@@ -10,20 +10,34 @@ import (
 )
 
 type CommandInput struct {
-	config *ffuf.Config
-	count  int
+	config  *ffuf.Config
+	count   int
+	keyword string
+	command string
 }
 
-func NewCommandInput(conf *ffuf.Config) (*CommandInput, error) {
+func NewCommandInput(keyword string, value string, conf *ffuf.Config) (*CommandInput, error) {
 	var cmd CommandInput
+	cmd.keyword = keyword
 	cmd.config = conf
 	cmd.count = -1
+	cmd.command = value
 	return &cmd, nil
+}
+
+//Keyword returns the keyword assigned to this InternalInputProvider
+func (c *CommandInput) Keyword() string {
+	return c.keyword
 }
 
 //Position will return the current position in the input list
 func (c *CommandInput) Position() int {
 	return c.count
+}
+
+//ResetPosition will reset the current position of the InternalInputProvider
+func (c *CommandInput) ResetPosition() {
+	c.count = 0
 }
 
 //Next will increment the cursor position, and return a boolean telling if there's iterations left
@@ -39,7 +53,7 @@ func (c *CommandInput) Next() bool {
 func (c *CommandInput) Value() []byte {
 	var stdout bytes.Buffer
 	os.Setenv("FFUF_NUM", strconv.Itoa(c.count))
-	cmd := exec.Command(SHELL_CMD, SHELL_ARG, c.config.InputCommand)
+	cmd := exec.Command(SHELL_CMD, SHELL_ARG, c.command)
 	cmd.Stdout = &stdout
 	err := cmd.Run()
 	if err != nil {

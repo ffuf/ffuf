@@ -11,6 +11,7 @@ import (
 type htmlFileOutput struct {
 	CommandLine string
 	Time        string
+	Keys        []string
 	Results     []Result
 }
 
@@ -62,7 +63,8 @@ const (
         </div>
           <tr>
               <th>Status</th>
-              <th>Input</th>
+{{ range .Keys }}              <th>{{ . }}</th>
+{{ end }}
               <th>Position</th>
               <th>Length</th>
               <th>Words</th>
@@ -71,11 +73,11 @@ const (
         </thead>
 
         <tbody>
-            {{range .Results}}
+			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ .StatusCode }}|{{ .Input }}|{{ .Position }}|{{ .ContentLength }}|{{ .ContentWords }}|{{ .ContentLines }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|
                 </div>
-                <tr class="result-{{ .StatusCode }}" style="background-color: {{.HTMLColor}};"><td><font color="black" class="status-code">{{ .StatusCode }}</font></td><td>{{ .Input }}</td><td>{{ .Position }}</td><td>{{ .ContentLength }}</td><td>{{ .ContentWords }}</td><td>{{ .ContentLines }}</td></tr>
+				<tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};"><td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>{{ range $keyword, $value := $result.Input }}<td>{{ $value | printf "%s" }}</td>{{ end }}</td><td>{{ $result.Position }}</td><td>{{ $result.ContentLength }}</td><td>{{ $result.ContentWords }}</td><td>{{ $result.ContentLines }}</td></tr>
             {{end}}
         </tbody>
       </table>
@@ -142,10 +144,16 @@ func writeHTML(config *ffuf.Config, results []Result) error {
 
 	ti := time.Now()
 
+	keywords := make([]string, 0)
+	for _, inputprovider := range config.InputProviders {
+		keywords = append(keywords, inputprovider.Keyword)
+	}
+
 	outHTML := htmlFileOutput{
 		CommandLine: config.CommandLine,
 		Time:        ti.Format(time.RFC3339),
 		Results:     results,
+		Keys:        keywords,
 	}
 
 	f, err := os.Create(config.OutputFile)
