@@ -153,11 +153,16 @@ func (s *Stdoutput) printResult(resp ffuf.Response) {
 	if s.config.Quiet {
 		s.resultQuiet(resp)
 	} else {
-		s.resultNormal(resp)
+		if len(resp.Request.Input) > 1 {
+			// Print a multi-line result (when using multiple input keywords and wordlists)
+			s.resultMultiline(resp)
+		} else {
+			s.resultNormal(resp)
+		}
 	}
 }
 
-func (s *Stdoutput) prepareInputs(resp ffuf.Response) string {
+func (s *Stdoutput) prepareInputsOneLine(resp ffuf.Response) string {
 	inputs := ""
 	if len(resp.Request.Input) > 1 {
 		for k, v := range resp.Request.Input {
@@ -182,12 +187,29 @@ func (s *Stdoutput) prepareInputs(resp ffuf.Response) string {
 }
 
 func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
-	fmt.Println(s.prepareInputs(resp))
+	fmt.Println(s.prepareInputsOneLine(resp))
+}
+
+func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
+	var res_hdr, res_str string
+	res_str = "%s    * %s: %s\n"
+	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, resp.StatusCode, resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
+	fmt.Println(s.colorize(res_hdr, resp.StatusCode))
+	for k, v := range resp.Request.Input {
+		if inSlice(k, s.config.CommandKeywords) {
+			// If we're using external command for input, display the position instead of input
+			fmt.Printf(res_str, TERMINAL_CLEAR_LINE, k, strconv.Itoa(resp.Request.Position))
+		} else {
+			// Wordlist input
+			fmt.Printf(res_str, TERMINAL_CLEAR_LINE, k, v)
+		}
+	}
+
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var res_str string
-	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, s.prepareInputs(resp), s.colorizeStatus(resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
+	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
 	fmt.Println(res_str)
 }
 
@@ -202,9 +224,9 @@ func (s *Stdoutput) addRedirectLocation(resp ffuf.Response) string {
 	return ""
 }
 
-func (s *Stdoutput) colorizeStatus(status int64) string {
+func (s *Stdoutput) colorize(input string, status int64) string {
 	if !s.config.Colors {
-		return fmt.Sprintf("%d", status)
+		return fmt.Sprintf("%s", input)
 	}
 	colorCode := ANSI_CLEAR
 	if status >= 200 && status < 300 {
@@ -219,7 +241,7 @@ func (s *Stdoutput) colorizeStatus(status int64) string {
 	if status >= 500 && status < 600 {
 		colorCode = ANSI_RED
 	}
-	return fmt.Sprintf("%s%d%s", colorCode, status, ANSI_CLEAR)
+	return fmt.Sprintf("%s%s%s", colorCode, input, ANSI_CLEAR)
 }
 
 func printOption(name []byte, value []byte) {
