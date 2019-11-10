@@ -195,6 +195,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
     - New CLI flac: -acc, custom auto-calibration strings
     - New CLI flag: -debug-log, writes the debug logging to the specified file.
     - New CLI flags -ml and -fl, filters/matches line count in response
+    - Ability to use multiple wordlists / keywords by defining multiple -w command line flags. The if no keyword is defined, the default is FUZZ to keep backwards compatibility. Example: `-w "wordlists/custom.txt:CUSTOM" -H "RandomHeader: CUSTOM"`.
 
   - Changed
 
