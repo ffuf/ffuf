@@ -80,6 +80,7 @@ func main() {
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.Var(&opts.inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.IntVar(&conf.InputNum, "input-num", 100, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.StringVar(&conf.InputMode, "mode", "clusterbomb", "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.Var(&opts.cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.\nResults unpredictable when combined with -H \"Cookie: ...\"")
 	flag.Var(&opts.cookies, "cookie", "Cookie data (alias of -b)")
@@ -150,7 +151,10 @@ func main() {
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	errs := ffuf.NewMultierror()
 	var err error
-	inputprovider := input.NewInputProvider(conf)
+	inputprovider, err := input.NewInputProvider(conf)
+	if err != nil {
+		errs.Add(err)
+	}
 	// TODO: implement error handling for runnerprovider and outputprovider
 	// We only have http runner right now
 	runprovider := runner.NewRunnerByName("http", conf)
@@ -158,7 +162,7 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	for _, v := range conf.InputProviders {
 		err = inputprovider.AddProvider(v)
 		if err != nil {
-			errs.Add(fmt.Errorf("%s", err))
+			errs.Add(err)
 		}
 	}
 	// We only have stdout outputprovider right now
