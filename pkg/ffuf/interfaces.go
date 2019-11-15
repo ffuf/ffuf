@@ -27,6 +27,7 @@ type InternalInputProvider interface {
 	Next() bool
 	Position() int
 	ResetPosition()
+	IncrementPosition()
 	Value() []byte
 	Total() int
 }

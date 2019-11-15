@@ -20,7 +20,7 @@ func NewCommandInput(keyword string, value string, conf *ffuf.Config) (*CommandI
 	var cmd CommandInput
 	cmd.keyword = keyword
 	cmd.config = conf
-	cmd.count = -1
+	cmd.count = 0
 	cmd.command = value
 	return &cmd, nil
 }
@@ -40,9 +40,13 @@ func (c *CommandInput) ResetPosition() {
 	c.count = 0
 }
 
+//IncrementPosition increments the current position in the inputprovider
+func (c *CommandInput) IncrementPosition() {
+	c.count += 1
+}
+
 //Next will increment the cursor position, and return a boolean telling if there's iterations left
 func (c *CommandInput) Next() bool {
-	c.count++
 	if c.count >= c.config.InputNum {
 		return false
 	}
