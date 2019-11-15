@@ -110,6 +110,8 @@ func (s *Stdoutput) Finalize() error {
 	if s.config.OutputFile != "" {
 		if s.config.OutputFormat == "json" {
 			err = writeJSON(s.config, s.Results)
+		} else if s.config.OutputFormat == "ejson" {
+			err = writeEJSON(s.config, s.Results)
 		} else if s.config.OutputFormat == "html" {
 			err = writeHTML(s.config, s.Results)
 		} else if s.config.OutputFormat == "md" {
@@ -192,19 +194,20 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 
 func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 	var res_hdr, res_str string
-	res_str = "%s    * %s: %s\n"
+	res_str = "%s%s    * %s: %s\n"
 	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, resp.StatusCode, resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
-	fmt.Println(s.colorize(res_hdr, resp.StatusCode))
+	res_hdr = s.colorize(res_hdr, resp.StatusCode)
+	reslines := ""
 	for k, v := range resp.Request.Input {
 		if inSlice(k, s.config.CommandKeywords) {
 			// If we're using external command for input, display the position instead of input
-			fmt.Printf(res_str, TERMINAL_CLEAR_LINE, k, strconv.Itoa(resp.Request.Position))
+			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(resp.Request.Position))
 		} else {
 			// Wordlist input
-			fmt.Printf(res_str, TERMINAL_CLEAR_LINE, k, v)
+			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
 		}
 	}
-
+	fmt.Printf("%s\n%s", res_hdr, reslines)
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
