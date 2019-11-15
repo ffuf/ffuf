@@ -155,7 +155,7 @@ Usage of ./ffuf:
   -o string
     	Write output to file
   -of string
-    	Output file format. Available formats: json, html, md, csv, ecsv (default "json")
+    	Output file format. Available formats: json, ejson, html, md, csv, ecsv (default "json")
   -p delay
     	Seconds of delay between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -r	Follow redirects
@@ -193,8 +193,10 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 - master
   - New
     - Added a new flag to select a multi wordlist operation mode: `--mode`, possible values: `clusterbomb` and `pitchfork`.
+    - Added a new output file format eJSON, for always base64 encoding the input data.
   - Changed
     - Fixed a bug in the default multi wordlist mode
+    - Fixed JSON output regression, where all the input data was always encoded in base64 
 
 - v0.11
 
