@@ -144,6 +144,8 @@ Usage of ./ffuf:
     	Match HTTP status codes from respose, use "all" to match every response code. (default "200,204,301,302,307,401,403")
   -ml string
     	Match amount of lines in response
+  -mode string
+    	Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork (default "clusterbomb")
   -mr string
     	Match regexp
   -ms string
@@ -190,7 +192,9 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
 - master
   - New
+    - Added a new flag to select a multi wordlist operation mode: `--mode`, possible values: `clusterbomb` and `pitchfork`.
   - Changed
+    - Fixed a bug in the default multi wordlist mode
 
 - v0.11
 
