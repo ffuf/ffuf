@@ -35,7 +35,13 @@ const (
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-    />
+	/>
+	<link 
+	  rel="stylesheet" 
+	  type="text/css" 
+	  href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css"
+	/>
+  
   </head>
 
   <body>
@@ -56,7 +62,7 @@ const (
 		<pre>{{ .CommandLine }}</pre>
 		<pre>{{ .Time }}</pre>
 
-   <table>
+   <table id="ffufreport">
         <thead>
         <div style="display:none">
 |result_raw|StatusCode|Input|Position|ContentLength|ContentWords|ContentLines|
@@ -90,7 +96,14 @@ const (
     </main>
 
     <!--JavaScript at end of body for optimized loading-->
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+	<script>
+	$(document).ready( function () {
+		$('#ffufreport').DataTable();
+	} );
+	</script>
     <style>
       body {
         display: flex;
