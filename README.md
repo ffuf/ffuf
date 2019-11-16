@@ -192,6 +192,10 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
 - master
   - New
+  - Changed
+
+- v0.12
+  - New
     - Added a new flag to select a multi wordlist operation mode: `--mode`, possible values: `clusterbomb` and `pitchfork`.
     - Added a new output file format eJSON, for always base64 encoding the input data.
     - Redirect location is always shown in the output files (when using `-o`)
