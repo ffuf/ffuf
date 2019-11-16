@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -66,6 +69,8 @@ func (j *Job) Start() {
 		j.Output.Banner()
 	}
 	j.Running = true
+	// Monitor for SIGTERM and do cleanup properly (writing the output files etc)
+	j.interruptMonitor()
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go j.runProgress(&wg)
@@ -103,6 +108,17 @@ func (j *Job) Start() {
 	j.updateProgress()
 	j.Output.Finalize()
 	return
+}
+
+func (j *Job) interruptMonitor() {
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		for _ = range sigChan {
+			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
+			j.Stop()
+		}
+	}()
 }
 
 func (j *Job) runProgress(wg *sync.WaitGroup) {
