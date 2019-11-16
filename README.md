@@ -193,6 +193,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 - master
   - New
   - Changed
+    - Limit the use of `-e` (extensions) to a single keyword: FUZZ
 
 - v0.12
   - New
