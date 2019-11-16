@@ -27,13 +27,15 @@ type Stdoutput struct {
 }
 
 type Result struct {
-	Input         map[string][]byte `json:"input"`
-	Position      int               `json:"position"`
-	StatusCode    int64             `json:"status"`
-	ContentLength int64             `json:"length"`
-	ContentWords  int64             `json:"words"`
-	ContentLines  int64             `json:"lines"`
-	HTMLColor     string            `json:"-"`
+	Input            map[string][]byte `json:"input"`
+	Position         int               `json:"position"`
+	StatusCode       int64             `json:"status"`
+	ContentLength    int64             `json:"length"`
+	ContentWords     int64             `json:"words"`
+	ContentLines     int64             `json:"lines"`
+	RedirectLocation string            `json:"redirectlocation"`
+	Url              string            `json:"url"`
+	HTMLColor        string            `json:"-"`
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -140,12 +142,14 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			inputs[k] = v
 		}
 		sResult := Result{
-			Input:         inputs,
-			Position:      resp.Request.Position,
-			StatusCode:    resp.StatusCode,
-			ContentLength: resp.ContentLength,
-			ContentWords:  resp.ContentWords,
-			ContentLines:  resp.ContentLines,
+			Input:            inputs,
+			Position:         resp.Request.Position,
+			StatusCode:       resp.StatusCode,
+			ContentLength:    resp.ContentLength,
+			ContentWords:     resp.ContentWords,
+			ContentLines:     resp.ContentLines,
+			RedirectLocation: resp.GetRedirectLocation(),
+			Url:              resp.Request.Url,
 		}
 		s.Results = append(s.Results, sResult)
 	}

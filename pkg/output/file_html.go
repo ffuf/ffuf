@@ -65,6 +65,8 @@ const (
               <th>Status</th>
 {{ range .Keys }}              <th>{{ . }}</th>
 {{ end }}
+			  <th>URL</th>
+			  <th>Redirect location</th>
               <th>Position</th>
               <th>Length</th>
               <th>Words</th>
@@ -75,9 +77,9 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|
                 </div>
-				<tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};"><td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>{{ range $keyword, $value := $result.Input }}<td>{{ $value | printf "%s" }}</td>{{ end }}</td><td>{{ $result.Position }}</td><td>{{ $result.ContentLength }}</td><td>{{ $result.ContentWords }}</td><td>{{ $result.ContentLines }}</td></tr>
+				<tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};"><td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>{{ range $keyword, $value := $result.Input }}<td>{{ $value | printf "%s" }}</td>{{ end }}</td><td>{{ $result.Url }}</td><td>{{ $result.RedirectLocation }}</td><td>{{ $result.Position }}</td><td>{{ $result.ContentLength }}</td><td>{{ $result.ContentWords }}</td><td>{{ $result.ContentLines }}</td></tr>
             {{end}}
         </tbody>
       </table>
