@@ -37,7 +37,6 @@ type Config struct {
 	FollowRedirects        bool
 	AutoCalibration        bool
 	AutoCalibrationStrings []string
-	ShowRedirectLocation   bool
 	Timeout                int
 	ProgressFrequency      int
 	Delay                  optRange
@@ -47,6 +46,7 @@ type Config struct {
 	Context                context.Context
 	ProxyURL               func(*http.Request) (*url.URL, error)
 	CommandLine            string
+	Verbose                bool
 }
 
 type InputProviderConfig struct {
@@ -67,7 +67,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.StopOn403 = false
 	conf.StopOnErrors = false
 	conf.StopOnAll = false
-	conf.ShowRedirectLocation = false
 	conf.FollowRedirects = false
 	conf.InputProviders = make([]InputProviderConfig, 0)
 	conf.CommandKeywords = make([]string, 0)
@@ -81,5 +80,6 @@ func NewConfig(ctx context.Context) Config {
 	// Progress update frequency, in milliseconds
 	conf.ProgressFrequency = 100
 	conf.DirSearchCompat = false
+	conf.Verbose = false
 	return conf
 }

@@ -139,7 +139,6 @@ Usage of ./ffuf:
   -input-num int
     	Number of inputs to test. Used in conjunction with --input-cmd. (default 100)
   -k	TLS identity verification
-  -l	Show target location of redirect responses
   -mc string
     	Match HTTP status codes from respose, use "all" to match every response code. (default "200,204,301,302,307,401,403")
   -ml string
@@ -172,6 +171,7 @@ Usage of ./ffuf:
     	HTTP request timeout in seconds. (default 10)
   -u string
     	Target URL
+  -v	Verbose output, printing full URL and redirect location (if any) with the results.
   -w value
     	Wordlist file path and (optional) custom fuzz keyword, using colon as delimiter. Use file path '-' to read from standard input. Can be supplied multiple times. Format: '/path/to/wordlist:KEYWORD'
   -x string
@@ -197,10 +197,12 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
     - Redirect location is always shown in the output files (when using `-o`)
     - Full URL is always shown in the output files (when using `-o`)
     - HTML output format got [DataTables](https://datatables.net/) support allowing realtime searches, sorting by column etc.
+    - New CLI flag `-v` for verbose output. Including full URL, and redirect location.
   - Changed
     - Fixed a bug in the default multi wordlist mode
     - Fixed JSON output regression, where all the input data was always encoded in base64 
     - `--debug-log` no correctly logs connection errors
+    - Removed `-l` flag in favor of `-v`
 
 - v0.11
 

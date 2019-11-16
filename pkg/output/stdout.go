@@ -159,7 +159,7 @@ func (s *Stdoutput) printResult(resp ffuf.Response) {
 	if s.config.Quiet {
 		s.resultQuiet(resp)
 	} else {
-		if len(resp.Request.Input) > 1 {
+		if len(resp.Request.Input) > 1 || s.config.Verbose {
 			// Print a multi-line result (when using multiple input keywords and wordlists)
 			s.resultMultiline(resp)
 		} else {
@@ -199,9 +199,16 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, resp.StatusCode, resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
+	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, resp.StatusCode, resp.ContentLength, resp.ContentWords, resp.ContentLines)
 	res_hdr = s.colorize(res_hdr, resp.StatusCode)
 	reslines := ""
+	if s.config.Verbose {
+		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, resp.Request.Url)
+		redirectLocation := resp.GetRedirectLocation()
+		if redirectLocation != "" {
+			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
+		}
+	}
 	for k, v := range resp.Request.Input {
 		if inSlice(k, s.config.CommandKeywords) {
 			// If we're using external command for input, display the position instead of input
@@ -211,24 +218,13 @@ func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
 		}
 	}
-	fmt.Printf("%s\n%s", res_hdr, reslines)
+	fmt.Printf("%s\n%s\n", res_hdr, reslines)
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var res_str string
-	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d%s]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines, s.addRedirectLocation(resp))
+	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
 	fmt.Println(res_str)
-}
-
-// addRedirectLocation returns a formatted string containing the Redirect location or returns an empty string
-func (s *Stdoutput) addRedirectLocation(resp ffuf.Response) string {
-	if s.config.ShowRedirectLocation == true {
-		redirectLocation := resp.GetRedirectLocation()
-		if redirectLocation != "" {
-			return fmt.Sprintf(", ->: %s", redirectLocation)
-		}
-	}
-	return ""
 }
 
 func (s *Stdoutput) colorize(input string, status int64) string {
