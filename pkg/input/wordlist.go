@@ -121,7 +121,7 @@ func (w *WordlistInput) readFile(path string) error {
 			}
 		} else {
 			data = append(data, []byte(reader.Text()))
-			if len(w.config.Extensions) > 0 {
+			if w.keyword == "FUZZ" && len(w.config.Extensions) > 0 {
 				for _, ext := range w.config.Extensions {
 					data = append(data, []byte(reader.Text()+ext))
 				}
