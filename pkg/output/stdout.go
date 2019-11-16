@@ -49,9 +49,64 @@ func (s *Stdoutput) Banner() error {
 	fmt.Printf("%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
+	// Print headers
+	if len(s.config.Headers) > 0 {
+		for k, v := range s.config.Headers {
+			printOption([]byte("Header"), []byte(fmt.Sprintf("%s: %s", k, v)))
+		}
+	}
+	// Print POST data
+	if len(s.config.Data) > 0 {
+		printOption([]byte("Data"), []byte(s.config.Data))
+	}
+
+	// Print extensions
+	if len(s.config.Extensions) > 0 {
+		exts := ""
+		for _, ext := range s.config.Extensions {
+			exts = fmt.Sprintf("%s%s ", exts, ext)
+		}
+		printOption([]byte("Extensions"), []byte(exts))
+	}
+
+	// Output file info
+	if len(s.config.OutputFile) > 0 {
+		printOption([]byte("Output file"), []byte(s.config.OutputFile))
+		printOption([]byte("File format"), []byte(s.config.OutputFormat))
+	}
+
+	// Follow redirects?
+	follow := fmt.Sprintf("%t", s.config.FollowRedirects)
+	printOption([]byte("Follow redirects"), []byte(follow))
+
+	// Autocalibration
+	autocalib := fmt.Sprintf("%t", s.config.AutoCalibration)
+	printOption([]byte("Calibration"), []byte(autocalib))
+
+	// Timeout
+	timeout := fmt.Sprintf("%d", s.config.Timeout)
+	printOption([]byte("Timeout"), []byte(timeout))
+
+	// Threads
+	threads := fmt.Sprintf("%d", s.config.Threads)
+	printOption([]byte("Threads"), []byte(threads))
+
+	// Delay?
+	if s.config.Delay.HasDelay {
+		delay := ""
+		if s.config.Delay.IsRange {
+			delay = fmt.Sprintf("%.2f - %.2f seconds", s.config.Delay.Min, s.config.Delay.Max)
+		} else {
+			delay = fmt.Sprintf("%.2f seconds", s.config.Delay.Min)
+		}
+		printOption([]byte("Delay"), []byte(delay))
+	}
+
+	// Print matchers
 	for _, f := range s.config.Matchers {
 		printOption([]byte("Matcher"), []byte(f.Repr()))
 	}
+	// Print filters
 	for _, f := range s.config.Filters {
 		printOption([]byte("Filter"), []byte(f.Repr()))
 	}
@@ -248,7 +303,7 @@ func (s *Stdoutput) colorize(input string, status int64) string {
 }
 
 func printOption(name []byte, value []byte) {
-	fmt.Printf(" :: %-12s : %s\n", name, value)
+	fmt.Printf(" :: %-16s : %s\n", name, value)
 }
 
 func inSlice(key string, slice []string) bool {
