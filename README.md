@@ -198,11 +198,13 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
     - Full URL is always shown in the output files (when using `-o`)
     - HTML output format got [DataTables](https://datatables.net/) support allowing realtime searches, sorting by column etc.
     - New CLI flag `-v` for verbose output. Including full URL, and redirect location.
+    - SIGTERM monitoring, in order to catch keyboard interrupts an such, to be able to write `-o` files before exiting.
   - Changed
     - Fixed a bug in the default multi wordlist mode
     - Fixed JSON output regression, where all the input data was always encoded in base64 
     - `--debug-log` no correctly logs connection errors
     - Removed `-l` flag in favor of `-v`
+    - More verbose information in banner shown in startup.
 
 - v0.11
 
