@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -163,12 +164,14 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
 		j.incError()
+		log.Printf("%s", err)
 		return
 	}
 	resp, err := j.Runner.Execute(&req)
 	if err != nil {
 		if retried {
 			j.incError()
+			log.Printf("%s", err)
 		} else {
 			j.runTask(input, position, true)
 		}
@@ -214,6 +217,7 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 		if err != nil {
 			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
 			j.incError()
+			log.Printf("%s", err)
 			return results, err
 		}
 		resp, err := j.Runner.Execute(&req)
