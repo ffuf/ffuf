@@ -15,12 +15,14 @@ type ejsonFileOutput struct {
 }
 
 type JsonResult struct {
-	Input         map[string]string `json:"input"`
-	Position      int               `json:"position"`
-	StatusCode    int64             `json:"status"`
-	ContentLength int64             `json:"length"`
-	ContentWords  int64             `json:"words"`
-	ContentLines  int64             `json:"lines"`
+	Input            map[string]string `json:"input"`
+	Position         int               `json:"position"`
+	StatusCode       int64             `json:"status"`
+	ContentLength    int64             `json:"length"`
+	ContentWords     int64             `json:"words"`
+	ContentLines     int64             `json:"lines"`
+	RedirectLocation string            `json:"redirectlocation"`
+	Url              string            `json:"url"`
 }
 
 type jsonFileOutput struct {
@@ -57,12 +59,14 @@ func writeJSON(config *ffuf.Config, res []Result) error {
 			strinput[k] = string(v)
 		}
 		jsonRes = append(jsonRes, JsonResult{
-			Input:         strinput,
-			Position:      r.Position,
-			StatusCode:    r.StatusCode,
-			ContentLength: r.ContentLength,
-			ContentWords:  r.ContentWords,
-			ContentLines:  r.ContentLines,
+			Input:            strinput,
+			Position:         r.Position,
+			StatusCode:       r.StatusCode,
+			ContentLength:    r.ContentLength,
+			ContentWords:     r.ContentWords,
+			ContentLines:     r.ContentLines,
+			RedirectLocation: r.RedirectLocation,
+			Url:              r.Url,
 		})
 	}
 	outJSON := jsonFileOutput{
