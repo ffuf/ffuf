@@ -194,9 +194,13 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
   - New
     - Added a new flag to select a multi wordlist operation mode: `--mode`, possible values: `clusterbomb` and `pitchfork`.
     - Added a new output file format eJSON, for always base64 encoding the input data.
+    - Redirect location is always shown in the output files (when using `-o`)
+    - Full URL is always shown in the output files (when using `-o`)
+    - HTML output format got [DataTables](https://datatables.net/) support allowing realtime searches, sorting by column etc.
   - Changed
     - Fixed a bug in the default multi wordlist mode
     - Fixed JSON output regression, where all the input data was always encoded in base64 
+    - `--debug-log` no correctly logs connection errors
 
 - v0.11
 
