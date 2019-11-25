@@ -160,7 +160,7 @@ Usage of ./ffuf:
   -r	Follow redirects
   -s	Do not print additional information (silent mode)
   -sa
-    	Stop on all error cases. Implies -sf and -se
+    	Stop on all error cases. Implies -sf and -se and 429 response codes.
   -se
     	Stop on spurious errors
   -sf
@@ -194,6 +194,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
   - New
   - Changed
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
+    - Take 429 responses into account when -sa (stop on all error cases) is used
 
 - v0.12
   - New
@@ -206,7 +207,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
     - SIGTERM monitoring, in order to catch keyboard interrupts an such, to be able to write `-o` files before exiting.
   - Changed
     - Fixed a bug in the default multi wordlist mode
-    - Fixed JSON output regression, where all the input data was always encoded in base64 
+    - Fixed JSON output regression, where all the input data was always encoded in base64
     - `--debug-log` no correctly logs connection errors
     - Removed `-l` flag in favor of `-v`
     - More verbose information in banner shown in startup.
