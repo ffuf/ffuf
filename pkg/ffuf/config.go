@@ -35,6 +35,7 @@ type Config struct {
 	StopOnErrors           bool
 	StopOnAll              bool
 	FollowRedirects        bool
+	IgnoreWordlistComments bool
 	AutoCalibration        bool
 	AutoCalibrationStrings []string
 	Timeout                int
@@ -68,6 +69,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.StopOnErrors = false
 	conf.StopOnAll = false
 	conf.FollowRedirects = false
+	conf.IgnoreWordlistComments = false
 	conf.InputProviders = make([]InputProviderConfig, 0)
 	conf.CommandKeywords = make([]string, 0)
 	conf.InputNum = 0

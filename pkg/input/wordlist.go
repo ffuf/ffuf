@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -117,13 +118,23 @@ func (w *WordlistInput) readFile(path string) error {
 					data = append(data, []byte(contnt))
 				}
 			} else {
-				data = append(data, []byte(reader.Text()))
+				text := reader.Text()
+
+				if w.config.IgnoreWordlistComments && strings.HasPrefix(text, "#") {
+					continue
+				}
+				data = append(data, []byte(text))
 			}
 		} else {
-			data = append(data, []byte(reader.Text()))
+			text := reader.Text()
+
+			if w.config.IgnoreWordlistComments && strings.HasPrefix(text, "#") {
+				continue
+			}
+			data = append(data, []byte(text))
 			if w.keyword == "FUZZ" && len(w.config.Extensions) > 0 {
 				for _, ext := range w.config.Extensions {
-					data = append(data, []byte(reader.Text()+ext))
+					data = append(data, []byte(text+ext))
 				}
 			}
 		}
