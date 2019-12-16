@@ -160,7 +160,7 @@ Usage of ./ffuf:
   -r	Follow redirects
   -s	Do not print additional information (silent mode)
   -sa
-    	Stop on all error cases. Implies -sf and -se and 429 response codes.
+    	Stop on all error cases. Implies -sf and -se. Also stops on spurious 429 response codes.
   -se
     	Stop on spurious errors
   -sf
