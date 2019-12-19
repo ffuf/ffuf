@@ -30,8 +30,8 @@ func (f *RegexpFilter) Filter(response *ffuf.Response) (bool, error) {
 	matchdata := []byte(matchheaders)
 	matchdata = append(matchdata, response.Data...)
 	// is the raw value a fuzzing keyword
-	if _, fuzzed := inputs[f.valueRaw]; fuzzed {
-		matched, err := regexp.Match(string(inputs[f.valueRaw]), matchdata)
+	if _, fuzzed := response.Request.Input[f.valueRaw]; fuzzed {
+		matched, err := regexp.Match(regexp.QuoteMeta(string(response.Request.Input[f.valueRaw])), matchdata)
 		if err != nil {
 			return false, nil
 		}
