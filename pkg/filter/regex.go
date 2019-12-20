@@ -3,6 +3,7 @@ package filter
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -29,15 +30,15 @@ func (f *RegexpFilter) Filter(response *ffuf.Response) (bool, error) {
 	}
 	matchdata := []byte(matchheaders)
 	matchdata = append(matchdata, response.Data...)
-	// is the raw value a fuzzing keyword
-	if _, fuzzed := response.Request.Input[f.valueRaw]; fuzzed {
-		matched, err := regexp.Match(regexp.QuoteMeta(string(response.Request.Input[f.valueRaw])), matchdata)
-		if err != nil {
-			return false, nil
-		}
-		return matched, nil
+	pattern := f.valueRaw
+	for keyword, inputitem := range response.Request.Input {
+		pattern = strings.Replace(pattern, keyword, regexp.QuoteMeta(string(inputitem)), -1)
 	}
-	return f.Value.Match(matchdata), nil
+	matched, err := regexp.Match(pattern, matchdata)
+	if err != nil {
+		return false, nil
+	}
+	return matched, nil
 }
 
 func (f *RegexpFilter) Repr() string {
