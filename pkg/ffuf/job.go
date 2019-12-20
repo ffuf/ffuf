@@ -24,6 +24,7 @@ type Job struct {
 	Total                int
 	Running              bool
 	Count403             int
+	Count429             int
 	Error                string
 	startTime            time.Time
 }
@@ -50,6 +51,13 @@ func (j *Job) inc403() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.Count403++
+}
+
+// inc429 increments the 429 response counter
+func (j *Job) inc429() {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	j.Count429++
 }
 
 //resetSpuriousErrors resets the spurious error counter
@@ -197,9 +205,17 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		j.resetSpuriousErrors()
 	}
 	if j.Config.StopOn403 || j.Config.StopOnAll {
-		// Incremnt Forbidden counter if we encountered one
+		// Increment Forbidden counter if we encountered one
 		if resp.StatusCode == 403 {
 			j.inc403()
+		}
+	}
+	if j.Config.StopOnAll {
+		// increment 429 counter if the response code is 429
+		if j.Config.StopOnAll {
+			if resp.StatusCode == 429 {
+				j.inc429()
+			}
 		}
 	}
 	if j.isMatch(resp) {
@@ -249,6 +265,7 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 	return results, nil
 }
 
+// CheckStop stops the job if stopping conditions are met
 func (j *Job) CheckStop() {
 	if j.Counter > 50 {
 		// We have enough samples
@@ -266,6 +283,11 @@ func (j *Job) CheckStop() {
 				j.Stop()
 			}
 
+		}
+		if j.Config.StopOnAll && (float64(j.Count429)/float64(j.Counter) > 0.2) {
+			// Over 20% of responses are 429
+			j.Error = "Getting an unusual amount of 429 responses, exiting."
+			j.Stop()
 		}
 	}
 }
