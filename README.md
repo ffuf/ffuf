@@ -160,7 +160,7 @@ Usage of ./ffuf:
   -r	Follow redirects
   -s	Do not print additional information (silent mode)
   -sa
-    	Stop on all error cases. Implies -sf and -se
+    	Stop on all error cases. Implies -sf and -se. Also stops on spurious 429 response codes.
   -se
     	Stop on spurious errors
   -sf
@@ -195,6 +195,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
   - Changed
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
     - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns
+    - Take 429 responses into account when -sa (stop on all error cases) is used
 
 - v0.12
   - New
