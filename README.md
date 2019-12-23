@@ -194,6 +194,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
   - New
   - Changed
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
+    - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns
 
 - v0.12
   - New
@@ -206,7 +207,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
     - SIGTERM monitoring, in order to catch keyboard interrupts an such, to be able to write `-o` files before exiting.
   - Changed
     - Fixed a bug in the default multi wordlist mode
-    - Fixed JSON output regression, where all the input data was always encoded in base64 
+    - Fixed JSON output regression, where all the input data was always encoded in base64
     - `--debug-log` no correctly logs connection errors
     - Removed `-l` flag in favor of `-v`
     - More verbose information in banner shown in startup.
