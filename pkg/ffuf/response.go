@@ -14,6 +14,8 @@ type Response struct {
 	ContentLines  int64
 	Cancelled     bool
 	Request       *Request
+	Raw           string
+	ResultFile    string
 }
 
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response
@@ -33,5 +35,7 @@ func NewResponse(httpresp *http.Response, req *Request) Response {
 	resp.StatusCode = int64(httpresp.StatusCode)
 	resp.Headers = httpresp.Header
 	resp.Cancelled = false
+	resp.Raw = ""
+	resp.ResultFile = ""
 	return resp
 }

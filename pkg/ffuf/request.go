@@ -8,6 +8,7 @@ type Request struct {
 	Data     []byte
 	Input    map[string][]byte
 	Position int
+	Raw      string
 }
 
 func NewRequest(conf *Config) Request {

@@ -92,7 +92,7 @@ ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Usage of ./ffuf:
+Usage of ffuf:
   -D	DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.
   -H "Name: Value"
     	Header "Name: Value", separated by colon. Multiple -H flags are accepted.
@@ -122,7 +122,7 @@ Usage of ./ffuf:
   -debug-log string
     	Write all of the internal logging to the specified file.
   -e string
-    	Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once.
+    	Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once. Only extends a wordlist with (default) FUZZ keyword.
   -fc string
     	Filter HTTP status codes from response. Comma separated list of codes and ranges
   -fl string
@@ -153,6 +153,8 @@ Usage of ./ffuf:
     	Match amount of words in response
   -o string
     	Write output to file
+  -od string
+    	Directory path to store matched results to.
   -of string
     	Output file format. Available formats: json, ejson, html, md, csv, ecsv (default "json")
   -p delay
@@ -192,6 +194,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 
 - master
   - New
+    - New CLI flag `-od` (output directory) to enable writing requests and responses for matched results to a file for postprocessing or debugging purposes.
   - Changed
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
     - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns

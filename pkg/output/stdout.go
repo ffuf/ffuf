@@ -1,8 +1,11 @@
 package output
 
 import (
+	"crypto/md5"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -35,6 +38,7 @@ type Result struct {
 	ContentLines     int64             `json:"lines"`
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
+	ResultFile       string            `json:"resultfile"`
 	HTMLColor        string            `json:"-"`
 }
 
@@ -187,6 +191,10 @@ func (s *Stdoutput) Finalize() error {
 }
 
 func (s *Stdoutput) Result(resp ffuf.Response) {
+	// Do we want to write request and response to a file
+	if len(s.config.OutputDirectory) > 0 {
+		resp.ResultFile = s.writeResultToFile(resp)
+	}
 	// Output the result
 	s.printResult(resp)
 	// Check if we need the data later
@@ -205,16 +213,42 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			ContentLines:     resp.ContentLines,
 			RedirectLocation: resp.GetRedirectLocation(),
 			Url:              resp.Request.Url,
+			ResultFile:       resp.ResultFile,
 		}
 		s.Results = append(s.Results, sResult)
 	}
+}
+
+func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
+	var fileContent, fileName, filePath string
+	// Create directory if needed
+	if s.config.OutputDirectory != "" {
+		err := os.Mkdir(s.config.OutputDirectory, 0750)
+		if err != nil {
+			if !os.IsExist(err) {
+				s.Error(fmt.Sprintf("%s", err))
+				return ""
+			}
+		}
+	}
+	fileContent = fmt.Sprintf("%s\n---- ↑ Request ---- Response ↓ ----\n\n%s", resp.Request.Raw, resp.Raw)
+
+	// Create file name
+	fileName = fmt.Sprintf("%x", md5.Sum([]byte(fileContent)))
+
+	filePath = path.Join(s.config.OutputDirectory, fileName)
+	err := ioutil.WriteFile(filePath, []byte(fileContent), 0640)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+	return fileName
 }
 
 func (s *Stdoutput) printResult(resp ffuf.Response) {
 	if s.config.Quiet {
 		s.resultQuiet(resp)
 	} else {
-		if len(resp.Request.Input) > 1 || s.config.Verbose {
+		if len(resp.Request.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 {
 			// Print a multi-line result (when using multiple input keywords and wordlists)
 			s.resultMultiline(resp)
 		} else {
@@ -263,6 +297,9 @@ func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 		if redirectLocation != "" {
 			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
 		}
+	}
+	if resp.ResultFile != "" {
+		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, resp.ResultFile)
 	}
 	for k, v := range resp.Request.Input {
 		if inSlice(k, s.config.CommandKeywords) {

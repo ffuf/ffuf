@@ -29,6 +29,7 @@ type Config struct {
 	CommandKeywords        []string
 	InputNum               int
 	InputMode              string
+	OutputDirectory        string
 	OutputFile             string
 	OutputFormat           string
 	StopOn403              bool
