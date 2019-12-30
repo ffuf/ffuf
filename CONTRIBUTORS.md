@@ -1,0 +1,16 @@
+# Contributors
+
+* [ccsplit](https://github.com/ccsplit)
+* [delic](https://github.com/delic)
+* [eur0pa](https://github.com/eur0pa)
+* [fang0654](https://github.com/fang0654)
+* [JamTookTheBait](https://github.com/JamTookTheBait)
+* [joohoi](https://github.com/joohoi)
+* [jvesiluoma](https://github.com/jvesiluoma)
+* [lc](https://github.com/lc)
+* [nnwakelam](https://twitter.com/nnwakelam)
+* [oh6hay](https://github.com/oh6hay)
+* [putsi](https://github.com/putsi)
+* [SakiiR](https://github.com/SakiiR)
+* [seblw](https://github.com/seblw)
+* [SolomonSklash](https://github.com/SolomonSklash)
