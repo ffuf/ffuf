@@ -103,6 +103,7 @@ func main() {
 	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
+	flag.IntVar(&conf.MaxTime, "maxtime", 0, "Maximum running time in seconds.")
 	flag.BoolVar(&conf.Verbose, "v", false, "Verbose output, printing full URL and redirect location (if any) with the results.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
