@@ -171,6 +171,8 @@ Usage of ffuf:
     	Number of concurrent threads. (default 40)
   -timeout int
     	HTTP request timeout in seconds. (default 10)
+  -maxtime int
+      Maximum running time in seconds. (default 0 = inf.)
   -u string
     	Target URL
   -v	Verbose output, printing full URL and redirect location (if any) with the results.
@@ -195,6 +197,7 @@ The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard l
 - master
   - New
     - New CLI flag `-od` (output directory) to enable writing requests and responses for matched results to a file for postprocessing or debugging purposes.
+    - New CLI flag `-maxtime` to limit the running time of ffuf
   - Changed
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
     - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns

@@ -77,6 +77,7 @@ func (j *Job) Start() {
 		j.Output.Banner()
 	}
 	j.Running = true
+	j.startTime = time.Now()
 	// Monitor for SIGTERM and do cleanup properly (writing the output files etc)
 	j.interruptMonitor()
 	var wg sync.WaitGroup
@@ -131,7 +132,6 @@ func (j *Job) interruptMonitor() {
 
 func (j *Job) runProgress(wg *sync.WaitGroup) {
 	defer wg.Done()
-	j.startTime = time.Now()
 	totalProgress := j.Input.Total()
 	for j.Counter <= totalProgress {
 		if !j.Running {
@@ -287,6 +287,16 @@ func (j *Job) CheckStop() {
 		if j.Config.StopOnAll && (float64(j.Count429)/float64(j.Counter) > 0.2) {
 			// Over 20% of responses are 429
 			j.Error = "Getting an unusual amount of 429 responses, exiting."
+			j.Stop()
+		}
+	}
+
+	// check for maximum running time
+	if j.Config.MaxTime > 0 {
+		dur := time.Now().Sub(j.startTime)
+		runningSecs := int(dur / time.Second)
+		if runningSecs >= j.Config.MaxTime {
+			j.Error = "Maximum running time reached, exiting."
 			j.Stop()
 		}
 	}
