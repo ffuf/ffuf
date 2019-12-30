@@ -48,6 +48,7 @@ type Config struct {
 	ProxyURL               func(*http.Request) (*url.URL, error)
 	CommandLine            string
 	Verbose                bool
+	MaxTime                int
 }
 
 type InputProviderConfig struct {
@@ -82,5 +83,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.ProgressFrequency = 100
 	conf.DirSearchCompat = false
 	conf.Verbose = false
+	conf.MaxTime = 0
 	return conf
 }

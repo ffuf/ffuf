@@ -11,8 +11,6 @@
 
 A fast web fuzzer written in Go.
 
-Heavily inspired by the great projects [gobuster](https://github.com/OJ/gobuster) and [wfuzz](https://github.com/xmendez/wfuzz).
-
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
@@ -139,6 +137,8 @@ Usage of ffuf:
   -input-num int
     	Number of inputs to test. Used in conjunction with --input-cmd. (default 100)
   -k	TLS identity verification
+  -maxtime int
+      Maximum running time in seconds. (default 0 = inf.)
   -mc string
     	Match HTTP status codes from respose, use "all" to match every response code. (default "200,204,301,302,307,401,403")
   -ml string
