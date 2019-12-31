@@ -99,6 +99,8 @@ func main() {
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
 	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se. Also stops on spurious 429 response codes.")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
+	flag.BoolVar(&conf.Recursion, "recursion", false, "Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it.")
+	flag.IntVar(&conf.RecursionDepth, "recursion-depth", 0, "Maximum recursion depth.")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
 	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
@@ -367,6 +369,14 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	for _, provider := range conf.InputProviders {
 		if !keywordPresent(provider.Keyword, conf) {
 			errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
+			errs.Add(fmt.Errorf(errmsg))
+		}
+	}
+
+	// Do checks for recursion mode
+	if conf.Recursion {
+		if !strings.HasSuffix(conf.Url, "FUZZ") {
+			errmsg := fmt.Sprintf("When using -recursion the URL (-u) must end with FUZZ keyword.")
 			errs.Add(fmt.Errorf(errmsg))
 		}
 	}
