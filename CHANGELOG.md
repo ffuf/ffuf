@@ -4,6 +4,7 @@
   - New
     - New CLI flag `-od` (output directory) to enable writing requests and responses for matched results to a file for postprocessing or debugging purposes.
     - New CLI flag `-maxtime` to limit the running time of ffuf
+    - New CLI flags `-recursion` and `-recursion-depth` to control recursive ffuf jobs if directories are found. This requires the `-u` to end with FUZZ keyword.
   - Changed
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
     - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns

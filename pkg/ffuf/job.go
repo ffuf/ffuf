@@ -27,6 +27,14 @@ type Job struct {
 	Count429             int
 	Error                string
 	startTime            time.Time
+	queuejobs            []QueueJob
+	queuepos             int
+	currentDepth         int
+}
+
+type QueueJob struct {
+	Url   string
+	depth int
 }
 
 func NewJob(conf *Config) Job {
@@ -35,6 +43,9 @@ func NewJob(conf *Config) Job {
 	j.ErrorCounter = 0
 	j.SpuriousErrorCounter = 0
 	j.Running = false
+	j.queuepos = 0
+	j.queuejobs = make([]QueueJob, 0)
+	j.currentDepth = 0
 	return j
 }
 
@@ -69,17 +80,47 @@ func (j *Job) resetSpuriousErrors() {
 
 //Start the execution of the Job
 func (j *Job) Start() {
+	// Add the default job to job queue
+	j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0})
 	rand.Seed(time.Now().UnixNano())
 	j.Total = j.Input.Total()
 	defer j.Stop()
+	j.Running = true
+	j.startTime = time.Now()
 	//Show banner if not running in silent mode
 	if !j.Config.Quiet {
 		j.Output.Banner()
 	}
-	j.Running = true
-	j.startTime = time.Now()
 	// Monitor for SIGTERM and do cleanup properly (writing the output files etc)
 	j.interruptMonitor()
+	for j.jobsInQueue() {
+		j.prepareQueueJob()
+		if j.queuepos > 1 {
+			// Print info for queued recursive jobs
+			j.Output.Info(fmt.Sprintf("Scanning: %s", j.Config.Url))
+		}
+		j.Input.Reset()
+		j.Counter = 0
+		j.startExecution()
+	}
+
+	j.Output.Finalize()
+}
+
+func (j *Job) jobsInQueue() bool {
+	if j.queuepos < len(j.queuejobs) {
+		return true
+	}
+	return false
+}
+
+func (j *Job) prepareQueueJob() {
+	j.Config.Url = j.queuejobs[j.queuepos].Url
+	j.currentDepth = j.queuejobs[j.queuepos].depth
+	j.queuepos += 1
+}
+
+func (j *Job) startExecution() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go j.runProgress(&wg)
@@ -115,7 +156,6 @@ func (j *Job) Start() {
 	}
 	wg.Wait()
 	j.updateProgress()
-	j.Output.Finalize()
 	return
 }
 
@@ -150,6 +190,8 @@ func (j *Job) updateProgress() {
 		StartedAt:  j.startTime,
 		ReqCount:   j.Counter,
 		ReqTotal:   j.Input.Total(),
+		QueuePos:   j.queuepos,
+		QueueTotal: len(j.queuejobs),
 		ErrorCount: j.ErrorCounter,
 	}
 	j.Output.Progress(prog)
@@ -223,7 +265,28 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 	}
+
+	if j.Config.Recursion && len(resp.GetRedirectLocation()) > 0 {
+		j.handleRecursionJob(resp)
+	}
 	return
+}
+
+//handleRecursionJob adds a new recursion job to the job queue if a new directory is found
+func (j *Job) handleRecursionJob(resp Response) {
+	if (resp.Request.Url + "/") != resp.GetRedirectLocation() {
+		// Not a directory, return early
+		return
+	}
+	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
+		// We have yet to reach the maximum recursion depth
+		recUrl := resp.Request.Url + "/" + "FUZZ"
+		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1}
+		j.queuejobs = append(j.queuejobs, newJob)
+		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
+	} else {
+		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation()))
+	}
 }
 
 //CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests

@@ -49,6 +49,8 @@ type Config struct {
 	CommandLine            string
 	Verbose                bool
 	MaxTime                int
+	Recursion              bool
+	RecursionDepth         int
 }
 
 type InputProviderConfig struct {
@@ -84,5 +86,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.DirSearchCompat = false
 	conf.Verbose = false
 	conf.MaxTime = 0
+	conf.Recursion = false
+	conf.RecursionDepth = 0
 	return conf
 }

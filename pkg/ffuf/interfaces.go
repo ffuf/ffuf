@@ -17,6 +17,7 @@ type InputProvider interface {
 	AddProvider(InputProviderConfig) error
 	Next() bool
 	Position() int
+	Reset()
 	Value() map[string][]byte
 	Total() int
 }
@@ -37,6 +38,7 @@ type OutputProvider interface {
 	Banner() error
 	Finalize() error
 	Progress(status Progress)
+	Info(infostring string)
 	Error(errstring string)
 	Warning(warnstring string)
 	Result(resp Response)

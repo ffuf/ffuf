@@ -67,6 +67,15 @@ func (i *MainInputProvider) Value() map[string][]byte {
 	return retval
 }
 
+//Reset resets all the inputproviders and counters
+func (i *MainInputProvider) Reset() {
+	for _, p := range i.Providers {
+		p.ResetPosition()
+	}
+	i.position = 0
+	i.msbIterator = 0
+}
+
 //pitchforkValue returns a map of keyword:value pairs including all inputs.
 //This mode will iterate through wordlists in lockstep.
 func (i *MainInputProvider) pitchforkValue() map[string][]byte {
