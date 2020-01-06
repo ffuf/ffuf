@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -28,6 +29,26 @@ func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
 		}
 	}
 	return &StatusFilter{Value: intranges}, nil
+}
+
+func (f *StatusFilter) MarshalJSON() ([]byte, error) {
+	value := make([]string, 0)
+	for _, v := range f.Value {
+		if v.Min == 0 && v.Max == 0 {
+			value = append(value, "all")
+		} else {
+			if v.Min == v.Max {
+				value = append(value, strconv.FormatInt(v.Min, 10))
+			} else {
+				value = append(value, fmt.Sprintf("%d-%d", v.Min, v.Max))
+			}
+		}
+	}
+	return json.Marshal(&struct {
+		Value string `json:"value"`
+	}{
+		Value: strings.Join(value, ","),
+	})
 }
 
 func (f *StatusFilter) Filter(response *ffuf.Response) (bool, error) {

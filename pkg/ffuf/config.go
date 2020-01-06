@@ -2,8 +2,6 @@ package ffuf
 
 import (
 	"context"
-	"net/http"
-	"net/url"
 )
 
 //optRange stores either a single float, in which case the value is stored in min and IsRange is false,
@@ -39,13 +37,13 @@ type Config struct {
 	AutoCalibration        bool
 	AutoCalibrationStrings []string
 	Timeout                int
-	ProgressFrequency      int
+	ProgressFrequency      int `json:"-"`
 	Delay                  optRange
-	Filters                []FilterProvider
-	Matchers               []FilterProvider
+	Filters                map[string]FilterProvider
+	Matchers               map[string]FilterProvider
 	Threads                int
-	Context                context.Context
-	ProxyURL               func(*http.Request) (*url.URL, error)
+	Context                context.Context `json:"-"`
+	ProxyURL               string
 	CommandLine            string
 	Verbose                bool
 	MaxTime                int
@@ -74,10 +72,12 @@ func NewConfig(ctx context.Context) Config {
 	conf.FollowRedirects = false
 	conf.InputProviders = make([]InputProviderConfig, 0)
 	conf.CommandKeywords = make([]string, 0)
+	conf.AutoCalibrationStrings = make([]string, 0)
 	conf.InputNum = 0
 	conf.InputMode = "clusterbomb"
-	conf.ProxyURL = http.ProxyFromEnvironment
-	conf.Filters = make([]FilterProvider, 0)
+	conf.ProxyURL = ""
+	conf.Filters = make(map[string]FilterProvider)
+	conf.Matchers = make(map[string]FilterProvider)
 	conf.Delay = optRange{0, 0, false, false}
 	conf.Extensions = make([]string, 0)
 	conf.Timeout = 10

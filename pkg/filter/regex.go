@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -19,6 +20,14 @@ func NewRegexpFilter(value string) (ffuf.FilterProvider, error) {
 		return &RegexpFilter{}, fmt.Errorf("Regexp filter or matcher (-fr / -mr): invalid value: %s", value)
 	}
 	return &RegexpFilter{Value: re, valueRaw: value}, nil
+}
+
+func (f *RegexpFilter) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Value string `json:"value"`
+	}{
+		Value: f.valueRaw,
+	})
 }
 
 func (f *RegexpFilter) Filter(response *ffuf.Response) (bool, error) {

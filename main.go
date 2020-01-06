@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -326,11 +325,11 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	// Verify proxy url format
 	if len(parseOpts.proxyURL) > 0 {
-		pu, err := url.Parse(parseOpts.proxyURL)
+		_, err := url.Parse(parseOpts.proxyURL)
 		if err != nil {
 			errs.Add(fmt.Errorf("Bad proxy url (-x) format: %s", err))
 		} else {
-			conf.ProxyURL = http.ProxyURL(pu)
+			conf.ProxyURL = parseOpts.proxyURL
 		}
 	}
 
@@ -351,7 +350,9 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	// Auto-calibration strings
-	conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
+	if len(parseOpts.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
+	}
 	// Using -acc implies -ac
 	if len(conf.AutoCalibrationStrings) > 0 {
 		conf.AutoCalibration = true

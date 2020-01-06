@@ -30,6 +30,7 @@ type jsonFileOutput struct {
 	CommandLine string       `json:"commandline"`
 	Time        string       `json:"time"`
 	Results     []JsonResult `json:"results"`
+	Config      *ffuf.Config `json:"config"`
 }
 
 func writeEJSON(config *ffuf.Config, res []Result) error {
@@ -75,6 +76,7 @@ func writeJSON(config *ffuf.Config, res []Result) error {
 		CommandLine: config.CommandLine,
 		Time:        t.Format(time.RFC3339),
 		Results:     jsonRes,
+		Config:      config,
 	}
 	outBytes, err := json.Marshal(outJSON)
 	if err != nil {
