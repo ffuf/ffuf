@@ -34,7 +34,7 @@ func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 			MaxIdleConnsPerHost: 500,
 			MaxConnsPerHost:     500,
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: !conf.TLSVerify,
+				InsecureSkipVerify: true,
 			},
 		}}
 
