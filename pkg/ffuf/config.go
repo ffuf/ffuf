@@ -4,57 +4,48 @@ import (
 	"context"
 )
 
-//optRange stores either a single float, in which case the value is stored in min and IsRange is false,
-//or a range of floats, in which case IsRange is true
-type optRange struct {
-	Min      float64
-	Max      float64
-	IsRange  bool
-	HasDelay bool
-}
-
 type Config struct {
-	Headers                map[string]string
-	Extensions             []string
-	DirSearchCompat        bool
-	Method                 string
-	Url                    string
+	Headers                map[string]string `json:"headers"`
+	Extensions             []string          `json:"extensions"`
+	DirSearchCompat        bool              `json:"dirsearch_compatibility"`
+	Method                 string            `json:"method"`
+	Url                    string            `json:"url"`
 	TLSVerify              bool
-	Data                   string
-	Quiet                  bool
-	Colors                 bool
-	InputProviders         []InputProviderConfig
-	CommandKeywords        []string
-	InputNum               int
-	InputMode              string
-	OutputDirectory        string
-	OutputFile             string
-	OutputFormat           string
-	StopOn403              bool
-	StopOnErrors           bool
-	StopOnAll              bool
-	FollowRedirects        bool
-	AutoCalibration        bool
-	AutoCalibrationStrings []string
-	Timeout                int
-	ProgressFrequency      int `json:"-"`
-	Delay                  optRange
-	Filters                map[string]FilterProvider
-	Matchers               map[string]FilterProvider
-	Threads                int
-	Context                context.Context `json:"-"`
-	ProxyURL               string
-	CommandLine            string
-	Verbose                bool
-	MaxTime                int
-	Recursion              bool
-	RecursionDepth         int
+	Data                   string                    `json:"postdata"`
+	Quiet                  bool                      `json:"quiet"`
+	Colors                 bool                      `json:"colors"`
+	InputProviders         []InputProviderConfig     `json:"inputproviders"`
+	CommandKeywords        []string                  `json:"-"`
+	InputNum               int                       `json:"cmd_inputnum"`
+	InputMode              string                    `json:"inputmode"`
+	OutputDirectory        string                    `json:"outputdirectory"`
+	OutputFile             string                    `json:"outputfile"`
+	OutputFormat           string                    `json:"outputformat"`
+	StopOn403              bool                      `json:"stop_403"`
+	StopOnErrors           bool                      `json:"stop_errors"`
+	StopOnAll              bool                      `json:"stop_all"`
+	FollowRedirects        bool                      `json:"follow_redirects"`
+	AutoCalibration        bool                      `json:"autocalibration"`
+	AutoCalibrationStrings []string                  `json:"autocalibration_strings"`
+	Timeout                int                       `json:"timeout"`
+	ProgressFrequency      int                       `json:"-"`
+	Delay                  optRange                  `json:"delay"`
+	Filters                map[string]FilterProvider `json:"filters"`
+	Matchers               map[string]FilterProvider `json:"matchers"`
+	Threads                int                       `json:"threads"`
+	Context                context.Context           `json:"-"`
+	ProxyURL               string                    `json:"proxyurl"`
+	CommandLine            string                    `json:"cmdline"`
+	Verbose                bool                      `json:"verbose"`
+	MaxTime                int                       `json:"maxtime"`
+	Recursion              bool                      `json:"recursion"`
+	RecursionDepth         int                       `json:"recursion_depth"`
 }
 
 type InputProviderConfig struct {
-	Name    string
-	Keyword string
-	Value   string
+	Name    string `json:"name"`
+	Keyword string `json:"keyword"`
+	Value   string `json:"value"`
 }
 
 func NewConfig(ctx context.Context) Config {
