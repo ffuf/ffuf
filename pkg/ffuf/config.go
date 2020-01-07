@@ -5,12 +5,11 @@ import (
 )
 
 type Config struct {
-	Headers                map[string]string `json:"headers"`
-	Extensions             []string          `json:"extensions"`
-	DirSearchCompat        bool              `json:"dirsearch_compatibility"`
-	Method                 string            `json:"method"`
-	Url                    string            `json:"url"`
-	TLSVerify              bool
+	Headers                map[string]string         `json:"headers"`
+	Extensions             []string                  `json:"extensions"`
+	DirSearchCompat        bool                      `json:"dirsearch_compatibility"`
+	Method                 string                    `json:"method"`
+	Url                    string                    `json:"url"`
 	Data                   string                    `json:"postdata"`
 	Quiet                  bool                      `json:"quiet"`
 	Colors                 bool                      `json:"colors"`
@@ -54,7 +53,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.Headers = make(map[string]string)
 	conf.Method = "GET"
 	conf.Url = ""
-	conf.TLSVerify = false
 	conf.Data = ""
 	conf.Quiet = false
 	conf.StopOn403 = false

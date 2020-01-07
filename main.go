@@ -64,7 +64,7 @@ func main() {
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) custom fuzz keyword, using colon as delimiter. Use file path '-' to read from standard input. Can be supplied multiple times. Format: '/path/to/wordlist:KEYWORD'")
-	flag.BoolVar(&conf.TLSVerify, "k", false, "TLS identity verification")
+	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response. Comma separated list of codes and ranges")
 	flag.StringVar(&opts.filterSize, "fs", "", "Filter HTTP response size. Comma separated list of sizes and ranges")
