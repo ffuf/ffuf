@@ -9,6 +9,7 @@
     - Limit the use of `-e` (extensions) to a single keyword: FUZZ
     - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns
     - Take 429 responses into account when -sa (stop on all error cases) is used
+    - Write configuration to output JSON
 
 - v0.12
   - New
