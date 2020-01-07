@@ -21,7 +21,6 @@ type Config struct {
 	DirSearchCompat        bool
 	Method                 string
 	Url                    string
-	TLSVerify              bool
 	Data                   string
 	Quiet                  bool
 	Colors                 bool
@@ -65,7 +64,6 @@ func NewConfig(ctx context.Context) Config {
 	conf.Headers = make(map[string]string)
 	conf.Method = "GET"
 	conf.Url = ""
-	conf.TLSVerify = false
 	conf.Data = ""
 	conf.Quiet = false
 	conf.StopOn403 = false
