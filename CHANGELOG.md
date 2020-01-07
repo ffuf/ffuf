@@ -10,7 +10,7 @@
     - Regexp matching and filtering (-mr/-fr) allow using keywords in patterns
     - Take 429 responses into account when -sa (stop on all error cases) is used
     - Remove -k flag support, convert to dummy flag #134
-
+    - Write configuration to output JSON
 
 - v0.12
   - New

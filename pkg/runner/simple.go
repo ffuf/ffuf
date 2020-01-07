@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -24,12 +25,21 @@ type SimpleRunner struct {
 
 func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
 	var simplerunner SimpleRunner
+	proxyURL := http.ProxyFromEnvironment
+
+	if len(conf.ProxyURL) > 0 {
+		pu, err := url.Parse(conf.ProxyURL)
+		if err == nil {
+			proxyURL = http.ProxyURL(pu)
+		}
+	}
+
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
-			Proxy:               conf.ProxyURL,
+			Proxy:               proxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
 			MaxConnsPerHost:     500,

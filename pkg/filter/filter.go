@@ -31,7 +31,7 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 func AddFilter(conf *ffuf.Config, name string, option string) error {
 	newf, err := NewFilterByName(name, option)
 	if err == nil {
-		conf.Filters = append(conf.Filters, newf)
+		conf.Filters[name] = newf
 	}
 	return err
 }
@@ -40,7 +40,7 @@ func AddFilter(conf *ffuf.Config, name string, option string) error {
 func AddMatcher(conf *ffuf.Config, name string, option string) error {
 	newf, err := NewFilterByName(name, option)
 	if err == nil {
-		conf.Matchers = append(conf.Matchers, newf)
+		conf.Matchers[name] = newf
 	}
 	return err
 }
