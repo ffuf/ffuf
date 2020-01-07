@@ -87,6 +87,16 @@ func (s *Stdoutput) Banner() error {
 	autocalib := fmt.Sprintf("%t", s.config.AutoCalibration)
 	printOption([]byte("Calibration"), []byte(autocalib))
 
+	// Proxies
+	if len(s.config.ProxyURL) > 0 {
+		proxy := fmt.Sprintf("%s", s.config.ProxyURL)
+		printOption([]byte("Proxy"), []byte(proxy))
+	}
+	if len(s.config.ReplayProxyURL) > 0 {
+		replayproxy := fmt.Sprintf("%s", s.config.ReplayProxyURL)
+		printOption([]byte("ReplayProxy"), []byte(replayproxy))
+	}
+
 	// Timeout
 	timeout := fmt.Sprintf("%d", s.config.Timeout)
 	printOption([]byte("Timeout"), []byte(timeout))
