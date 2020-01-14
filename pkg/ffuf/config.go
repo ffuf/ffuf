@@ -20,6 +20,7 @@ type Config struct {
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
+	IgnoreWordlistComments bool                      `json:"ignore_wordlist_comments"`
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnErrors           bool                      `json:"stop_errors"`
 	StopOnAll              bool                      `json:"stop_all"`
@@ -55,6 +56,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.Url = ""
 	conf.Data = ""
 	conf.Quiet = false
+	conf.IgnoreWordlistComments = false
 	conf.StopOn403 = false
 	conf.StopOnErrors = false
 	conf.StopOnAll = false

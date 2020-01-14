@@ -59,6 +59,7 @@ func main() {
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
 	var ignored bool
+	flag.BoolVar(&conf.IgnoreWordlistComments, "ic", false, "Ignore wordlist comments")
 	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once. Only extends a wordlist with (default) FUZZ keyword.")
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
