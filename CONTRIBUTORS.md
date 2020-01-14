@@ -15,4 +15,4 @@
 * [seblw](https://github.com/seblw)
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [Shaked](https://github.com/Shaked)
-* [Ice3man543])(https://github.com/Ice3man543)
+* [Ice3man543](https://github.com/Ice3man543)
