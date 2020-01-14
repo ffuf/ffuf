@@ -436,8 +436,19 @@ func parseRawRequest(parseOpts *cliOptions, conf *ffuf.Config) error {
 		conf.Headers[strings.TrimSpace(p[0])] = strings.TrimSpace(p[1])
 	}
 
-	// Build the request URL from the request
-	conf.Url = parseOpts.requestProto + "://" + conf.Headers["Host"] + parts[1]
+	// Handle case with the full http url in path. In that case,
+	// ignore any host header that we encounter and use the path as request URL
+	if !strings.HasPrefix(parts[1], "/") && strings.HasPrefix(parts[1], "http") {
+		parsed, err := url.Parse(parts[1])
+		if err != nil {
+			return fmt.Errorf("could not parse request URL: %s", err)
+		}
+		conf.Url = parts[1]
+		conf.Headers["Host"] = parsed.Host
+	} else {
+		// Build the request URL from the request
+		conf.Url = parseOpts.requestProto + "://" + conf.Headers["Host"] + parts[1]
+	}
 
 	// Set the request body
 	b, err := ioutil.ReadAll(r)
