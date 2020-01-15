@@ -3,6 +3,7 @@
 - master
   - New
     - New CLI flag `-ic` to ignore comments from wordlist.
+    - New CLI flags `-request` to specify the raw request file to build the actual request from and `-request-proto` to define the new request format.
     - New CLI flag `-od` (output directory) to enable writing requests and responses for matched results to a file for postprocessing or debugging purposes.
     - New CLI flag `-maxtime` to limit the running time of ffuf
     - New CLI flags `-recursion` and `-recursion-depth` to control recursive ffuf jobs if directories are found. This requires the `-u` to end with FUZZ keyword.
