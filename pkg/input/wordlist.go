@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -106,6 +107,7 @@ func (w *WordlistInput) readFile(path string) error {
 	defer file.Close()
 
 	var data [][]byte
+	var ok bool
 	reader := bufio.NewScanner(file)
 	re := regexp.MustCompile(`(?i)%ext%`)
 	for reader.Scan() {
@@ -117,17 +119,50 @@ func (w *WordlistInput) readFile(path string) error {
 					data = append(data, []byte(contnt))
 				}
 			} else {
-				data = append(data, []byte(reader.Text()))
+				text := reader.Text()
+
+				if w.config.IgnoreWordlistComments {
+					text, ok = stripComments(text)
+					if !ok {
+						continue
+					}
+				}
+				data = append(data, []byte(text))
 			}
 		} else {
-			data = append(data, []byte(reader.Text()))
+			text := reader.Text()
+
+			if w.config.IgnoreWordlistComments {
+				text, ok = stripComments(text)
+				if !ok {
+					continue
+				}
+			}
+			data = append(data, []byte(text))
 			if w.keyword == "FUZZ" && len(w.config.Extensions) > 0 {
 				for _, ext := range w.config.Extensions {
-					data = append(data, []byte(reader.Text()+ext))
+					data = append(data, []byte(text+ext))
 				}
 			}
 		}
 	}
 	w.data = data
 	return reader.Err()
+}
+
+// stripComments removes all kind of comments from the word
+func stripComments(text string) (string, bool) {
+	// If the line starts with a # ignoring any space on the left,
+	// return blank.
+	if strings.HasPrefix(strings.TrimLeft(text, " "), "#") {
+		return "", false
+	}
+
+	// If the line has # later after a space, that's a comment.
+	// Only send the word upto space to the routine.
+	index := strings.Index(text, " #")
+	if index == -1 {
+		return text, true
+	}
+	return text[:index], true
 }
