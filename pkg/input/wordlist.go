@@ -107,6 +107,7 @@ func (w *WordlistInput) readFile(path string) error {
 	defer file.Close()
 
 	var data [][]byte
+	var ok bool
 	reader := bufio.NewScanner(file)
 	re := regexp.MustCompile(`(?i)%ext%`)
 	for reader.Scan() {
@@ -121,7 +122,10 @@ func (w *WordlistInput) readFile(path string) error {
 				text := reader.Text()
 
 				if w.config.IgnoreWordlistComments {
-					text = stripComments(text)
+					text, ok = stripComments(text)
+					if !ok {
+						continue
+					}
 				}
 				data = append(data, []byte(text))
 			}
@@ -129,7 +133,10 @@ func (w *WordlistInput) readFile(path string) error {
 			text := reader.Text()
 
 			if w.config.IgnoreWordlistComments {
-				text = stripComments(text)
+				text, ok = stripComments(text)
+				if !ok {
+					continue
+				}
 			}
 			data = append(data, []byte(text))
 			if w.keyword == "FUZZ" && len(w.config.Extensions) > 0 {
@@ -144,18 +151,18 @@ func (w *WordlistInput) readFile(path string) error {
 }
 
 // stripComments removes all kind of comments from the word
-func stripComments(text string) string {
+func stripComments(text string) (string, bool) {
 	// If the line starts with a # ignoring any space on the left,
 	// return blank.
 	if strings.HasPrefix(strings.TrimLeft(text, " "), "#") {
-		return ""
+		return "", false
 	}
 
 	// If the line has # later after a space, that's a comment.
 	// Only send the word upto space to the routine.
 	index := strings.Index(text, " #")
 	if index == -1 {
-		return text
+		return text, true
 	}
-	return text[:index]
+	return text[:index], true
 }
