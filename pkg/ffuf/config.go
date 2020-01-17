@@ -35,6 +35,7 @@ type Config struct {
 	Threads                int                       `json:"threads"`
 	Context                context.Context           `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
+	ReplayProxyURL         string                    `json:"replayproxyurl"`
 	CommandLine            string                    `json:"cmdline"`
 	Verbose                bool                      `json:"verbose"`
 	MaxTime                int                       `json:"maxtime"`

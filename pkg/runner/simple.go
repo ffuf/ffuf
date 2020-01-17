@@ -23,12 +23,18 @@ type SimpleRunner struct {
 	client *http.Client
 }
 
-func NewSimpleRunner(conf *ffuf.Config) ffuf.RunnerProvider {
+func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	var simplerunner SimpleRunner
 	proxyURL := http.ProxyFromEnvironment
+	customProxy := ""
 
-	if len(conf.ProxyURL) > 0 {
-		pu, err := url.Parse(conf.ProxyURL)
+	if replay {
+		customProxy = conf.ReplayProxyURL
+	} else {
+		customProxy = conf.ProxyURL
+	}
+	if len(customProxy) > 0 {
+		pu, err := url.Parse(customProxy)
 		if err == nil {
 			proxyURL = http.ProxyURL(pu)
 		}

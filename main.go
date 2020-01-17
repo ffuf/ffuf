@@ -33,6 +33,7 @@ type cliOptions struct {
 	matcherWords           string
 	matcherLines           string
 	proxyURL               string
+	replayProxyURL         string
 	request                string
 	requestProto           string
 	outputFormat           string
@@ -106,6 +107,7 @@ func main() {
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
 	flag.BoolVar(&conf.Recursion, "recursion", false, "Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it.")
 	flag.IntVar(&conf.RecursionDepth, "recursion-depth", 0, "Maximum recursion depth.")
+	flag.StringVar(&opts.replayProxyURL, "replay-proxy", "", "Replay matched requests using this proxy.")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
 	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
@@ -158,6 +160,9 @@ func main() {
 }
 
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
+	job := &ffuf.Job{
+		Config: conf,
+	}
 	errs := ffuf.NewMultierror()
 	var err error
 	inputprovider, err := input.NewInputProvider(conf)
@@ -166,7 +171,10 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	}
 	// TODO: implement error handling for runnerprovider and outputprovider
 	// We only have http runner right now
-	runprovider := runner.NewRunnerByName("http", conf)
+	job.Runner = runner.NewRunnerByName("http", conf, false)
+	if len(conf.ReplayProxyURL) > 0 {
+		job.ReplayRunner = runner.NewRunnerByName("http", conf, true)
+	}
 	// Initialize the correct inputprovider
 	for _, v := range conf.InputProviders {
 		err = inputprovider.AddProvider(v)
@@ -174,14 +182,10 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 			errs.Add(err)
 		}
 	}
+	job.Input = inputprovider
 	// We only have stdout outputprovider right now
-	outprovider := output.NewOutputProviderByName("stdout", conf)
-	return &ffuf.Job{
-		Config: conf,
-		Runner: runprovider,
-		Output: outprovider,
-		Input:  inputprovider,
-	}, errs.ErrorOrNil()
+	job.Output = output.NewOutputProviderByName("stdout", conf)
+	return job, errs.ErrorOrNil()
 }
 
 func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
@@ -346,6 +350,16 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errs.Add(fmt.Errorf("Bad proxy url (-x) format: %s", err))
 		} else {
 			conf.ProxyURL = parseOpts.proxyURL
+		}
+	}
+
+	// Verify replayproxy url format
+	if len(parseOpts.replayProxyURL) > 0 {
+		_, err := url.Parse(parseOpts.replayProxyURL)
+		if err != nil {
+			errs.Add(fmt.Errorf("Bad replay-proxy url (-replay-proxy) format: %s", err))
+		} else {
+			conf.ReplayProxyURL = parseOpts.replayProxyURL
 		}
 	}
 

@@ -17,6 +17,7 @@ type Job struct {
 	ErrorMutex           sync.Mutex
 	Input                InputProvider
 	Runner               RunnerProvider
+	ReplayRunner         RunnerProvider
 	Output               OutputProvider
 	Counter              int
 	ErrorCounter         int
@@ -261,6 +262,18 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 	if j.isMatch(resp) {
+		// Re-send request through replay-proxy if needed
+		if j.ReplayRunner != nil {
+			replayreq, err := j.ReplayRunner.Prepare(input)
+			replayreq.Position = position
+			if err != nil {
+				j.Output.Error(fmt.Sprintf("Encountered an error while preparing replayproxy request: %s\n", err))
+				j.incError()
+				log.Printf("%s", err)
+			} else {
+				_, _ = j.ReplayRunner.Execute(&replayreq)
+			}
+		}
 		j.Output.Result(resp)
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
