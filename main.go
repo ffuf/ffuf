@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -33,6 +34,8 @@ type cliOptions struct {
 	matcherLines           string
 	proxyURL               string
 	replayProxyURL         string
+	request                string
+	requestProto           string
 	outputFormat           string
 	wordlists              multiStringFlag
 	inputcommands          multiStringFlag
@@ -60,6 +63,7 @@ func main() {
 	conf := ffuf.NewConfig(ctx)
 	opts := cliOptions{}
 	var ignored bool
+	flag.BoolVar(&conf.IgnoreWordlistComments, "ic", false, "Ignore wordlist comments")
 	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once. Only extends a wordlist with (default) FUZZ keyword.")
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
@@ -90,6 +94,8 @@ func main() {
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
 	flag.StringVar(&opts.matcherLines, "ml", "", "Match amount of lines in response")
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
+	flag.StringVar(&opts.request, "request", "", "File containing the raw http request")
+	flag.StringVar(&opts.requestProto, "request-proto", "https", "Protocol to use along with raw request")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv")
@@ -243,9 +249,10 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	var err error
 	var err2 error
-	if len(conf.Url) == 0 {
-		errs.Add(fmt.Errorf("-u flag is required"))
+	if len(conf.Url) == 0 && parseOpts.request == "" {
+		errs.Add(fmt.Errorf("-u flag or -request flag is required"))
 	}
+
 	// prepare extensions
 	if parseOpts.extensions != "" {
 		extensions := strings.Split(parseOpts.extensions, ",")
@@ -295,6 +302,15 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	if len(conf.InputProviders) == 0 {
 		errs.Add(fmt.Errorf("Either -w or --input-cmd flag is required"))
+	}
+
+	// Prepare the request using body
+	if parseOpts.request != "" {
+		err := parseRawRequest(parseOpts, conf)
+		if err != nil {
+			errmsg := fmt.Sprintf("Could not parse raw request: %s", err)
+			errs.Add(fmt.Errorf(errmsg))
+		}
 	}
 
 	//Prepare headers
@@ -397,6 +413,70 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	return errs.ErrorOrNil()
+}
+
+func parseRawRequest(parseOpts *cliOptions, conf *ffuf.Config) error {
+	file, err := os.Open(parseOpts.request)
+	if err != nil {
+		return fmt.Errorf("could not open request file: %s", err)
+	}
+	defer file.Close()
+
+	r := bufio.NewReader(file)
+
+	s, err := r.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("could not read request: %s", err)
+	}
+	parts := strings.Split(s, " ")
+	if len(parts) < 3 {
+		return fmt.Errorf("malformed request supplied")
+	}
+	// Set the request Method
+	conf.Method = parts[0]
+
+	for {
+		line, err := r.ReadString('\n')
+		line = strings.TrimSpace(line)
+
+		if err != nil || line == "" {
+			break
+		}
+
+		p := strings.SplitN(line, ":", 2)
+		if len(p) != 2 {
+			continue
+		}
+
+		if strings.EqualFold(p[0], "content-length") {
+			continue
+		}
+
+		conf.Headers[strings.TrimSpace(p[0])] = strings.TrimSpace(p[1])
+	}
+
+	// Handle case with the full http url in path. In that case,
+	// ignore any host header that we encounter and use the path as request URL
+	if strings.HasPrefix(parts[1], "http") {
+		parsed, err := url.Parse(parts[1])
+		if err != nil {
+			return fmt.Errorf("could not parse request URL: %s", err)
+		}
+		conf.Url = parts[1]
+		conf.Headers["Host"] = parsed.Host
+	} else {
+		// Build the request URL from the request
+		conf.Url = parseOpts.requestProto + "://" + conf.Headers["Host"] + parts[1]
+	}
+
+	// Set the request body
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("could not read request body: %s", err)
+	}
+	conf.Data = string(b)
+
+	return nil
 }
 
 func keywordPresent(keyword string, conf *ffuf.Config) bool {
