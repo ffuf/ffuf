@@ -14,6 +14,8 @@
     - Take 429 responses into account when -sa (stop on all error cases) is used
     - Remove -k flag support, convert to dummy flag #134
     - Write configuration to output JSON
+    - Better help text.
+    - If any matcher is set, ignore -mc default value.
 
 - v0.12
   - New

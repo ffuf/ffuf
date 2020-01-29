@@ -64,11 +64,11 @@ func main() {
 	opts := cliOptions{}
 	var ignored bool
 	flag.BoolVar(&conf.IgnoreWordlistComments, "ic", false, "Ignore wordlist comments")
-	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions to apply. Each extension provided will extend the wordlist entry once. Only extends a wordlist with (default) FUZZ keyword.")
-	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch style wordlist compatibility mode. Used in conjunction with -e flag. Replaces %EXT% in wordlist entry with each of the extensions provided by -e.")
+	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions. Extends FUZZ keyword.")
+	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
-	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) custom fuzz keyword, using colon as delimiter. Use file path '-' to read from standard input. Can be supplied multiple times. Format: '/path/to/wordlist:KEYWORD'")
+	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response. Comma separated list of codes and ranges")
@@ -86,9 +86,9 @@ func main() {
 	flag.IntVar(&conf.InputNum, "input-num", 100, "Number of inputs to test. Used in conjunction with --input-cmd.")
 	flag.StringVar(&conf.InputMode, "mode", "clusterbomb", "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
-	flag.Var(&opts.cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.\nResults unpredictable when combined with -H \"Cookie: ...\"")
+	flag.Var(&opts.cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
 	flag.Var(&opts.cookies, "cookie", "Cookie data (alias of -b)")
-	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401,403", "Match HTTP status codes from respose, use \"all\" to match every response code.")
+	flag.StringVar(&opts.matcherStatus, "mc", "200,204,301,302,307,401,403", "Match HTTP status codes, or \"all\" for everything.")
 	flag.StringVar(&opts.matcherSize, "ms", "", "Match HTTP response size")
 	flag.StringVar(&opts.matcherRegexp, "mr", "", "Match regexp")
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
@@ -103,7 +103,7 @@ func main() {
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
-	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se. Also stops on spurious 429 response codes.")
+	flag.BoolVar(&conf.StopOnAll, "sa", false, "Stop on all error cases. Implies -sf and -se.")
 	flag.BoolVar(&conf.FollowRedirects, "r", false, "Follow redirects")
 	flag.BoolVar(&conf.Recursion, "recursion", false, "Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it.")
 	flag.IntVar(&conf.RecursionDepth, "recursion-depth", 0, "Maximum recursion depth.")
@@ -116,6 +116,7 @@ func main() {
 	flag.BoolVar(&conf.Verbose, "v", false, "Verbose output, printing full URL and redirect location (if any) with the results.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
+	flag.Usage = Usage
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
@@ -135,18 +136,18 @@ func main() {
 	}
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		flag.Usage()
+		Usage()
 		os.Exit(1)
 	}
 	job, err := prepareJob(&conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		flag.Usage()
+		Usage()
 		os.Exit(1)
 	}
 	if err := prepareFilters(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		flag.Usage()
+		Usage()
 		os.Exit(1)
 	}
 
@@ -190,6 +191,32 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 
 func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	errs := ffuf.NewMultierror()
+	// If any other matcher is set, ignore -mc default value
+	matcherSet := false
+	statusSet := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "mc" {
+			statusSet = true
+		}
+		if f.Name == "ms" {
+			matcherSet = true
+		}
+		if f.Name == "ml" {
+			matcherSet = true
+		}
+		if f.Name == "mr" {
+			matcherSet = true
+		}
+		if f.Name == "mw" {
+			matcherSet = true
+		}
+	})
+	if statusSet || !matcherSet {
+		if err := filter.AddMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
+			errs.Add(err)
+		}
+	}
+
 	if parseOpts.filterStatus != "" {
 		if err := filter.AddFilter(conf, "status", parseOpts.filterStatus); err != nil {
 			errs.Add(err)
@@ -212,11 +239,6 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.filterLines != "" {
 		if err := filter.AddFilter(conf, "line", parseOpts.filterLines); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.matcherStatus != "" {
-		if err := filter.AddMatcher(conf, "status", parseOpts.matcherStatus); err != nil {
 			errs.Add(err)
 		}
 	}
