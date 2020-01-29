@@ -2,6 +2,10 @@
 
 - master
   - New
+  - Changed
+
+- v1.0
+  - New
     - New CLI flag `-ic` to ignore comments from wordlist.
     - New CLI flags `-request` to specify the raw request file to build the actual request from and `-request-proto` to define the new request format.
     - New CLI flag `-od` (output directory) to enable writing requests and responses for matched results to a file for postprocessing or debugging purposes.
