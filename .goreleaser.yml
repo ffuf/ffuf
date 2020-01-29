@@ -12,14 +12,14 @@ builds:
       - arm
       - arm64
 
+archives:
+  - id: tgz
+    format: tar.gz
+    replacements:
+        darwin: macOS
+    format_overrides:
+        - goos: windows
+          format: zip
 
-archive:
-  format: tar.gz
-  replacements:
-      darwin: macOS
-  format_overrides:
-      - goos: windows
-        format: zip
-
-sign:
-  artifacts: checksum
+signs:
+  - artifacts: checksum
