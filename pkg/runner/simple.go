@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
@@ -86,7 +87,6 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	var httpreq *http.Request
 	var err error
-	var rawreq, rawresp strings.Builder
 	data := bytes.NewReader(req.Data)
 	httpreq, err = http.NewRequest(req.Method, req.Url, data)
 	if err != nil {
@@ -112,15 +112,6 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	resp := ffuf.NewResponse(httpresp, req)
 	defer httpresp.Body.Close()
 
-	if len(r.config.OutputDirectory) > 0 {
-		// store raw request
-		httpreq.Write(&rawreq)
-		resp.Request.Raw = rawreq.String()
-		// store raw response
-		httpresp.Write(&rawresp)
-		resp.Raw = rawresp.String()
-	}
-
 	// Check if we should download the resource or not
 	size, err := strconv.Atoi(httpresp.Header.Get("Content-Length"))
 	if err == nil {
@@ -129,6 +120,13 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 			resp.Cancelled = true
 			return resp, nil
 		}
+	}
+
+	if len(r.config.OutputDirectory) > 0 {
+		rawreq, _ := httputil.DumpRequestOut(httpreq, true)
+		rawresp, _ := httputil.DumpResponse(httpresp, true)
+		resp.Request.Raw = string(rawreq)
+		resp.Raw = string(rawresp)
 	}
 
 	if respbody, err := ioutil.ReadAll(httpresp.Body); err == nil {
