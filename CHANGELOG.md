@@ -3,6 +3,9 @@
 - master
   - New
   - Changed
+
+- v1.0.1
+  - Changed
     - Fixed a bug where regex matchers and filters would fail if `-od` was used to store the request & response contents.
 
 - v1.0
