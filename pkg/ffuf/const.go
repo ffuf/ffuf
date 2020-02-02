@@ -2,5 +2,5 @@ package ffuf
 
 const (
 	//VERSION holds the current version number
-	VERSION = "1.0.1"
+	VERSION = "1.1-git"
 )
