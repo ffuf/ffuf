@@ -168,6 +168,11 @@ EXAMPLE USAGE:
   More information and examples: https://github.com/ffuf/ffuf
 ```
 
+## Helper scripts and advanced payloads
+
+See [ffuf-scripts](https://github.com/ffuf/ffuf-scripts) repository for helper scripts and payload generators
+for different workflows and usage scenarios.
+
 ## License
 
 ffuf is released under MIT license. See [LICENSE](https://github.com/ffuf/ffuf/blob/master/LICENSE).
