@@ -87,6 +87,7 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	var httpreq *http.Request
 	var err error
+	var rawreq []byte
 	data := bytes.NewReader(req.Data)
 	httpreq, err = http.NewRequest(req.Method, req.Url, data)
 	if err != nil {
@@ -104,6 +105,11 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
 	}
+
+	if len(r.config.OutputDirectory) > 0 {
+		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
+	}
+
 	httpresp, err := r.client.Do(httpreq)
 	if err != nil {
 		return ffuf.Response{}, err
@@ -123,7 +129,6 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	if len(r.config.OutputDirectory) > 0 {
-		rawreq, _ := httputil.DumpRequestOut(httpreq, true)
 		rawresp, _ := httputil.DumpResponse(httpresp, true)
 		resp.Request.Raw = string(rawreq)
 		resp.Raw = string(rawresp)

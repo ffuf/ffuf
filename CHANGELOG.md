@@ -2,7 +2,9 @@
 
 - master
   - New
+
   - Changed
+    - Write POST request data properly to file when ran with `-od`
 
 - v1.0.1
   - Changed
