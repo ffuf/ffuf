@@ -6,6 +6,7 @@
   - Changed
     - Write POST request data properly to file when ran with `-od`
     - Properly handle relative redirect urls with `-recursion`
+    - Calculate req/sec correctly for when using recursion
 
 - v1.0.1
   - Changed
