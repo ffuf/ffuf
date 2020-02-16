@@ -5,6 +5,7 @@
 
   - Changed
     - Write POST request data properly to file when ran with `-od`
+    - Properly handle relative redirect urls with `-recursion`
 
 - v1.0.1
   - Changed

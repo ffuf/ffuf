@@ -233,7 +233,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			ContentLength:    resp.ContentLength,
 			ContentWords:     resp.ContentWords,
 			ContentLines:     resp.ContentLines,
-			RedirectLocation: resp.GetRedirectLocation(),
+			RedirectLocation: resp.GetRedirectLocation(false),
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,
 		}
@@ -315,7 +315,7 @@ func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 	reslines := ""
 	if s.config.Verbose {
 		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, resp.Request.Url)
-		redirectLocation := resp.GetRedirectLocation()
+		redirectLocation := resp.GetRedirectLocation(false)
 		if redirectLocation != "" {
 			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
 		}
