@@ -87,7 +87,6 @@ func (j *Job) Start() {
 	j.Total = j.Input.Total()
 	defer j.Stop()
 	j.Running = true
-	j.startTime = time.Now()
 	//Show banner if not running in silent mode
 	if !j.Config.Quiet {
 		j.Output.Banner()
@@ -101,6 +100,7 @@ func (j *Job) Start() {
 			j.Output.Info(fmt.Sprintf("Scanning: %s", j.Config.Url))
 		}
 		j.Input.Reset()
+		j.startTime = time.Now()
 		j.Counter = 0
 		j.startExecution()
 	}
