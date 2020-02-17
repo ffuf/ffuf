@@ -6,6 +6,9 @@ import (
 
 type Config struct {
 	Headers                map[string]string         `json:"headers"`
+	Useragents	       []string	                 `json:"useragents"`
+        UseragentsPath         string                    `json:"useragentspath"`
+	UseragentsMax          int                       `json:"useragentsmax"`
 	Extensions             []string                  `json:"extensions"`
 	DirSearchCompat        bool                      `json:"dirsearch_compatibility"`
 	Method                 string                    `json:"method"`
@@ -57,6 +60,9 @@ func NewConfig(ctx context.Context) Config {
 	conf.Url = ""
 	conf.Data = ""
 	conf.Quiet = false
+	conf.Useragents = make([]string, 0)
+        conf.UseragentsPath = "useragents.txt"
+	conf.UseragentsMax = 0
 	conf.IgnoreWordlistComments = false
 	conf.StopOn403 = false
 	conf.StopOnErrors = false

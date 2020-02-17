@@ -61,7 +61,7 @@ func Usage() {
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "c", "maxtime", "p", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "c", "maxtime", "p", "s", "sa", "se", "sf", "t", "v", "V", "A"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -146,6 +146,10 @@ func Usage() {
 
 	fmt.Printf("  Fuzz multiple locations. Match only responses reflecting the value of \"VAL\" keyword. Colored.\n")
 	fmt.Printf("    ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr \"VAL\" -c\n\n")
+
+	fmt.Printf("  Fuzz, alternate UserAgent-header, match HTTP 200 responses.\n")
+        fmt.Printf("    ffuf -w hosts.txt -A -u https://example.org/FUZZ  -mc 200\n\n")
+
 
 	fmt.Printf("  More information and examples: https://github.com/ffuf/ffuf\n\n")
 }
