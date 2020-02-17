@@ -148,7 +148,7 @@ func Usage() {
 	fmt.Printf("    ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr \"VAL\" -c\n\n")
 
 	fmt.Printf("  Fuzz, alternate UserAgent-header, match HTTP 200 responses.\n")
-        fmt.Printf("    ffuf -w hosts.txt -A -u https://example.org/FUZZ  -mc 200\n\n")
+        fmt.Printf("    ffuf -w hosts.txt -A useragents.txt u https://example.org/FUZZ  -mc 200\n\n")
 
 
 	fmt.Printf("  More information and examples: https://github.com/ffuf/ffuf\n\n")
