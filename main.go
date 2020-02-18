@@ -22,7 +22,7 @@ import (
 type cliOptions struct {
 	extensions             string
 	delay                  string
-        filterStatus           string
+	filterStatus           string
 	filterSize             string
 	filterRegexp           string
 	filterWords            string
@@ -67,7 +67,6 @@ func main() {
 	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions. Extends FUZZ keyword.")
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
-	flag.StringVar(&conf.UseragentsPath, "A", "", "alternate the User-Agent Header based on the file: useragents.txt")
 	flag.StringVar(&conf.Url, "u", "", "Target URL")
 	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
@@ -401,26 +400,6 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.outputFormat))
 		}
 	}
-
-        // include list of useragents
-	if len(conf.UseragentsPath) > 0x0 {
-	    _, err := os.Stat(conf.UseragentsPath) 
-	    if os.IsNotExist(err) {
-	           // silent skip
- 		   //fmt.Fprintf(os.Stderr, "Useragents list file %s does not exist", conf.UseragentsPath)	
-	    } else {
-		file, err := os.Open(conf.UseragentsPath)
-		if err != nil {
-        		return err
-    		}
-    		defer file.Close()
-
-    		scanner := bufio.NewScanner(file)
-    		for scanner.Scan() {
-        		conf.Useragents = append(conf.Useragents, scanner.Text())
-    		}
-		conf.UseragentsMax = len(conf.Useragents)
-	}}
 
         // Auto-calibration strings
 	if len(parseOpts.AutoCalibrationStrings) > 0 {

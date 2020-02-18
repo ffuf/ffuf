@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
-	"math/rand"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -97,14 +96,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	// Add user agent string if not defined
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		// take the default FFUF
-		if r.config.UseragentsMax < 1 { 
 			req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
-		} else {
-			// or take one from the list
-			rand.Seed(time.Now().UnixNano())	
-			req.Headers["User-Agent"] = r.config.Useragents[int(rand.Intn(r.config.UseragentsMax ))]
-		}
 	}
 	
         // Handle Go http.Request special cases
