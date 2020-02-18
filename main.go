@@ -36,6 +36,7 @@ type cliOptions struct {
 	replayProxyURL         string
 	request                string
 	requestProto           string
+	URL                    string
 	outputFormat           string
 	wordlists              multiStringFlag
 	inputcommands          multiStringFlag
@@ -67,7 +68,7 @@ func main() {
 	flag.StringVar(&opts.extensions, "e", "", "Comma separated list of extensions. Extends FUZZ keyword.")
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
-	flag.StringVar(&conf.Url, "u", "", "Target URL")
+	flag.StringVar(&opts.URL, "u", "", "Target URL")
 	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
@@ -333,6 +334,11 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errmsg := fmt.Sprintf("Could not parse raw request: %s", err)
 			errs.Add(fmt.Errorf(errmsg))
 		}
+	}
+
+	//Prepare URL
+	if parseOpts.URL != "" {
+		conf.Url = parseOpts.URL
 	}
 
 	//Prepare headers
