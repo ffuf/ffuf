@@ -96,7 +96,11 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	// Add user agent string if not defined
 	if _, ok := req.Headers["User-Agent"]; !ok {
+		if _, ok := req.Headers["User-agent"]; !ok {
 			req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
+		} else { 
+			req.Headers["User-Agent"] = req.Headers["User-agent"]
+		}
 	}
 	
         // Handle Go http.Request special cases
