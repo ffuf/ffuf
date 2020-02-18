@@ -98,7 +98,15 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
+<<<<<<< HEAD
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
+=======
+		if _, ok := req.Headers["User-agent"]; !ok {
+			req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
+		} else { 
+			req.Headers["User-Agent"] = req.Headers["User-agent"]
+		}
+>>>>>>> Make defining User-agent header case insensitive #171
 	}
 
 	// Handle Go http.Request special cases
