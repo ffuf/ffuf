@@ -337,7 +337,6 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	//Prepare headers and make canonical
-        fmt.Println("Before %s headers", conf.Headers )
 	for _, v := range parseOpts.headers {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
