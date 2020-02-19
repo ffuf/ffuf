@@ -272,7 +272,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	var err error
 	var err2 error
-	if len(conf.Url) == 0 && parseOpts.request == "" {
+	if len(parseOpts.URL) == 0 && parseOpts.request == "" {
 		errs.Add(fmt.Errorf("-u flag or -request flag is required"))
 	}
 
