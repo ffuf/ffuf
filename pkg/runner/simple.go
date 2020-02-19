@@ -102,8 +102,8 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 			req.Headers["User-Agent"] = req.Headers["User-agent"]
 		}
 	}
-	
-        // Handle Go http.Request special cases
+
+	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
 		httpreq.Host = req.Headers["Host"]
 	}

@@ -401,7 +401,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 
-        // Auto-calibration strings
+	// Auto-calibration strings
 	if len(parseOpts.AutoCalibrationStrings) > 0 {
 		conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
 	}
