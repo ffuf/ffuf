@@ -80,8 +80,11 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 =======
 			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey (strings.Replace(h, keyword, string(inputitem), -1))
 			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
+<<<<<<< HEAD
 			//headers[strings.Replace(h, keyword, string(inputitem), -1)] = strings.Replace(v, keyword, string(inputitem), -1)
 >>>>>>> formatting, canonical customer headers, docs updated
+=======
+>>>>>>> cleanup
 		}
 		req.Headers = headers
 		req.Url = strings.Replace(req.Url, keyword, string(inputitem), -1)
