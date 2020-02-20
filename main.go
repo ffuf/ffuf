@@ -376,9 +376,33 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
 			// trim and make canonical
+<<<<<<< HEAD
 			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
 			conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
 >>>>>>> Make canonical http headers and set default User-Agent only once.
+=======
+			// except if used in custom defined header
+			var CanonicalNeeded bool = true
+			for _, a := range conf.CommandKeywords {
+				if a == hs[0] {
+					CanonicalNeeded = false
+				}
+			}
+			// check if part of InputProviders
+			if CanonicalNeeded {
+				for _, b := range conf.InputProviders {
+					if b.Keyword == hs[0] {
+						CanonicalNeeded = false
+					}
+				}
+			}
+			if CanonicalNeeded {
+				var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
+				conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
+			} else {
+				conf.Headers[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
+			}
+>>>>>>> Checking userdefined headers for excluding in canonicalization.
 		} else {
 			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
