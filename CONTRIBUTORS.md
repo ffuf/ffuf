@@ -1,5 +1,6 @@
 # Contributors
 
+* [bjhulst](https://github.com/bjhulst)
 * [ccsplit](https://github.com/ccsplit)
 * [codingo](https://github.com/codingo)
 * [delic](https://github.com/delic)

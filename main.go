@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/textproto"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
-	"net/textproto"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 	"github.com/ffuf/ffuf/pkg/filter"
@@ -340,8 +340,8 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	for _, v := range parseOpts.headers {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
-			// trim and make canonical	
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey (strings.TrimSpace(hs[0]))
+			// trim and make canonical
+			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
 			conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
 		} else {
 			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
@@ -352,7 +352,6 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	if _, ok := conf.Headers["User-Agent"]; !ok {
 		conf.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
 	}
-
 
 	//Prepare delay
 	d := strings.Split(parseOpts.delay, "-")

@@ -4,7 +4,8 @@
   - New
 
   - Changed
-    - Write POST request data properly to file when ran with `-od`
+    - Write POST request data properly to file when ran with `-od`.
+    - Fixed a bug by using header canonicaliztion related to HTTP headers being case insensitive.
 
 - v1.0.1
   - Changed
