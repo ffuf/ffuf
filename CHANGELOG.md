@@ -6,6 +6,9 @@
   - Changed
     - Write POST request data properly to file when ran with `-od`.
     - Fixed a bug by using header canonicaliztion related to HTTP headers being case insensitive.
+    - Properly handle relative redirect urls with `-recursion`
+    - Calculate req/sec correctly for when using recursion
+    - When `-request` is used, allow the user to override URL using `-u`
 
 - v1.0.1
   - Changed

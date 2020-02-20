@@ -3,6 +3,7 @@ package runner
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -93,6 +94,11 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	httpreq, err = http.NewRequest(req.Method, req.Url, data)
 	if err != nil {
 		return ffuf.Response{}, err
+	}
+
+	// set default User-Agent header if not present
+	if _, ok := req.Headers["User-Agent"]; !ok {
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
 	}
 
 	// Handle Go http.Request special cases
