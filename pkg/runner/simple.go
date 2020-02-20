@@ -3,6 +3,7 @@ package runner
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -114,6 +115,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
 <<<<<<< HEAD
@@ -129,6 +131,13 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 =======
 >>>>>>> Make canonical http headers and set default User-Agent only once.
+=======
+	// set default User-Agent header if not present
+	if _, ok := req.Headers["User-Agent"]; !ok {
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
+	}
+
+>>>>>>> moved logic back and less resolve conflicts
 	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
 		httpreq.Host = req.Headers["Host"]

@@ -412,6 +412,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	// set default User-Agent header if not present
 	if _, ok := conf.Headers["User-Agent"]; !ok {
@@ -423,6 +424,8 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 >>>>>>> Make canonical http headers and set default User-Agent only once.
 =======
 >>>>>>> formatting, canonical customer headers, docs updated
+=======
+>>>>>>> moved logic back and less resolve conflicts
 	//Prepare delay
 	d := strings.Split(parseOpts.delay, "-")
 	if len(d) > 2 {
