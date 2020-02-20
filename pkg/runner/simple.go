@@ -6,9 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+<<<<<<< HEAD
 	"net/textproto"
 	"net/url"
+=======
+>>>>>>> fmt
 	"net/textproto"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -75,10 +79,14 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 		headers := make(map[string]string, 0)
 		for h, v := range req.Headers {
 <<<<<<< HEAD
+<<<<<<< HEAD
 			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.Replace(h, keyword, string(inputitem), -1))
 			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
 =======
 			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey (strings.Replace(h, keyword, string(inputitem), -1))
+=======
+			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.Replace(h, keyword, string(inputitem), -1))
+>>>>>>> fmt
 			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
 <<<<<<< HEAD
 			//headers[strings.Replace(h, keyword, string(inputitem), -1)] = strings.Replace(v, keyword, string(inputitem), -1)
