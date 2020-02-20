@@ -339,6 +339,9 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> resolving one conflict
 	//Prepare URL
 	if parseOpts.URL != "" {
 		conf.Url = parseOpts.URL
