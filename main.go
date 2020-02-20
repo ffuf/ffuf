@@ -336,6 +336,11 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 
+	//Prepare URL
+	if parseOpts.URL != "" {
+		conf.Url = parseOpts.URL
+	}
+
 	//Prepare headers and make canonical
 	for _, v := range parseOpts.headers {
 		hs := strings.SplitN(v, ":", 2)
