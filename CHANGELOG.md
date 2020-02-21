@@ -2,7 +2,9 @@
 
 - master
   - New
+  - Changed
 
+- v1.0.2
   - Changed
     - Write POST request data properly to file when ran with `-od`.
     - Fixed a bug by using header canonicaliztion related to HTTP headers being case insensitive.
