@@ -279,7 +279,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		j.updateProgress()
 	}
 
-	if j.Config.Recursion && len(resp.GetRedirectLocation()) > 0 {
+	if j.Config.Recursion && len(resp.GetRedirectLocation(false)) > 0 {
 		j.handleRecursionJob(resp)
 	}
 	return
@@ -287,7 +287,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 
 //handleRecursionJob adds a new recursion job to the job queue if a new directory is found
 func (j *Job) handleRecursionJob(resp Response) {
-	if (resp.Request.Url + "/") != resp.GetRedirectLocation() {
+	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
 		// Not a directory, return early
 		return
 	}
@@ -298,7 +298,7 @@ func (j *Job) handleRecursionJob(resp Response) {
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
-		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation()))
+		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
 	}
 }
 
