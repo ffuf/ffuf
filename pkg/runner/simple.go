@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -73,7 +74,8 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 		req.Method = strings.Replace(req.Method, keyword, string(inputitem), -1)
 		headers := make(map[string]string, 0)
 		for h, v := range req.Headers {
-			headers[strings.Replace(h, keyword, string(inputitem), -1)] = strings.Replace(v, keyword, string(inputitem), -1)
+			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.Replace(h, keyword, string(inputitem), -1))
+			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
 		}
 		req.Headers = headers
 		req.Url = strings.Replace(req.Url, keyword, string(inputitem), -1)
@@ -93,10 +95,12 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if err != nil {
 		return ffuf.Response{}, err
 	}
-	// Add user agent string if not defined
+
+	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
 	}
+
 	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
 		httpreq.Host = req.Headers["Host"]
