@@ -110,7 +110,8 @@ GENERAL OPTIONS:
   -ac              Automatically calibrate filtering options (default: false)
   -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
   -c               Colorize output. (default: false)
-  -maxtime         Maximum running time in seconds. (default: 0)
+  -maxtime         Maximum running time in seconds for the entire process. (default: 0)
+  -maxtime-job     Maximum running time in seconds per job. (default: 0)
   -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -s               Do not print additional information (silent mode) (default: false)
   -sa              Stop on all error cases. Implies -sf and -se. (default: false)
