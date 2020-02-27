@@ -71,10 +71,10 @@ If you don't want ffuf to run indefinitely, you can use the `-maxtime`. This sto
 ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime 60
 ```
 
-When working with recursion, you can control the maxtime __per job__ using `-maxtime-job`. This will stop the current job after a given time (in seconds) and continue with the next one.
+Especially when working with recursion, you can control the maxtime __per job__ using `-maxtime-job`. This will stop the current job after a given time (in seconds) and continue with the next one. Internally a job is the brute forcing of one specific folder. This is also the case for the root folder.
 
 ```
-ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime-job 60
+ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime-job 60 -recursion -recursion-depth 2
 ```
 
 It is also possible to combine both flags limiting the per job maximum execution time as well as the overall execution time. If you do not use recursion then both flags behave equally.

@@ -2,10 +2,10 @@
 
 - master
   - New
-  - Changed
+    - New CLI flag `-maxtime-job` to set max. execution time per job.
+    - Changed behaviour of `-maxtime`, can now be used for entire process.
 
 - v1.0.2
-  - Changed
     - Write POST request data properly to file when ran with `-od`.
     - Fixed a bug by using header canonicaliztion related to HTTP headers being case insensitive.
     - Properly handle relative redirect urls with `-recursion`
