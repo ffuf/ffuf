@@ -214,13 +214,12 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 
 func (j *Job) updateProgress() {
 	prog := Progress{
-		StartedAt:        j.startTimeJob,
-		StartedAtProcess: j.startTime,
-		ReqCount:         j.Counter,
-		ReqTotal:         j.Input.Total(),
-		QueuePos:         j.queuepos,
-		QueueTotal:       len(j.queuejobs),
-		ErrorCount:       j.ErrorCounter,
+		StartedAt:  j.startTimeJob,
+		ReqCount:   j.Counter,
+		ReqTotal:   j.Input.Total(),
+		QueuePos:   j.queuepos,
+		QueueTotal: len(j.queuejobs),
+		ErrorCount: j.ErrorCounter,
 	}
 	j.Output.Progress(prog)
 }
@@ -409,7 +408,7 @@ func (j *Job) CheckStop() {
 		dur := time.Now().Sub(j.startTimeJob)
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTimeJob {
-			j.Output.Info(fmt.Sprintf("Maximum running time for this job reached, continuing with next job if one exists."))
+			j.Error = "Maximum running time for this job reached, continuing with next job if one exists."
 			j.Next()
 
 		}
