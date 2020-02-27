@@ -63,6 +63,22 @@ This is a very straightforward operation, again by using the `FUZZ` keyword. Thi
 ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" -u https://target/login.php -fc 401
 ```
 
+### Maximum execution time
+
+If you don't want ffuf to run indefinitely, you can use the `-maxtime`. This stops __the entire__ process after a given time (in seconds).
+
+```
+ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime 60
+```
+
+When working with recursion, you can control the maxtime __per job__ using `-maxtime-job`. This will stop the current job after a given time (in seconds) and continue with the next one.
+
+```
+ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime-job 60
+```
+
+It is also possible to combine both flags limiting the per job maximum execution time as well as the overall execution time. If you do not use recursion then both flags behave equally.
+
 ### Using external mutator to produce test cases
 
 For this example, we'll fuzz JSON data that's sent over POST. [Radamsa](https://gitlab.com/akihe/radamsa) is used as the mutator.
