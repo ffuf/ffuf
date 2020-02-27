@@ -63,6 +63,22 @@ This is a very straightforward operation, again by using the `FUZZ` keyword. Thi
 ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" -u https://target/login.php -fc 401
 ```
 
+### Maximum execution time
+
+If you don't want ffuf to run indefinitely, you can use the `-maxtime`. This stops __the entire__ process after a given time (in seconds).
+
+```
+ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime 60
+```
+
+When working with recursion, you can control the maxtime __per job__ using `-maxtime-job`. This will stop the current job after a given time (in seconds) and continue with the next one. New jobs are created when the recursion functionality detects a subdirectory.
+
+```
+ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime-job 60 -recursion -recursion-depth 2
+```
+
+It is also possible to combine both flags limiting the per job maximum execution time as well as the overall execution time. If you do not use recursion then both flags behave equally.
+
 ### Using external mutator to produce test cases
 
 For this example, we'll fuzz JSON data that's sent over POST. [Radamsa](https://gitlab.com/akihe/radamsa) is used as the mutator.
@@ -110,7 +126,8 @@ GENERAL OPTIONS:
   -ac              Automatically calibrate filtering options (default: false)
   -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
   -c               Colorize output. (default: false)
-  -maxtime         Maximum running time in seconds. (default: 0)
+  -maxtime         Maximum running time in seconds for the entire process. (default: 0)
+  -maxtime-job     Maximum running time in seconds per job. (default: 0)
   -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
   -s               Do not print additional information (silent mode) (default: false)
   -sa              Stop on all error cases. Implies -sf and -se. (default: false)

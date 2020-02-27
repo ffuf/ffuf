@@ -39,6 +39,7 @@ type Config struct {
 	CommandLine            string                    `json:"cmdline"`
 	Verbose                bool                      `json:"verbose"`
 	MaxTime                int                       `json:"maxtime"`
+	MaxTimeJob             int                       `json:"maxtime_job"`
 	Recursion              bool                      `json:"recursion"`
 	RecursionDepth         int                       `json:"recursion_depth"`
 }
@@ -78,6 +79,7 @@ func NewConfig(ctx context.Context) Config {
 	conf.DirSearchCompat = false
 	conf.Verbose = false
 	conf.MaxTime = 0
+	conf.MaxTimeJob = 0
 	conf.Recursion = false
 	conf.RecursionDepth = 0
 	return conf

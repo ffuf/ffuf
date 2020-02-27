@@ -2,6 +2,8 @@
 
 - master
   - New
+    - New CLI flag `-maxtime-job` to set max. execution time per job.
+    - Changed behaviour of `-maxtime`, can now be used for entire process.
   - Changed
 
 - v1.0.2
