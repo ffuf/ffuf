@@ -103,7 +103,7 @@ func main() {
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv")
 	flag.StringVar(&conf.OutputDirectory, "od", "", "Directory path to store matched results to.")
-	flag.BoolVar(&opts.ignoreBody, "ignore-body", false, "Do not fetch the response content.")
+	flag.BoolVar(&conf.IgnoreBody, "ignore-body", false, "Do not fetch the response content.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
@@ -274,7 +274,7 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.ignoreBody && warningIgnoreBody {
+	if conf.IgnoreBody && warningIgnoreBody {
 		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
 	}
 	return errs.ErrorOrNil()
