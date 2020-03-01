@@ -116,8 +116,7 @@ func main() {
 	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
-	flag.IntVar(&conf.MaxTime, "maxtime", 0, "Maximum running time in seconds for entire process.")
-	flag.IntVar(&conf.MaxTimeJob, "maxtime-job", 0, "Maximum running time in seconds per job.")
+	flag.IntVar(&conf.MaxTime, "maxtime", 0, "Maximum running time in seconds.")
 	flag.BoolVar(&conf.Verbose, "v", false, "Verbose output, printing full URL and redirect location (if any) with the results.")
 	flag.BoolVar(&opts.showVersion, "V", false, "Show version information.")
 	flag.StringVar(&opts.debugLog, "debug-log", "", "Write all of the internal logging to the specified file.")
@@ -350,10 +349,6 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> resolving one conflict
 	//Prepare URL
 	if parseOpts.URL != "" {
 		conf.Url = parseOpts.URL
@@ -385,59 +380,11 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			} else {
 				conf.Headers[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
 			}
-=======
-	//Prepare headers and make canonical
-	for _, v := range parseOpts.headers {
-		hs := strings.SplitN(v, ":", 2)
-		if len(hs) == 2 {
-			// trim and make canonical
-<<<<<<< HEAD
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
-			conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
->>>>>>> Make canonical http headers and set default User-Agent only once.
-=======
-			// except if used in custom defined header
-			var CanonicalNeeded bool = true
-			for _, a := range conf.CommandKeywords {
-				if a == hs[0] {
-					CanonicalNeeded = false
-				}
-			}
-			// check if part of InputProviders
-			if CanonicalNeeded {
-				for _, b := range conf.InputProviders {
-					if b.Keyword == hs[0] {
-						CanonicalNeeded = false
-					}
-				}
-			}
-			if CanonicalNeeded {
-				var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
-				conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
-			} else {
-				conf.Headers[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
-			}
->>>>>>> Checking userdefined headers for excluding in canonicalization.
 		} else {
 			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-	// set default User-Agent header if not present
-	if _, ok := conf.Headers["User-Agent"]; !ok {
-		conf.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
-	}
-
-<<<<<<< HEAD
-
->>>>>>> Make canonical http headers and set default User-Agent only once.
-=======
->>>>>>> formatting, canonical customer headers, docs updated
-=======
->>>>>>> moved logic back and less resolve conflicts
 	//Prepare delay
 	d := strings.Split(parseOpts.delay, "-")
 	if len(d) > 2 {
