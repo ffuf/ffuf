@@ -7,6 +7,7 @@
     - New CLI flag `-maxtime-job` to set max. execution time per job.
     - Changed behaviour of `-maxtime`, can now be used for entire process.
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
     - New CLI flag `-maxtime-job` to set max. execution time per job.
@@ -17,6 +18,8 @@
 >>>>>>> changes
 
 >>>>>>> logic and docs
+=======
+>>>>>>> doc
   - Changed
 
 - v1.0.2
@@ -118,3 +121,4 @@
     - New CLI flag to stop on spurious 403 responses
   - Changed
     - Regex matching / filtering now matches the headers alongside of the response body
+
