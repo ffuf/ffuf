@@ -7,11 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
-<<<<<<< HEAD
-	"net/textproto"
-	"net/url"
-=======
->>>>>>> fmt
 	"net/textproto"
 	"net/url"
 	"strconv"
@@ -79,21 +74,8 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 		req.Method = strings.Replace(req.Method, keyword, string(inputitem), -1)
 		headers := make(map[string]string, 0)
 		for h, v := range req.Headers {
-<<<<<<< HEAD
-<<<<<<< HEAD
 			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.Replace(h, keyword, string(inputitem), -1))
 			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
-=======
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey (strings.Replace(h, keyword, string(inputitem), -1))
-=======
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.Replace(h, keyword, string(inputitem), -1))
->>>>>>> fmt
-			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
-<<<<<<< HEAD
-			//headers[strings.Replace(h, keyword, string(inputitem), -1)] = strings.Replace(v, keyword, string(inputitem), -1)
->>>>>>> formatting, canonical customer headers, docs updated
-=======
->>>>>>> cleanup
 		}
 		req.Headers = headers
 		req.Url = strings.Replace(req.Url, keyword, string(inputitem), -1)
@@ -114,30 +96,11 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		return ffuf.Response{}, err
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-	// set default User-Agent header if not present
-	if _, ok := req.Headers["User-Agent"]; !ok {
-<<<<<<< HEAD
-		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
-=======
-		if _, ok := req.Headers["User-agent"]; !ok {
-			req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
-		} else { 
-			req.Headers["User-Agent"] = req.Headers["User-agent"]
-		}
->>>>>>> Make defining User-agent header case insensitive #171
-	}
-
-=======
->>>>>>> Make canonical http headers and set default User-Agent only once.
-=======
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
 	}
 
->>>>>>> moved logic back and less resolve conflicts
 	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
 		httpreq.Host = req.Headers["Host"]

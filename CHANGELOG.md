@@ -2,42 +2,19 @@
 
 - master
   - New
-<<<<<<< HEAD
-<<<<<<< HEAD
     - New CLI flag `-maxtime-job` to set max. execution time per job.
     - Changed behaviour of `-maxtime`, can now be used for entire process.
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
-    - New CLI flag `-maxtime-job` to set max. execution time per job.
-    - Changed behaviour of `-maxtime`, can now be used for entire process.
->>>>>>> resolving
     - A new flag `-ignore-body` so ffuf does not fetch the response content. Default value=false.
-=======
->>>>>>> changes
 
->>>>>>> logic and docs
-=======
->>>>>>> doc
   - Changed
 
 - v1.0.2
   - Changed
     - Write POST request data properly to file when ran with `-od`.
     - Fixed a bug by using header canonicaliztion related to HTTP headers being case insensitive.
-<<<<<<< HEAD
-<<<<<<< HEAD
     - Properly handle relative redirect urls with `-recursion`
     - Calculate req/sec correctly for when using recursion
     - When `-request` is used, allow the user to override URL using `-u`
-=======
->>>>>>> formatting, canonical customer headers, docs updated
-=======
-    - Properly handle relative redirect urls with `-recursion`
-    - Calculate req/sec correctly for when using recursion
-    - When `-request` is used, allow the user to override URL using `-u`
->>>>>>> moved logic back and less resolve conflicts
 
 - v1.0.1
   - Changed
@@ -121,4 +98,3 @@
     - New CLI flag to stop on spurious 403 responses
   - Changed
     - Regex matching / filtering now matches the headers alongside of the response body
-
