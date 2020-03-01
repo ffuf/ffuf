@@ -197,21 +197,25 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	// If any other matcher is set, ignore -mc default value
 	matcherSet := false
 	statusSet := false
+	warningIgnoreBody := false
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "mc" {
 			statusSet = true
 		}
 		if f.Name == "ms" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 		if f.Name == "ml" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 		if f.Name == "mr" {
 			matcherSet = true
 		}
 		if f.Name == "mw" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 	})
 	if statusSet || !matcherSet {
@@ -226,6 +230,7 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.filterSize != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "size", parseOpts.filterSize); err != nil {
 			errs.Add(err)
 		}
@@ -236,11 +241,13 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.filterWords != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "word", parseOpts.filterWords); err != nil {
 			errs.Add(err)
 		}
 	}
 	if parseOpts.filterLines != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "line", parseOpts.filterLines); err != nil {
 			errs.Add(err)
 		}
@@ -264,6 +271,9 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if err := filter.AddMatcher(conf, "line", parseOpts.matcherLines); err != nil {
 			errs.Add(err)
 		}
+	}
+	if warningIgnoreBody {
+		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fw,fs,ml,mw and ms.\n")
 	}
 	return errs.ErrorOrNil()
 }
