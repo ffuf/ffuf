@@ -24,12 +24,10 @@ type Job struct {
 	SpuriousErrorCounter int
 	Total                int
 	Running              bool
-	RunningJob           bool
 	Count403             int
 	Count429             int
 	Error                string
 	startTime            time.Time
-	startTimeJob         time.Time
 	queuejobs            []QueueJob
 	queuepos             int
 	currentDepth         int
@@ -46,7 +44,6 @@ func NewJob(conf *Config) Job {
 	j.ErrorCounter = 0
 	j.SpuriousErrorCounter = 0
 	j.Running = false
-	j.RunningJob = false
 	j.queuepos = 0
 	j.queuejobs = make([]QueueJob, 0)
 	j.currentDepth = 0
@@ -84,18 +81,12 @@ func (j *Job) resetSpuriousErrors() {
 
 //Start the execution of the Job
 func (j *Job) Start() {
-	if j.startTime.IsZero() {
-		j.startTime = time.Now()
-	}
-
 	// Add the default job to job queue
 	j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0})
 	rand.Seed(time.Now().UnixNano())
 	j.Total = j.Input.Total()
 	defer j.Stop()
-
 	j.Running = true
-	j.RunningJob = true
 	//Show banner if not running in silent mode
 	if !j.Config.Quiet {
 		j.Output.Banner()
@@ -104,14 +95,12 @@ func (j *Job) Start() {
 	j.interruptMonitor()
 	for j.jobsInQueue() {
 		j.prepareQueueJob()
-
-		if j.queuepos > 1 && !j.RunningJob {
+		if j.queuepos > 1 {
 			// Print info for queued recursive jobs
 			j.Output.Info(fmt.Sprintf("Scanning: %s", j.Config.Url))
 		}
 		j.Input.Reset()
-		j.startTimeJob = time.Now()
-		j.RunningJob = true
+		j.startTime = time.Now()
 		j.Counter = 0
 		j.startExecution()
 	}
@@ -138,16 +127,13 @@ func (j *Job) startExecution() {
 	go j.runProgress(&wg)
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
 	limiter := make(chan bool, j.Config.Threads)
-
 	for j.Input.Next() {
 		// Check if we should stop the process
 		j.CheckStop()
-
 		if !j.Running {
 			defer j.Output.Warning(j.Error)
 			break
 		}
-
 		limiter <- true
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
@@ -168,11 +154,6 @@ func (j *Job) startExecution() {
 				time.Sleep(sleepDurationMS * time.Millisecond)
 			}
 		}()
-
-		if !j.RunningJob {
-			defer j.Output.Warning(j.Error)
-			return
-		}
 	}
 	wg.Wait()
 	j.updateProgress()
@@ -194,27 +175,20 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 	defer wg.Done()
 	totalProgress := j.Input.Total()
 	for j.Counter <= totalProgress {
-
 		if !j.Running {
 			break
 		}
-
 		j.updateProgress()
 		if j.Counter == totalProgress {
 			return
 		}
-
-		if !j.RunningJob {
-			return
-		}
-
 		time.Sleep(time.Millisecond * time.Duration(j.Config.ProgressFrequency))
 	}
 }
 
 func (j *Job) updateProgress() {
 	prog := Progress{
-		StartedAt:  j.startTimeJob,
+		StartedAt:  j.startTime,
 		ReqCount:   j.Counter,
 		ReqTotal:   j.Input.Total(),
 		QueuePos:   j.queuepos,
@@ -393,24 +367,13 @@ func (j *Job) CheckStop() {
 		}
 	}
 
-	// Check for runtime of entire process
+	// check for maximum running time
 	if j.Config.MaxTime > 0 {
 		dur := time.Now().Sub(j.startTime)
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTime {
-			j.Error = "Maximum running time for entire process reached, exiting."
+			j.Error = "Maximum running time reached, exiting."
 			j.Stop()
-		}
-	}
-
-	// Check for runtime of current job
-	if j.Config.MaxTimeJob > 0 {
-		dur := time.Now().Sub(j.startTimeJob)
-		runningSecs := int(dur / time.Second)
-		if runningSecs >= j.Config.MaxTimeJob {
-			j.Error = "Maximum running time for this job reached, continuing with next job if one exists."
-			j.Next()
-
 		}
 	}
 }
@@ -418,11 +381,5 @@ func (j *Job) CheckStop() {
 //Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
-	return
-}
-
-//Stop current, resume to next
-func (j *Job) Next() {
-	j.RunningJob = false
 	return
 }
