@@ -96,9 +96,13 @@ func (j *Job) Start() {
 
 	j.Running = true
 <<<<<<< HEAD
+<<<<<<< HEAD
 	j.RunningJob = true
 =======
 >>>>>>> moved logic back and less resolve conflicts
+=======
+	j.RunningJob = true
+>>>>>>> changes
 	//Show banner if not running in silent mode
 	if !j.Config.Quiet {
 		j.Output.Banner()
@@ -114,11 +118,16 @@ func (j *Job) Start() {
 		}
 		j.Input.Reset()
 <<<<<<< HEAD
+<<<<<<< HEAD
 		j.startTimeJob = time.Now()
 		j.RunningJob = true
 =======
 		j.startTime = time.Now()
 >>>>>>> moved logic back and less resolve conflicts
+=======
+		j.startTimeJob = time.Now()
+		j.RunningJob = true
+>>>>>>> changes
 		j.Counter = 0
 		j.startExecution()
 	}
