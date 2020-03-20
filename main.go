@@ -39,6 +39,7 @@ type cliOptions struct {
 	requestProto           string
 	URL                    string
 	outputFormat           string
+	ignoreBody             bool
 	wordlists              multiStringFlag
 	inputcommands          multiStringFlag
 	headers                multiStringFlag
@@ -102,6 +103,7 @@ func main() {
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv")
 	flag.StringVar(&conf.OutputDirectory, "od", "", "Directory path to store matched results to.")
+	flag.BoolVar(&conf.IgnoreBody, "ignore-body", false, "Do not fetch the response content.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
@@ -197,21 +199,25 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	// If any other matcher is set, ignore -mc default value
 	matcherSet := false
 	statusSet := false
+	warningIgnoreBody := false
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "mc" {
 			statusSet = true
 		}
 		if f.Name == "ms" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 		if f.Name == "ml" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 		if f.Name == "mr" {
 			matcherSet = true
 		}
 		if f.Name == "mw" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 	})
 	if statusSet || !matcherSet {
@@ -226,6 +232,7 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.filterSize != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "size", parseOpts.filterSize); err != nil {
 			errs.Add(err)
 		}
@@ -236,11 +243,13 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.filterWords != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "word", parseOpts.filterWords); err != nil {
 			errs.Add(err)
 		}
 	}
 	if parseOpts.filterLines != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "line", parseOpts.filterLines); err != nil {
 			errs.Add(err)
 		}
@@ -264,6 +273,9 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if err := filter.AddMatcher(conf, "line", parseOpts.matcherLines); err != nil {
 			errs.Add(err)
 		}
+	}
+	if conf.IgnoreBody && warningIgnoreBody {
+		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
 	}
 	return errs.ErrorOrNil()
 }

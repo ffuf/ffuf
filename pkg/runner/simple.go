@@ -127,7 +127,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	size, err := strconv.Atoi(httpresp.Header.Get("Content-Length"))
 	if err == nil {
 		resp.ContentLength = int64(size)
-		if size > MAX_DOWNLOAD_SIZE {
+		if (r.config.IgnoreBody) || (size > MAX_DOWNLOAD_SIZE) {
 			resp.Cancelled = true
 			return resp, nil
 		}
