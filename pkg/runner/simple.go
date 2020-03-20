@@ -53,6 +53,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			MaxConnsPerHost:     500,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
+				Renegotiation:      tls.RenegotiateOnceAsClient,
 			},
 		}}
 
