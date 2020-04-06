@@ -20,6 +20,7 @@ type Config struct {
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
+	OutputCheckpoint       int                       `json:"outputcheckpoint"`
 	IgnoreBody             bool                      `json:"ignorebody"`
 	IgnoreWordlistComments bool                      `json:"ignore_wordlist_comments"`
 	StopOn403              bool                      `json:"stop_403"`

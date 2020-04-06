@@ -36,6 +36,7 @@ type InternalInputProvider interface {
 //OutputProvider is responsible of providing output from the RunnerProvider
 type OutputProvider interface {
 	Banner() error
+	WriteOutputFile()
 	Finalize() error
 	Progress(status Progress)
 	Info(infostring string)

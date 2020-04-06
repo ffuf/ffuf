@@ -188,7 +188,7 @@ func (s *Stdoutput) Warning(warnstring string) {
 	}
 }
 
-func (s *Stdoutput) Finalize() error {
+func (s *Stdoutput) WriteOutputFile() {
 	var err error
 	if s.config.OutputFile != "" {
 		if s.config.OutputFormat == "json" {
@@ -208,6 +208,10 @@ func (s *Stdoutput) Finalize() error {
 			s.Error(fmt.Sprintf("%s", err))
 		}
 	}
+}
+
+func (s *Stdoutput) Finalize() error {
+	s.WriteOutputFile()
 	fmt.Fprintf(os.Stderr, "\n")
 	return nil
 }

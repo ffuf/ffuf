@@ -157,6 +157,9 @@ func (j *Job) startExecution() {
 			defer func() { <-limiter }()
 			defer wg.Done()
 			j.runTask(nextInput, nextPosition, false)
+			if j.Config.OutputCheckpoint != -1 && j.Counter % j.Config.OutputCheckpoint == 0 {
+				j.Output.WriteOutputFile()
+			}
 			if j.Config.Delay.HasDelay {
 				var sleepDurationMS time.Duration
 				if j.Config.Delay.IsRange {
