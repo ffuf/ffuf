@@ -104,6 +104,7 @@ func main() {
 	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv")
 	flag.StringVar(&conf.OutputDirectory, "od", "", "Directory path to store matched results to.")
 	flag.BoolVar(&conf.IgnoreBody, "ignore-body", false, "Do not fetch the response content.")
+	flag.BoolVar(&conf.NoBanner, "nb", false, "Do not print the banner ")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")

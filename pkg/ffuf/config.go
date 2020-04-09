@@ -21,6 +21,7 @@ type Config struct {
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
 	IgnoreBody             bool                      `json:"ignorebody"`
+	NoBanner               bool                      `json:"nobanner"`
 	IgnoreWordlistComments bool                      `json:"ignore_wordlist_comments"`
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnErrors           bool                      `json:"stop_errors"`
