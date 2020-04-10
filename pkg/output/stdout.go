@@ -53,6 +53,18 @@ func (s *Stdoutput) Banner() error {
 	fmt.Printf("%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
+
+	// Print wordlists
+	for _, provider := range s.config.InputProviders {
+		if provider.Name == "wordlist" {
+			wordlistValue := provider.Value
+			if provider.Keyword != "FUZZ" {
+				wordlistValue += ":" + provider.Keyword
+			}
+			printOption([]byte("Wordlist"), []byte(wordlistValue))
+		}
+	}
+
 	// Print headers
 	if len(s.config.Headers) > 0 {
 		for k, v := range s.config.Headers {
