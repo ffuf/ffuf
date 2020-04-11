@@ -57,11 +57,7 @@ func (s *Stdoutput) Banner() error {
 	// Print wordlists
 	for _, provider := range s.config.InputProviders {
 		if provider.Name == "wordlist" {
-			wordlistValue := provider.Value
-			if provider.Keyword != "FUZZ" {
-				wordlistValue += ":" + provider.Keyword
-			}
-			printOption([]byte("Wordlist"), []byte(wordlistValue))
+			printOption([]byte("Wordlist"), []byte(provider.Keyword + ": " + provider.Value))
 		}
 	}
 
