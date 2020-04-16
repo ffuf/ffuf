@@ -6,6 +6,7 @@
     - Changed behaviour of `-maxtime`, can now be used for entire process.
     - A new flag `-ignore-body` so ffuf does not fetch the response content. Default value=false.
     - Added the wordlists to the header information.
+    - Added support to output "all" formats (specify the path/filename sans file extension and ffuf will add the appropriate suffix for the filetype)
 
   - Changed
     - Added tls renegotiation flag to fix #193 in http.Client
