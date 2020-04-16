@@ -20,3 +20,4 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
+* [Daviey](https://github.com/Daviey)
