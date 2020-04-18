@@ -242,7 +242,7 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 		s.Error(fmt.Sprintf("%s", err))
 	}
 
-	s.config.OutputFile = BaseFilename + ".csv"
+	s.config.OutputFile = BaseFilename + ".ecsv"
 	err = writeCSV(s.config, s.Results, true)
 	if err != nil {
 		s.Error(fmt.Sprintf("%s", err))
