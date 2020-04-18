@@ -1,9 +1,9 @@
 # Contributors
-
 * [bjhulst](https://github.com/bjhulst)
 * [ccsplit](https://github.com/ccsplit)
 * [codingo](https://github.com/codingo)
 * [Damian89](https://github.com/Damian89)
+* [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
 * [eur0pa](https://github.com/eur0pa)
 * [fang0654](https://github.com/fang0654)
@@ -20,4 +20,3 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
-* [Daviey](https://github.com/Daviey)
