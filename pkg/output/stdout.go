@@ -83,7 +83,16 @@ func (s *Stdoutput) Banner() error {
 
 	// Output file info
 	if len(s.config.OutputFile) > 0 {
-		printOption([]byte("Output file"), []byte(s.config.OutputFile))
+
+		// Use filename as specified by user
+		OutputFile := s.config.OutputFile
+
+		if s.config.OutputFormat == "all" {
+			// Actually... append all extensions
+			OutputFile += ".{json,ejson,html,md,csv,ecsv}"
+		}
+
+		printOption([]byte("Output file"), []byte(OutputFile))
 		printOption([]byte("File format"), []byte(s.config.OutputFormat))
 	}
 
@@ -196,10 +205,59 @@ func (s *Stdoutput) Warning(warnstring string) {
 	}
 }
 
+func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
+	var err error
+	var BaseFilename string = s.config.OutputFile
+
+	// Go through each type of write, adding
+	// the suffix to each output file.
+
+	s.config.OutputFile = BaseFilename + ".json"
+	err = writeJSON(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".ejson"
+	err = writeEJSON(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".html"
+	err = writeHTML(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".md"
+	err = writeMarkdown(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".csv"
+	err = writeCSV(s.config, s.Results, false)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".ecsv"
+	err = writeCSV(s.config, s.Results, true)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	return nil
+
+}
+
 func (s *Stdoutput) Finalize() error {
 	var err error
 	if s.config.OutputFile != "" {
-		if s.config.OutputFormat == "json" {
+		if s.config.OutputFormat == "all" {
+			err = s.writeToAll(s.config, s.Results)
+		} else if s.config.OutputFormat == "json" {
 			err = writeJSON(s.config, s.Results)
 		} else if s.config.OutputFormat == "ejson" {
 			err = writeEJSON(s.config, s.Results)

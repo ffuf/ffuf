@@ -101,7 +101,7 @@ func main() {
 	flag.StringVar(&opts.requestProto, "request-proto", "https", "Protocol to use along with raw request")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
-	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv")
+	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
 	flag.StringVar(&conf.OutputDirectory, "od", "", "Directory path to store matched results to.")
 	flag.BoolVar(&conf.IgnoreBody, "ignore-body", false, "Do not fetch the response content.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
@@ -430,7 +430,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	//Check the output file format option
 	if conf.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
-		outputFormats := []string{"json", "ejson", "html", "md", "csv", "ecsv"}
+		outputFormats := []string{"all", "json", "ejson", "html", "md", "csv", "ecsv"}
 		found := false
 		for _, f := range outputFormats {
 			if f == parseOpts.outputFormat {
