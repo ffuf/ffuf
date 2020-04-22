@@ -11,6 +11,7 @@
   - Changed
     - Added tls renegotiation flag to fix #193 in http.Client
     - Fixed HTML report to display select/combo-box for rows per page (and increased default from 10 to 250 rows).
+    - Added Host information to JSON output file
 
 - v1.0.2
   - Changed

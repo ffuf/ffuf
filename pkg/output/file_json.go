@@ -9,9 +9,10 @@ import (
 )
 
 type ejsonFileOutput struct {
-	CommandLine string   `json:"commandline"`
-	Time        string   `json:"time"`
-	Results     []Result `json:"results"`
+	CommandLine string       `json:"commandline"`
+	Time        string       `json:"time"`
+	Results     []Result     `json:"results"`
+	Config      *ffuf.Config `json:"config"`
 }
 
 type JsonResult struct {
@@ -24,6 +25,7 @@ type JsonResult struct {
 	RedirectLocation string            `json:"redirectlocation"`
 	ResultFile       string            `json:"resultfile"`
 	Url              string            `json:"url"`
+	Host             string            `json:"host"`
 }
 
 type jsonFileOutput struct {
@@ -70,6 +72,7 @@ func writeJSON(config *ffuf.Config, res []Result) error {
 			RedirectLocation: r.RedirectLocation,
 			ResultFile:       r.ResultFile,
 			Url:              r.Url,
+			Host:             r.Host,
 		})
 	}
 	outJSON := jsonFileOutput{

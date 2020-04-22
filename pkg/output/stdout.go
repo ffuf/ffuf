@@ -39,6 +39,7 @@ type Result struct {
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
 	ResultFile       string            `json:"resultfile"`
+	Host             string            `json:"host"`
 	HTMLColor        string            `json:"-"`
 }
 
@@ -57,7 +58,7 @@ func (s *Stdoutput) Banner() error {
 	// Print wordlists
 	for _, provider := range s.config.InputProviders {
 		if provider.Name == "wordlist" {
-			printOption([]byte("Wordlist"), []byte(provider.Keyword + ": " + provider.Value))
+			printOption([]byte("Wordlist"), []byte(provider.Keyword+": "+provider.Value))
 		}
 	}
 
@@ -302,6 +303,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			RedirectLocation: resp.GetRedirectLocation(false),
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,
+			Host:             resp.Request.Host,
 		}
 		s.Results = append(s.Results, sResult)
 	}
