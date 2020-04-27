@@ -453,7 +453,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
-	if conf.Method == "GET" {
+	if conf.Method == "GET" && len(parseOpts.request) == 0 {
 		if len(conf.Data) > 0 {
 			conf.Method = "POST"
 		}
