@@ -2,6 +2,7 @@
 * [bjhulst](https://github.com/bjhulst)
 * [ccsplit](https://github.com/ccsplit)
 * [codingo](https://github.com/codingo)
+* [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
 * [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
