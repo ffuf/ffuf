@@ -29,14 +29,20 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, error) {
 func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error {
 	if provider.Name == "command" {
 		newcomm, _ := NewCommandInput(provider.Keyword, provider.Value, i.Config)
-		i.Providers = append(i.Providers, newcomm)
+		i.Providers = append(i.Providers, &encodedInputProvider{
+			iip: newcomm,
+			ei:  provider.Encoder,
+		})
 	} else {
 		// Default to wordlist
 		newwl, err := NewWordlistInput(provider.Keyword, provider.Value, i.Config)
 		if err != nil {
 			return err
 		}
-		i.Providers = append(i.Providers, newwl)
+		i.Providers = append(i.Providers, &encodedInputProvider{
+			iip: newwl,
+			ei:  provider.Encoder,
+		})
 	}
 	return nil
 }
