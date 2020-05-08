@@ -67,7 +67,7 @@ func escape(s string, encodeChars string) string {
 }
 
 func urlencode(ep EncoderParameters, data []byte) ([]byte, error) {
-	chars, ok := ep["urlencode_chars"]
+	chars, ok := ep["urlenc_chars"]
 	if ok {
 		return []byte(escape(string(data), chars)), nil
 	}
