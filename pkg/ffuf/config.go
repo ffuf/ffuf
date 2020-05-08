@@ -2,6 +2,8 @@ package ffuf
 
 import (
 	"context"
+
+	"github.com/ffuf/ffuf/pkg/encoder"
 )
 
 type Config struct {
@@ -46,9 +48,10 @@ type Config struct {
 }
 
 type InputProviderConfig struct {
-	Name    string `json:"name"`
-	Keyword string `json:"keyword"`
-	Value   string `json:"value"`
+	Name    string                  `json:"name"`
+	Keyword string                  `json:"keyword"`
+	Value   string                  `json:"value"`
+	Encoder encoder.EncoderInstance `json:"encoder"`
 }
 
 func NewConfig(ctx context.Context) Config {

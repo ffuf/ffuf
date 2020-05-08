@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ffuf/ffuf/pkg/encoder"
 	"github.com/ffuf/ffuf/pkg/ffuf"
 	"github.com/ffuf/ffuf/pkg/filter"
 	"github.com/ffuf/ffuf/pkg/input"
@@ -47,6 +48,8 @@ type cliOptions struct {
 	AutoCalibrationStrings multiStringFlag
 	showVersion            bool
 	debugLog               string
+	listEncoders           bool
+	encoderParameters      multiStringFlag
 }
 
 type multiStringFlag []string
@@ -71,7 +74,9 @@ func main() {
 	flag.BoolVar(&conf.DirSearchCompat, "D", false, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
 	flag.Var(&opts.headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.StringVar(&opts.URL, "u", "", "Target URL")
-	flag.Var(&opts.wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
+	flag.Var(&opts.wordlists, "w", "Wordlist file path with (optional) keyword and encoders separated by colon. eg. '/path/to/wordlist:KEYWORD:ENC1:ENC2'")
+	flag.BoolVar(&opts.listEncoders, "el", false, "List available encoders for use with -w")
+	flag.Var(&opts.encoderParameters, "ep", "Encoder args formatted as 'KEYWORD_ENCODER_ARG=VALUE'. Accepted multiple times.")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
 	flag.StringVar(&opts.delay, "p", "", "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.filterStatus, "fc", "", "Filter HTTP status codes from response. Comma separated list of codes and ranges")
@@ -125,6 +130,13 @@ func main() {
 	flag.Parse()
 	if opts.showVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
+		os.Exit(0)
+	}
+	if opts.listEncoders {
+		fmt.Printf("Available encoders:\n")
+		for _, enc := range encoder.Encoders() {
+			fmt.Printf("  %-25s| %s\n", enc.Name(), enc.Description())
+		}
 		os.Exit(0)
 	}
 	if len(opts.debugLog) != 0 {
@@ -301,30 +313,63 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 		parseOpts.headers.Set("Cookie: " + strings.Join(parseOpts.cookies, "; "))
 	}
 
+	// Build map of encoder parameters for each keyword
+	encoderParameters := map[string]encoder.EncoderParameters{}
+	for _, param := range parseOpts.encoderParameters {
+		ps := strings.SplitN(param, "_", 2)
+		if len(ps) != 2 {
+			errs.Add(fmt.Errorf("Unable to parse encoder parameter: %s", param))
+			continue
+		}
+		kv := strings.SplitN(ps[1], "=", 2)
+		if len(kv) != 2 {
+			errs.Add(fmt.Errorf("Unable to parse encoder parameter: %s", param))
+			continue
+		}
+		if _, ok := encoderParameters[ps[0]]; !ok {
+			encoderParameters[ps[0]] = encoder.EncoderParameters{kv[0]: kv[1]}
+		}
+		encoderParameters[ps[0]][kv[0]] = kv[1]
+	}
+
 	//Prepare inputproviders
 	for _, v := range parseOpts.wordlists {
-		wl := strings.SplitN(v, ":", 2)
-		if len(wl) == 2 {
+		wl := strings.Split(v, ":")
+		if len(wl) >= 2 {
+			params, _ := encoderParameters[wl[1]]
+			enc, err := encoder.Compile(wl[2:], params)
+			if err != nil {
+				errs.Add(err)
+				continue
+			}
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "wordlist",
 				Value:   wl[0],
 				Keyword: wl[1],
+				Encoder: enc,
 			})
 		} else {
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "wordlist",
 				Value:   wl[0],
 				Keyword: "FUZZ",
+				Encoder: encoder.Id(),
 			})
 		}
 	}
 	for _, v := range parseOpts.inputcommands {
-		ic := strings.SplitN(v, ":", 2)
-		if len(ic) == 2 {
+		ic := strings.Split(v, ":")
+		if len(ic) >= 2 {
+			params, _ := encoderParameters[ic[1]]
+			enc, err := encoder.Compile(ic[2:], params)
+			if err != nil {
+				return err
+			}
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "command",
 				Value:   ic[0],
 				Keyword: ic[1],
+				Encoder: enc,
 			})
 			conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
 		} else {
@@ -332,6 +377,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 				Name:    "command",
 				Value:   ic[0],
 				Keyword: "FUZZ",
+				Encoder: encoder.Id(),
 			})
 			conf.CommandKeywords = append(conf.CommandKeywords, "FUZZ")
 		}
