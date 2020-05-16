@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"math/rand"
+	"os"
 )
 
 //used for random string generation in calibration function
@@ -28,4 +29,13 @@ func UniqStringSlice(inslice []string) []string {
 		ret = append(ret, k)
 	}
 	return ret
+}
+
+//FileExists checks if the filepath exists and is not a directory
+func FileExists(path string) bool {
+	md, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !md.IsDir()
 }
