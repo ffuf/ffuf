@@ -1,5 +1,6 @@
 # Contributors
 * [bjhulst](https://github.com/bjhulst)
+* [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
 * [codingo](https://github.com/codingo)
 * [Damian89](https://github.com/Damian89)
