@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -313,7 +314,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 
 //handleRecursionJob adds a new recursion job to the job queue if a new directory is found
 func (j *Job) handleRecursionJob(resp Response) {
-	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
+	if !(strings.HasSuffix(resp.GetRedirectLocation(true), "/")) {
 		// Not a directory, return early
 		return
 	}
