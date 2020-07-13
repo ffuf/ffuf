@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"math/rand"
+	"time"
 )
 
 //used for random string generation in calibration function
@@ -9,6 +10,7 @@ var chars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 //RandomString returns a random string of length of parameter n
 func RandomString(n int) string {
+	rand.Seed(time.Now().UnixNano())
 	s := make([]rune, n)
 	for i := range s {
 		s[i] = chars[rand.Intn(len(chars))]
