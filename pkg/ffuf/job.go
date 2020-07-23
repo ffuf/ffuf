@@ -331,6 +331,7 @@ func (j *Job) handleRecursionJob(resp Response) {
 //CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
 func (j *Job) CalibrateResponses() ([]Response, error) {
 	cInputs := make([]string, 0)
+	rand.Seed(time.Now().UnixNano())
 	if len(j.Config.AutoCalibrationStrings) < 1 {
 		cInputs = append(cInputs, "admin"+RandomString(16)+"/")
 		cInputs = append(cInputs, ".htaccess"+RandomString(16))
