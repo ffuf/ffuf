@@ -5,7 +5,8 @@
     - New CLI flag `-maxtime-job` to set max. execution time per job.
     - Changed behaviour of `-maxtime`, can now be used for entire process.
   - Changed
-
+    - Fixed a bug related to the autocalibration feature making the random seed initialization also to take place before autocalibration needs it.
+    
 - v1.0.2
   - Changed
     - Write POST request data properly to file when ran with `-od`.
