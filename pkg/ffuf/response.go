@@ -24,7 +24,11 @@ func (resp *Response) GetRedirectLocation(absolute bool) string {
 
 	redirectLocation := ""
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 {
-		redirectLocation = resp.Headers["Location"][0]
+		if loc, ok := resp.Headers["Location"]; ok {
+			if len(loc) > 0 {
+				redirectLocation = loc[0]
+			}
+		}
 	}
 
 	if absolute {
