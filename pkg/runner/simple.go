@@ -53,6 +53,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			MaxConnsPerHost:     500,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
+				Renegotiation:      tls.RenegotiateOnceAsClient,
 			},
 		}}
 
@@ -105,6 +106,8 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if _, ok := req.Headers["Host"]; ok {
 		httpreq.Host = req.Headers["Host"]
 	}
+
+	req.Host = httpreq.Host
 	httpreq = httpreq.WithContext(r.config.Context)
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
@@ -126,7 +129,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	size, err := strconv.Atoi(httpresp.Header.Get("Content-Length"))
 	if err == nil {
 		resp.ContentLength = int64(size)
-		if size > MAX_DOWNLOAD_SIZE {
+		if (r.config.IgnoreBody) || (size > MAX_DOWNLOAD_SIZE) {
 			resp.Cancelled = true
 			return resp, nil
 		}

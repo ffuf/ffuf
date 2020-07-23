@@ -10,6 +10,7 @@ import (
 	"net/textproto"
 	"net/url"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -39,6 +40,7 @@ type cliOptions struct {
 	requestProto           string
 	URL                    string
 	outputFormat           string
+	ignoreBody             bool
 	wordlists              multiStringFlag
 	inputcommands          multiStringFlag
 	headers                multiStringFlag
@@ -100,8 +102,9 @@ func main() {
 	flag.StringVar(&opts.requestProto, "request-proto", "https", "Protocol to use along with raw request")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
 	flag.StringVar(&conf.OutputFile, "o", "", "Write output to file")
-	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv")
+	flag.StringVar(&opts.outputFormat, "of", "json", "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
 	flag.StringVar(&conf.OutputDirectory, "od", "", "Directory path to store matched results to.")
+	flag.BoolVar(&conf.IgnoreBody, "ignore-body", false, "Do not fetch the response content.")
 	flag.BoolVar(&conf.Quiet, "s", false, "Do not print additional information (silent mode)")
 	flag.BoolVar(&conf.StopOn403, "sf", false, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&conf.StopOnErrors, "se", false, "Stop on spurious errors")
@@ -197,21 +200,25 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 	// If any other matcher is set, ignore -mc default value
 	matcherSet := false
 	statusSet := false
+	warningIgnoreBody := false
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "mc" {
 			statusSet = true
 		}
 		if f.Name == "ms" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 		if f.Name == "ml" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 		if f.Name == "mr" {
 			matcherSet = true
 		}
 		if f.Name == "mw" {
 			matcherSet = true
+			warningIgnoreBody = true
 		}
 	})
 	if statusSet || !matcherSet {
@@ -226,6 +233,7 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.filterSize != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "size", parseOpts.filterSize); err != nil {
 			errs.Add(err)
 		}
@@ -236,11 +244,13 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.filterWords != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "word", parseOpts.filterWords); err != nil {
 			errs.Add(err)
 		}
 	}
 	if parseOpts.filterLines != "" {
+		warningIgnoreBody = true
 		if err := filter.AddFilter(conf, "line", parseOpts.filterLines); err != nil {
 			errs.Add(err)
 		}
@@ -264,6 +274,9 @@ func prepareFilters(parseOpts *cliOptions, conf *ffuf.Config) error {
 		if err := filter.AddMatcher(conf, "line", parseOpts.matcherLines); err != nil {
 			errs.Add(err)
 		}
+	}
+	if conf.IgnoreBody && warningIgnoreBody {
+		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
 	}
 	return errs.ErrorOrNil()
 }
@@ -291,7 +304,24 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 
 	//Prepare inputproviders
 	for _, v := range parseOpts.wordlists {
-		wl := strings.SplitN(v, ":", 2)
+		var wl []string
+		if runtime.GOOS == "windows" {
+			// Try to ensure that Windows file paths like C:\path\to\wordlist.txt:KEYWORD are treated properly
+			if ffuf.FileExists(v) {
+				// The wordlist was supplied without a keyword parameter
+				wl = []string{v}
+			} else {
+				filepart := v[:strings.LastIndex(v, ":")]
+				if ffuf.FileExists(filepart) {
+					wl = []string{filepart, v[strings.LastIndex(v, ":")+1:]}
+				} else {
+					// The file was not found. Use full wordlist parameter value for more concise error message down the line
+					wl = []string{v}
+				}
+			}
+		} else {
+			wl = strings.SplitN(v, ":", 2)
+		}
 		if len(wl) == 2 {
 			conf.InputProviders = append(conf.InputProviders, ffuf.InputProviderConfig{
 				Name:    "wordlist",
@@ -418,7 +448,7 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	//Check the output file format option
 	if conf.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
-		outputFormats := []string{"json", "ejson", "html", "md", "csv", "ecsv"}
+		outputFormats := []string{"all", "json", "ejson", "html", "md", "csv", "ecsv"}
 		found := false
 		for _, f := range outputFormats {
 			if f == parseOpts.outputFormat {
@@ -441,10 +471,12 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 	}
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
-	if conf.Method == "GET" {
-		if len(conf.Data) > 0 {
-			conf.Method = "POST"
-		}
+	if len(conf.Data) > 0 &&
+		conf.Method == "GET" &&
+		//don't modify the method automatically if a request file is being used as input
+		len(parseOpts.request) == 0 {
+
+		conf.Method = "POST"
 	}
 
 	conf.CommandLine = strings.Join(os.Args, " ")

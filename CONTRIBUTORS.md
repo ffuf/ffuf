@@ -1,12 +1,15 @@
 # Contributors
-
 * [bjhulst](https://github.com/bjhulst)
+* [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
 * [codingo](https://github.com/codingo)
+* [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
+* [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
 * [eur0pa](https://github.com/eur0pa)
 * [fang0654](https://github.com/fang0654)
+* [helpermika](https://github.com/helpermika)
 * [Ice3man543](https://github.com/Ice3man543)
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [joohoi](https://github.com/joohoi)

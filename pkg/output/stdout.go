@@ -39,6 +39,7 @@ type Result struct {
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
 	ResultFile       string            `json:"resultfile"`
+	Host             string            `json:"host"`
 	HTMLColor        string            `json:"-"`
 }
 
@@ -53,6 +54,14 @@ func (s *Stdoutput) Banner() error {
 	fmt.Printf("%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
+
+	// Print wordlists
+	for _, provider := range s.config.InputProviders {
+		if provider.Name == "wordlist" {
+			printOption([]byte("Wordlist"), []byte(provider.Keyword+": "+provider.Value))
+		}
+	}
+
 	// Print headers
 	if len(s.config.Headers) > 0 {
 		for k, v := range s.config.Headers {
@@ -75,7 +84,16 @@ func (s *Stdoutput) Banner() error {
 
 	// Output file info
 	if len(s.config.OutputFile) > 0 {
-		printOption([]byte("Output file"), []byte(s.config.OutputFile))
+
+		// Use filename as specified by user
+		OutputFile := s.config.OutputFile
+
+		if s.config.OutputFormat == "all" {
+			// Actually... append all extensions
+			OutputFile += ".{json,ejson,html,md,csv,ecsv}"
+		}
+
+		printOption([]byte("Output file"), []byte(OutputFile))
 		printOption([]byte("File format"), []byte(s.config.OutputFormat))
 	}
 
@@ -188,10 +206,59 @@ func (s *Stdoutput) Warning(warnstring string) {
 	}
 }
 
+func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
+	var err error
+	var BaseFilename string = s.config.OutputFile
+
+	// Go through each type of write, adding
+	// the suffix to each output file.
+
+	s.config.OutputFile = BaseFilename + ".json"
+	err = writeJSON(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".ejson"
+	err = writeEJSON(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".html"
+	err = writeHTML(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".md"
+	err = writeMarkdown(s.config, s.Results)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".csv"
+	err = writeCSV(s.config, s.Results, false)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	s.config.OutputFile = BaseFilename + ".ecsv"
+	err = writeCSV(s.config, s.Results, true)
+	if err != nil {
+		s.Error(fmt.Sprintf("%s", err))
+	}
+
+	return nil
+
+}
+
 func (s *Stdoutput) Finalize() error {
 	var err error
 	if s.config.OutputFile != "" {
-		if s.config.OutputFormat == "json" {
+		if s.config.OutputFormat == "all" {
+			err = s.writeToAll(s.config, s.Results)
+		} else if s.config.OutputFormat == "json" {
 			err = writeJSON(s.config, s.Results)
 		} else if s.config.OutputFormat == "ejson" {
 			err = writeEJSON(s.config, s.Results)
@@ -236,6 +303,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			RedirectLocation: resp.GetRedirectLocation(false),
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,
+			Host:             resp.Request.Host,
 		}
 		s.Results = append(s.Results, sResult)
 	}
