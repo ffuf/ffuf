@@ -152,7 +152,7 @@ FILTER OPTIONS:
 
 INPUT OPTIONS:
   -D               DirSearch wordlist compatibility mode. Used in conjunction with -e flag. (default: false)
-  -e               Comma separated list of extensions. Extends FUZZ keyword.
+  -e               Comma separated list of extensions. Extends FUZZ keyword. (Ex: -e ".php, _bak, .aspx")
   -ic              Ignore wordlist comments (default: false)
   -input-cmd       Command producing the input. --input-num is required when using this input method. Overrides -w.
   -input-num       Number of inputs to test. Used in conjunction with --input-cmd. (default: 100)
