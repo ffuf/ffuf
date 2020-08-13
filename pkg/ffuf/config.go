@@ -30,6 +30,7 @@ type Config struct {
 	AutoCalibrationStrings []string                  `json:"autocalibration_strings"`
 	Timeout                int                       `json:"timeout"`
 	ProgressFrequency      int                       `json:"-"`
+	ProgressMinified       bool                      `json:"progress_minified"`
 	Delay                  optRange                  `json:"delay"`
 	Filters                map[string]FilterProvider `json:"filters"`
 	Matchers               map[string]FilterProvider `json:"matchers"`

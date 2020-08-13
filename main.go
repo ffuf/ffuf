@@ -145,6 +145,11 @@ func main() {
 		Usage()
 		os.Exit(1)
 	}
+	if ffuf.SmallTTY() {
+		conf.ProgressMinified = true
+	} else {
+		conf.ProgressMinified = false
+	}
 	job, err := prepareJob(&conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)

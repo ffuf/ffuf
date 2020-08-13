@@ -167,6 +167,11 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
+	if s.config.ProgressMinified {
+		fmt.Fprintf(os.Stderr, "%s:: Progress [%d/%d] :: Duration: [%d:%02d:%02d]", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, hours, mins, secs)
+		return
+	}
+
 	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 

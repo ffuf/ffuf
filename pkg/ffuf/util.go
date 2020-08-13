@@ -3,6 +3,9 @@ package ffuf
 import (
 	"math/rand"
 	"os"
+	"os/exec"
+	"strconv"
+	"strings"
 )
 
 //used for random string generation in calibration function
@@ -38,4 +41,40 @@ func FileExists(path string) bool {
 		return false
 	}
 	return !md.IsDir()
+}
+
+//sizeofTTY return two integers or an error (X, Y, error) that corresspond to the width and height of the TTY and any error that could occur.
+func sizeofTTY() (int, int, error) {
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	out, err := cmd.Output()
+	if err != nil {
+		return 0, 0, err
+	}
+	output := string(out)
+
+	parts := strings.Split(output, " ")
+	x, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, err
+	}
+	y, err := strconv.Atoi(strings.Replace(parts[1], "\n", "", 1))
+	if err != nil {
+		return 0, 0, err
+	}
+	return x, y, nil
+}
+
+//SmallTTY returns a boolean based on if the size of the TTY is smaller than 35 columns.
+func SmallTTY() bool {
+	x, _, err := sizeofTTY()
+
+	if err != nil {
+		return false
+	}
+
+	if x < MINIMUMCOLS {
+		return true
+	}
+	return false
 }
