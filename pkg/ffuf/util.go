@@ -43,8 +43,8 @@ func FileExists(path string) bool {
 	return !md.IsDir()
 }
 
-//sizeofTTY return two integers or an error (X, Y, error) that corresspond to the width and height of the TTY and any error that could occur.
-func sizeofTTY() (int, int, error) {
+//SizeofTTY return two integers or an error (X, Y, error) that corresspond to the width and height of the TTY and any error that could occur.
+func SizeofTTY() (int, int, error) {
 	cmd := exec.Command("stty", "size")
 	cmd.Stdin = os.Stdin
 	out, err := cmd.Output()
@@ -65,16 +65,7 @@ func sizeofTTY() (int, int, error) {
 	return x, y, nil
 }
 
-//SmallTTY returns a boolean based on if the size of the TTY is smaller than 35 columns.
-func SmallTTY() bool {
-	x, _, err := sizeofTTY()
-
-	if err != nil {
-		return false
-	}
-
-	if x < MINIMUMCOLS {
-		return true
-	}
-	return false
+//Percent take current completed jobs and total jobs and return the percentage completed
+func Percent(current int, total int) float32 {
+	return ((float32(current) * float32(100)) / float32(total))
 }

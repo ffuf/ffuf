@@ -145,11 +145,18 @@ func main() {
 		Usage()
 		os.Exit(1)
 	}
-	if ffuf.SmallTTY() {
-		conf.ProgressMinified = true
+	if runtime.GOOS == "windows" {
+		// 60 is large width to defaul to for windows.
+		conf.TerminalWidth = 60
 	} else {
-		conf.ProgressMinified = false
+		_, cols, err := ffuf.SizeofTTY()
+
+		if err != nil {
+			conf.TerminalWidth = 80
+		}
+		conf.TerminalWidth = cols
 	}
+
 	job, err := prepareJob(&conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)

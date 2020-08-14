@@ -152,6 +152,7 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 		return
 	}
 
+	var progressString string
 	dur := time.Now().Sub(status.StartedAt)
 	runningSecs := int(dur / time.Second)
 	var reqRate int
@@ -167,12 +168,20 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	if s.config.ProgressMinified {
-		fmt.Fprintf(os.Stderr, "%s:: Progress [%d/%d] :: Duration: [%d:%02d:%02d]", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, hours, mins, secs)
-		return
+	//Create full progress string
+	progressString = fmt.Sprintf("%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	if len(progressString)+1 >= s.config.TerminalWidth {
+		//if that progress string plus one is larger than the terminal width then replace the progress string with a shorter one
+		progressString = fmt.Sprintf("%s[%.f%%%%]-[%d/%d]", TERMINAL_CLEAR_LINE, ffuf.Percent(status.ReqCount, status.ReqTotal), status.QueuePos, status.QueueTotal)
+
+		if len(progressString) > s.config.TerminalWidth {
+			//finally if the new minified version of progress bar is too large to fit on the users terminal screen silence the progress
+			s.config.Quiet = true
+			return
+		}
 	}
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	fmt.Fprintf(os.Stderr, progressString)
 }
 
 func (s *Stdoutput) Info(infostring string) {
