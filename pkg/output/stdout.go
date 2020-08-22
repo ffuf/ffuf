@@ -51,7 +51,7 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 }
 
 func (s *Stdoutput) Banner() error {
-	fmt.Printf("%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
+	fmt.Fprintf(os.Stderr ,"%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
 
@@ -142,7 +142,7 @@ func (s *Stdoutput) Banner() error {
 	for _, f := range s.config.Filters {
 		printOption([]byte("Filter"), []byte(f.Repr()))
 	}
-	fmt.Printf("%s\n\n", BANNER_SEP)
+	fmt.Fprintf(os.Stderr, "%s\n\n", BANNER_SEP)
 	return nil
 }
 
@@ -430,7 +430,7 @@ func (s *Stdoutput) colorize(input string, status int64) string {
 }
 
 func printOption(name []byte, value []byte) {
-	fmt.Printf(" :: %-16s : %s\n", name, value)
+	fmt.Fprintf(os.Stderr, " :: %-16s : %s\n", name, value)
 }
 
 func inSlice(key string, slice []string) bool {
