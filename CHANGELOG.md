@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
 
   - Changed
 

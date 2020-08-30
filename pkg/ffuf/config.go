@@ -43,6 +43,7 @@ type Config struct {
 	MaxTimeJob             int                       `json:"maxtime_job"`
 	Recursion              bool                      `json:"recursion"`
 	RecursionDepth         int                       `json:"recursion_depth"`
+	Rate                   int64                     `json:"rate"`
 }
 
 type InputProviderConfig struct {
@@ -76,12 +77,13 @@ func NewConfig(ctx context.Context) Config {
 	conf.Extensions = make([]string, 0)
 	conf.Timeout = 10
 	// Progress update frequency, in milliseconds
-	conf.ProgressFrequency = 100
+	conf.ProgressFrequency = 125
 	conf.DirSearchCompat = false
 	conf.Verbose = false
 	conf.MaxTime = 0
 	conf.MaxTimeJob = 0
 	conf.Recursion = false
 	conf.RecursionDepth = 0
+	conf.Rate = 0
 	return conf
 }
