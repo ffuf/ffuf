@@ -292,10 +292,8 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 	if j.Config.StopOnAll {
 		// increment 429 counter if the response code is 429
-		if j.Config.StopOnAll {
-			if resp.StatusCode == 429 {
-				j.inc429()
-			}
+		if resp.StatusCode == 429 {
+			j.inc429()
 		}
 	}
 	if j.isMatch(resp) {
