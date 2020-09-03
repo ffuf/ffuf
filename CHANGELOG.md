@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Change banner logging to stderr instead of stdout
 
   - Changed
 
