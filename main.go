@@ -117,7 +117,7 @@ func main() {
 	flag.StringVar(&opts.replayProxyURL, "replay-proxy", "", "Replay matched requests using this proxy.")
 	flag.BoolVar(&conf.AutoCalibration, "ac", false, "Automatically calibrate filtering options")
 	flag.Var(&opts.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
-	flag.IntVar(&conf.Threads, "t", 40, "Number of concurrent threads.")
+	flag.IntVar(&conf.Threads, "t", 30, "Number of concurrent threads.")
 	flag.IntVar(&conf.Timeout, "timeout", 10, "HTTP request timeout in seconds.")
 	flag.IntVar(&conf.MaxTime, "maxtime", 0, "Maximum running time in seconds for entire process.")
 	flag.IntVar(&conf.MaxTimeJob, "maxtime-job", 0, "Maximum running time in seconds per job.")
