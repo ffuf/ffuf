@@ -28,6 +28,7 @@ type Job struct {
 	Count403             int
 	Count429             int
 	Error                string
+	Rate                 *RateThrottle
 	startTime            time.Time
 	startTimeJob         time.Time
 	queuejobs            []QueueJob
@@ -40,8 +41,9 @@ type QueueJob struct {
 	depth int
 }
 
-func NewJob(conf *Config) Job {
+func NewJob(conf *Config) *Job {
 	var j Job
+	j.Config = conf
 	j.Counter = 0
 	j.ErrorCounter = 0
 	j.SpuriousErrorCounter = 0
@@ -50,7 +52,8 @@ func NewJob(conf *Config) Job {
 	j.queuepos = 0
 	j.queuejobs = make([]QueueJob, 0)
 	j.currentDepth = 0
-	return j
+	j.Rate = NewRateThrottle(conf)
+	return &j
 }
 
 //incError increments the error counter
@@ -132,10 +135,24 @@ func (j *Job) prepareQueueJob() {
 	j.queuepos += 1
 }
 
+func (j *Job) sleepIfNeeded() {
+	var sleepDuration time.Duration
+	if j.Config.Delay.HasDelay {
+		if j.Config.Delay.IsRange {
+			sTime := j.Config.Delay.Min + rand.Float64()*(j.Config.Delay.Max-j.Config.Delay.Min)
+			sleepDuration = time.Duration(sTime * 1000)
+		} else {
+			sleepDuration = time.Duration(j.Config.Delay.Min * 1000)
+		}
+		sleepDuration = sleepDuration * time.Millisecond
+	}
+	time.Sleep(sleepDuration)
+}
+
 func (j *Job) startExecution() {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go j.runProgress(&wg)
+	go j.runBackgroundTasks(&wg)
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
 	limiter := make(chan bool, j.Config.Threads)
 
@@ -147,26 +164,21 @@ func (j *Job) startExecution() {
 			defer j.Output.Warning(j.Error)
 			break
 		}
-
 		limiter <- true
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
 		wg.Add(1)
 		j.Counter++
+
 		go func() {
 			defer func() { <-limiter }()
 			defer wg.Done()
+			threadStart := time.Now()
 			j.runTask(nextInput, nextPosition, false)
-			if j.Config.Delay.HasDelay {
-				var sleepDurationMS time.Duration
-				if j.Config.Delay.IsRange {
-					sTime := j.Config.Delay.Min + rand.Float64()*(j.Config.Delay.Max-j.Config.Delay.Min)
-					sleepDurationMS = time.Duration(sTime * 1000)
-				} else {
-					sleepDurationMS = time.Duration(j.Config.Delay.Min * 1000)
-				}
-				time.Sleep(sleepDurationMS * time.Millisecond)
-			}
+			j.sleepIfNeeded()
+			j.Rate.Throttle()
+			threadEnd := time.Now()
+			j.Rate.Tick(threadStart, threadEnd)
 		}()
 
 		if !j.RunningJob {
@@ -190,7 +202,7 @@ func (j *Job) interruptMonitor() {
 	}()
 }
 
-func (j *Job) runProgress(wg *sync.WaitGroup) {
+func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 	defer wg.Done()
 	totalProgress := j.Input.Total()
 	for j.Counter <= totalProgress {
@@ -198,16 +210,14 @@ func (j *Job) runProgress(wg *sync.WaitGroup) {
 		if !j.Running {
 			break
 		}
-
 		j.updateProgress()
 		if j.Counter == totalProgress {
 			return
 		}
-
 		if !j.RunningJob {
 			return
 		}
-
+		j.Rate.Adjust()
 		time.Sleep(time.Millisecond * time.Duration(j.Config.ProgressFrequency))
 	}
 }
@@ -217,6 +227,7 @@ func (j *Job) updateProgress() {
 		StartedAt:  j.startTimeJob,
 		ReqCount:   j.Counter,
 		ReqTotal:   j.Input.Total(),
+		ReqSec:     j.Rate.CurrentRate(),
 		QueuePos:   j.queuepos,
 		QueueTotal: len(j.queuejobs),
 		ErrorCount: j.ErrorCounter,
@@ -281,10 +292,8 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 	if j.Config.StopOnAll {
 		// increment 429 counter if the response code is 429
-		if j.Config.StopOnAll {
-			if resp.StatusCode == 429 {
-				j.inc429()
-			}
+		if resp.StatusCode == 429 {
+			j.inc429()
 		}
 	}
 	if j.isMatch(resp) {

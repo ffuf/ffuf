@@ -35,6 +35,7 @@ type cliOptions struct {
 	matcherWords           string
 	matcherLines           string
 	proxyURL               string
+	rate                   int
 	replayProxyURL         string
 	request                string
 	requestProto           string
@@ -98,6 +99,7 @@ func main() {
 	flag.StringVar(&opts.matcherWords, "mw", "", "Match amount of words in response")
 	flag.StringVar(&opts.matcherLines, "ml", "", "Match amount of lines in response")
 	flag.StringVar(&opts.proxyURL, "x", "", "HTTP Proxy URL")
+	flag.IntVar(&opts.rate, "rate", 0, "Rate of requests per second")
 	flag.StringVar(&opts.request, "request", "", "File containing the raw http request")
 	flag.StringVar(&opts.requestProto, "request-proto", "https", "Protocol to use along with raw request")
 	flag.StringVar(&conf.Method, "X", "GET", "HTTP method to use")
@@ -143,17 +145,20 @@ func main() {
 	if err := prepareConfig(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 	job, err := prepareJob(&conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 	if err := prepareFilters(&opts, &conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
+		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 
@@ -167,9 +172,7 @@ func main() {
 }
 
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
-	job := &ffuf.Job{
-		Config: conf,
-	}
+	job := ffuf.NewJob(conf)
 	errs := ffuf.NewMultierror()
 	var err error
 	inputprovider, err := input.NewInputProvider(conf)
@@ -494,6 +497,12 @@ func prepareConfig(parseOpts *cliOptions, conf *ffuf.Config) error {
 			errmsg := fmt.Sprintf("When using -recursion the URL (-u) must end with FUZZ keyword.")
 			errs.Add(fmt.Errorf(errmsg))
 		}
+	}
+
+	if parseOpts.rate < 0 {
+		conf.Rate = 0
+	} else {
+		conf.Rate = int64(parseOpts.rate)
 	}
 
 	return errs.ErrorOrNil()

@@ -154,9 +154,9 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 
 	dur := time.Now().Sub(status.StartedAt)
 	runningSecs := int(dur / time.Second)
-	var reqRate int
+	var reqRate int64
 	if runningSecs > 0 {
-		reqRate = int(status.ReqCount / runningSecs)
+		reqRate = status.ReqSec
 	} else {
 		reqRate = 0
 	}

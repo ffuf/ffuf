@@ -15,7 +15,9 @@ A fast web fuzzer written in Go.
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
   or
-- If you have go compiler installed: `go get github.com/ffuf/ffuf`
+- If you have recent go compiler installed: `go get github.com/ffuf/ffuf`
+  or
+- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go build 
 
 The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
 
@@ -106,13 +108,14 @@ ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.0
+Fuzz Faster U Fool - v1.2.0-git
 
 HTTP OPTIONS:
   -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
   -X               HTTP method to use (default: GET)
   -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
   -d               POST data
+  -ignore-body     Do not fetch the response content. (default: false)
   -r               Follow redirects (default: false)
   -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
   -recursion-depth Maximum recursion depth. (default: 0)
@@ -126,9 +129,10 @@ GENERAL OPTIONS:
   -ac              Automatically calibrate filtering options (default: false)
   -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
   -c               Colorize output. (default: false)
-  -maxtime         Maximum running time in seconds for the entire process. (default: 0)
+  -maxtime         Maximum running time in seconds for entire process. (default: 0)
   -maxtime-job     Maximum running time in seconds per job. (default: 0)
   -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
+  -rate            Rate of requests per second (default: 0)
   -s               Do not print additional information (silent mode) (default: false)
   -sa              Stop on all error cases. Implies -sf and -se. (default: false)
   -se              Stop on spurious errors (default: false)
@@ -165,7 +169,7 @@ OUTPUT OPTIONS:
   -debug-log       Write all of the internal logging to the specified file.
   -o               Write output to file
   -od              Directory path to store matched results to.
-  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (default: json)
+  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
 
 EXAMPLE USAGE:
   Fuzz file paths from wordlist.txt, match all responses but filter out those with content-size 42.
@@ -183,6 +187,7 @@ EXAMPLE USAGE:
     ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr "VAL" -c
 
   More information and examples: https://github.com/ffuf/ffuf
+
 ```
 
 ## Helper scripts and advanced payloads
