@@ -1,9 +1,11 @@
 ## Changelog
 - master
   - New
-    - Change banner logging to stderr instead of stdout
+    - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
+    - Change banner logging to stderr instead of stdout.
 
   - Changed
+    - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.
 
 - v1.1.0
   - New

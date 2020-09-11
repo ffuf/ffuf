@@ -12,6 +12,7 @@
 * [helpermika](https://github.com/helpermika)
 * [Ice3man543](https://github.com/Ice3man543)
 * [JamTookTheBait](https://github.com/JamTookTheBait)
+* [jimen0](https://github.com/jimen0)
 * [joohoi](https://github.com/joohoi)
 * [jvesiluoma](https://github.com/jvesiluoma)
 * [Kiblyn11](https://github.com/Kiblyn11)
