@@ -14,6 +14,7 @@
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [joohoi](https://github.com/joohoi)
 * [jvesiluoma](https://github.com/jvesiluoma)
+* [Kiblyn11](https://github.com/Kiblyn11)
 * [lc](https://github.com/lc)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [oh6hay](https://github.com/oh6hay)
@@ -22,4 +23,3 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
-* [Kiblyn11](https://github.com/Kiblyn11)
