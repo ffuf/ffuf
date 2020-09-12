@@ -88,6 +88,7 @@ func main() {
 	flag.BoolVar(&conf.Colors, "c", false, "Colorize output.")
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.Var(&opts.inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
+	flag.StringVar(&conf.InputShell, "input-shell", "", "Shell to be used for running command")
 	flag.IntVar(&conf.InputNum, "input-num", 100, "Number of inputs to test. Used in conjunction with --input-cmd.")
 	flag.StringVar(&conf.InputMode, "mode", "clusterbomb", "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")

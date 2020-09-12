@@ -17,6 +17,7 @@ type Config struct {
 	CommandKeywords        []string                  `json:"-"`
 	InputNum               int                       `json:"cmd_inputnum"`
 	InputMode              string                    `json:"inputmode"`
+	InputShell             string                    `json:"inputshell"`
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
