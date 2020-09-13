@@ -66,8 +66,6 @@ func (m *multiStringFlag) Set(value string) error {
 		*m = append(*m, value)
 	}
 
-	fmt.Printf("%v\n", *m)
-
 	return nil
 }
 
