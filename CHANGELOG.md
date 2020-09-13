@@ -5,6 +5,7 @@
 
   - Changed
     - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.
+    - The `-w` flag now accepts comma delimited values in the form of `file1:W1,file2:W2`.
 
 - v1.1.0
   - New
