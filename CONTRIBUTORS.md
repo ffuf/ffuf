@@ -1,4 +1,5 @@
 # Contributors
+* [AverageSecurityGuy](https://github.com/averagesecurityguy)
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)

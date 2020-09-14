@@ -58,7 +58,14 @@ func (m *multiStringFlag) String() string {
 }
 
 func (m *multiStringFlag) Set(value string) error {
-	*m = append(*m, value)
+	delimited := strings.Split(value, ",")
+
+	if len(delimited) > 1 {
+		*m = append(*m, delimited...)
+	} else {
+		*m = append(*m, value)
+	}
+
 	return nil
 }
 
