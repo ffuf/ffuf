@@ -1,4 +1,5 @@
 # Contributors
+* [AverageSecurityGuy](https://github.com/averagesecurityguy)
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
@@ -23,4 +24,3 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
-* [AverageSecurityGuy](https://github.com/averagesecurityguy)
