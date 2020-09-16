@@ -42,7 +42,7 @@ type cliOptions struct {
 	URL                    string
 	outputFormat           string
 	ignoreBody             bool
-	wordlists              multiStringFlag
+	wordlists              wordlistFlag
 	inputcommands          multiStringFlag
 	headers                multiStringFlag
 	cookies                multiStringFlag
@@ -52,12 +52,22 @@ type cliOptions struct {
 }
 
 type multiStringFlag []string
+type wordlistFlag []string
 
 func (m *multiStringFlag) String() string {
 	return ""
 }
 
+func (m *wordlistFlag) String() string {
+	return ""
+}
+
 func (m *multiStringFlag) Set(value string) error {
+	*m = append(*m, value)
+	return nil
+}
+
+func (m *wordlistFlag) Set(value string) error {
 	delimited := strings.Split(value, ",")
 
 	if len(delimited) > 1 {
