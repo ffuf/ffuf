@@ -64,6 +64,56 @@ type ConfigOptions struct {
 	Wordlists              []string
 }
 
+//NewConfigOptions returns a newly created ConfigOptions struct with default values
+func NewConfigOptions() *ConfigOptions {
+	c := &ConfigOptions{}
+	c.AutoCalibration = false
+	c.Colors = false
+	c.Data = ""
+	c.DebugLog = ""
+	c.Delay = ""
+	c.DirSearchCompat = false
+	c.Extensions = ""
+	c.FilterLines = ""
+	c.FilterRegexp = ""
+	c.FilterSize = ""
+	c.FilterStatus = ""
+	c.FilterWords = ""
+	c.FollowRedirects = false
+	c.IgnoreBody = false
+	c.IgnoreWordlistComments = false
+	c.InputMode = "clusterbomb"
+	c.InputNum = 100
+	c.MatcherLines = ""
+	c.MatcherRegexp = ""
+	c.MatcherSize = ""
+	c.MatcherStatus = "200,204,301,302,307,401,403"
+	c.MatcherWords = ""
+	c.MaxTime = 0
+	c.MaxTimeJob = 0
+	c.Method = "GET"
+	c.OutputDirectory = ""
+	c.OutputFile = ""
+	c.OutputFormat = "json"
+	c.ProxyURL = ""
+	c.Quiet = false
+	c.Rate = 0
+	c.Recursion = false
+	c.RecursionDepth = 0
+	c.ReplayProxyURL = ""
+	c.Request = ""
+	c.RequestProto = "https"
+	c.ShowVersion = false
+	c.StopOn403 = false
+	c.StopOnAll = false
+	c.StopOnErrors = false
+	c.Threads = 40
+	c.Timeout = 10
+	c.URL = ""
+	c.Verbose = false
+	return c
+}
+
 //ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
 func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
