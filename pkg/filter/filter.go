@@ -124,56 +124,56 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 		}
 	})
 	if statusSet || !matcherSet {
-		if err := AddMatcher(conf, "status", parseOpts.MatcherStatus); err != nil {
+		if err := AddMatcher(conf, "status", parseOpts.Matcher.Status); err != nil {
 			errs.Add(err)
 		}
 	}
 
-	if parseOpts.FilterStatus != "" {
-		if err := AddFilter(conf, "status", parseOpts.FilterStatus); err != nil {
+	if parseOpts.Filter.Status != "" {
+		if err := AddFilter(conf, "status", parseOpts.Filter.Status); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.FilterSize != "" {
+	if parseOpts.Filter.Size != "" {
 		warningIgnoreBody = true
-		if err := AddFilter(conf, "size", parseOpts.FilterSize); err != nil {
+		if err := AddFilter(conf, "size", parseOpts.Filter.Size); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.FilterRegexp != "" {
-		if err := AddFilter(conf, "regexp", parseOpts.FilterRegexp); err != nil {
+	if parseOpts.Filter.Regexp != "" {
+		if err := AddFilter(conf, "regexp", parseOpts.Filter.Regexp); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.FilterWords != "" {
+	if parseOpts.Filter.Words != "" {
 		warningIgnoreBody = true
-		if err := AddFilter(conf, "word", parseOpts.FilterWords); err != nil {
+		if err := AddFilter(conf, "word", parseOpts.Filter.Words); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.FilterLines != "" {
+	if parseOpts.Filter.Lines != "" {
 		warningIgnoreBody = true
-		if err := AddFilter(conf, "line", parseOpts.FilterLines); err != nil {
+		if err := AddFilter(conf, "line", parseOpts.Filter.Lines); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.MatcherSize != "" {
-		if err := AddMatcher(conf, "size", parseOpts.MatcherSize); err != nil {
+	if parseOpts.Matcher.Size != "" {
+		if err := AddMatcher(conf, "size", parseOpts.Matcher.Size); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.MatcherRegexp != "" {
-		if err := AddMatcher(conf, "regexp", parseOpts.MatcherRegexp); err != nil {
+	if parseOpts.Matcher.Regexp != "" {
+		if err := AddMatcher(conf, "regexp", parseOpts.Matcher.Regexp); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.MatcherWords != "" {
-		if err := AddMatcher(conf, "word", parseOpts.MatcherWords); err != nil {
+	if parseOpts.Matcher.Words != "" {
+		if err := AddMatcher(conf, "word", parseOpts.Matcher.Words); err != nil {
 			errs.Add(err)
 		}
 	}
-	if parseOpts.MatcherLines != "" {
-		if err := AddMatcher(conf, "line", parseOpts.MatcherLines); err != nil {
+	if parseOpts.Matcher.Lines != "" {
+		if err := AddMatcher(conf, "line", parseOpts.Matcher.Lines); err != nil {
 			errs.Add(err)
 		}
 	}

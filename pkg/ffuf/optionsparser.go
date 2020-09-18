@@ -13,104 +13,128 @@ import (
 )
 
 type ConfigOptions struct {
+	Filter  FilterOptions
+	General GeneralOptions
+	HTTP    HTTPOptions
+	Input   InputOptions
+	Matcher MatcherOptions
+	Output  OutputOptions
+}
+
+type HTTPOptions struct {
+	Cookies         []string
+	Data            string
+	FollowRedirects bool
+	Headers         []string
+	IgnoreBody      bool
+	Method          string
+	ProxyURL        string
+	Recursion       bool
+	RecursionDepth  int
+	ReplayProxyURL  string
+	Timeout         int
+	URL             string
+}
+
+type GeneralOptions struct {
 	AutoCalibration        bool
 	AutoCalibrationStrings []string
 	Colors                 bool
-	Cookies                []string
-	Data                   string
-	DebugLog               string
 	Delay                  string
-	DirSearchCompat        bool
-	Extensions             string
-	FilterLines            string
-	FilterRegexp           string
-	FilterSize             string
-	FilterStatus           string
-	FilterWords            string
-	FollowRedirects        bool
-	Headers                []string
-	IgnoreBody             bool
-	IgnoreWordlistComments bool
-	InputMode              string
-	InputNum               int
-	Inputcommands          []string
-	MatcherLines           string
-	MatcherRegexp          string
-	MatcherSize            string
-	MatcherStatus          string
-	MatcherWords           string
 	MaxTime                int
 	MaxTimeJob             int
-	Method                 string
-	OutputDirectory        string
-	OutputFile             string
-	OutputFormat           string
-	ProxyURL               string
 	Quiet                  bool
 	Rate                   int
-	Recursion              bool
-	RecursionDepth         int
-	ReplayProxyURL         string
-	Request                string
-	RequestProto           string
 	ShowVersion            bool
 	StopOn403              bool
 	StopOnAll              bool
 	StopOnErrors           bool
 	Threads                int
-	Timeout                int
-	URL                    string
 	Verbose                bool
+}
+
+type InputOptions struct {
+	DirSearchCompat        bool
+	Extensions             string
+	IgnoreWordlistComments bool
+	InputMode              string
+	InputNum               int
+	Inputcommands          []string
+	Request                string
+	RequestProto           string
 	Wordlists              []string
+}
+
+type OutputOptions struct {
+	DebugLog        string
+	OutputDirectory string
+	OutputFile      string
+	OutputFormat    string
+}
+
+type FilterOptions struct {
+	Lines  string
+	Regexp string
+	Size   string
+	Status string
+	Words  string
+}
+
+type MatcherOptions struct {
+	Lines  string
+	Regexp string
+	Size   string
+	Status string
+	Words  string
 }
 
 //NewConfigOptions returns a newly created ConfigOptions struct with default values
 func NewConfigOptions() *ConfigOptions {
 	c := &ConfigOptions{}
-	c.AutoCalibration = false
-	c.Colors = false
-	c.Data = ""
-	c.DebugLog = ""
-	c.Delay = ""
-	c.DirSearchCompat = false
-	c.Extensions = ""
-	c.FilterLines = ""
-	c.FilterRegexp = ""
-	c.FilterSize = ""
-	c.FilterStatus = ""
-	c.FilterWords = ""
-	c.FollowRedirects = false
-	c.IgnoreBody = false
-	c.IgnoreWordlistComments = false
-	c.InputMode = "clusterbomb"
-	c.InputNum = 100
-	c.MatcherLines = ""
-	c.MatcherRegexp = ""
-	c.MatcherSize = ""
-	c.MatcherStatus = "200,204,301,302,307,401,403"
-	c.MatcherWords = ""
-	c.MaxTime = 0
-	c.MaxTimeJob = 0
-	c.Method = "GET"
-	c.OutputDirectory = ""
-	c.OutputFile = ""
-	c.OutputFormat = "json"
-	c.ProxyURL = ""
-	c.Quiet = false
-	c.Rate = 0
-	c.Recursion = false
-	c.RecursionDepth = 0
-	c.ReplayProxyURL = ""
-	c.Request = ""
-	c.RequestProto = "https"
-	c.ShowVersion = false
-	c.StopOn403 = false
-	c.StopOnAll = false
-	c.StopOnErrors = false
-	c.Threads = 40
-	c.Timeout = 10
-	c.URL = ""
-	c.Verbose = false
+	c.General.AutoCalibration = false
+	c.General.Colors = false
+	c.HTTP.Data = ""
+	c.Output.DebugLog = ""
+	c.General.Delay = ""
+	c.Input.DirSearchCompat = false
+	c.Input.Extensions = ""
+	c.Filter.Lines = ""
+	c.Filter.Regexp = ""
+	c.Filter.Size = ""
+	c.Filter.Status = ""
+	c.Filter.Words = ""
+	c.HTTP.FollowRedirects = false
+	c.HTTP.IgnoreBody = false
+	c.Input.IgnoreWordlistComments = false
+	c.Input.InputMode = "clusterbomb"
+	c.Input.InputNum = 100
+	c.Matcher.Lines = ""
+	c.Matcher.Regexp = ""
+	c.Matcher.Size = ""
+	c.Matcher.Status = "200,204,301,302,307,401,403"
+	c.Matcher.Words = ""
+	c.General.MaxTime = 0
+	c.General.MaxTimeJob = 0
+	c.HTTP.Method = "GET"
+	c.Output.OutputDirectory = ""
+	c.Output.OutputFile = ""
+	c.Output.OutputFormat = "json"
+	c.HTTP.ProxyURL = ""
+	c.General.Quiet = false
+	c.General.Rate = 0
+	c.HTTP.Recursion = false
+	c.HTTP.RecursionDepth = 0
+	c.HTTP.ReplayProxyURL = ""
+	c.Input.Request = ""
+	c.Input.RequestProto = "https"
+	c.General.ShowVersion = false
+	c.General.StopOn403 = false
+	c.General.StopOnAll = false
+	c.General.StopOnErrors = false
+	c.General.Threads = 40
+	c.HTTP.Timeout = 10
+	c.HTTP.URL = ""
+	c.General.Verbose = false
 	return c
 }
 
@@ -123,23 +147,23 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 
 	var err error
 	var err2 error
-	if len(parseOpts.URL) == 0 && parseOpts.Request == "" {
+	if len(parseOpts.HTTP.URL) == 0 && parseOpts.Input.Request == "" {
 		errs.Add(fmt.Errorf("-u flag or -request flag is required"))
 	}
 
 	// prepare extensions
-	if parseOpts.Extensions != "" {
-		extensions := strings.Split(parseOpts.Extensions, ",")
+	if parseOpts.Input.Extensions != "" {
+		extensions := strings.Split(parseOpts.Input.Extensions, ",")
 		conf.Extensions = extensions
 	}
 
 	// Convert cookies to a header
-	if len(parseOpts.Cookies) > 0 {
-		parseOpts.Headers = append(parseOpts.Headers, "Cookie: "+strings.Join(parseOpts.Cookies, "; "))
+	if len(parseOpts.HTTP.Cookies) > 0 {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Cookie: "+strings.Join(parseOpts.HTTP.Cookies, "; "))
 	}
 
 	//Prepare inputproviders
-	for _, v := range parseOpts.Wordlists {
+	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
 		if runtime.GOOS == "windows" {
 			// Try to ensure that Windows file paths like C:\path\to\wordlist.txt:KEYWORD are treated properly
@@ -172,7 +196,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 			})
 		}
 	}
-	for _, v := range parseOpts.Inputcommands {
+	for _, v := range parseOpts.Input.Inputcommands {
 		ic := strings.SplitN(v, ":", 2)
 		if len(ic) == 2 {
 			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
@@ -196,7 +220,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 	}
 
 	// Prepare the request using body
-	if parseOpts.Request != "" {
+	if parseOpts.Input.Request != "" {
 		err := parseRawRequest(parseOpts, &conf)
 		if err != nil {
 			errmsg := fmt.Sprintf("Could not parse raw request: %s", err)
@@ -205,12 +229,12 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 	}
 
 	//Prepare URL
-	if parseOpts.URL != "" {
-		conf.Url = parseOpts.URL
+	if parseOpts.HTTP.URL != "" {
+		conf.Url = parseOpts.HTTP.URL
 	}
 
 	//Prepare headers and make canonical
-	for _, v := range parseOpts.Headers {
+	for _, v := range parseOpts.HTTP.Headers {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
 			// trim and make canonical
@@ -241,7 +265,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 	}
 
 	//Prepare delay
-	d := strings.Split(parseOpts.Delay, "-")
+	d := strings.Split(parseOpts.General.Delay, "-")
 	if len(d) > 2 {
 		errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
 	} else if len(d) == 2 {
@@ -252,32 +276,32 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 		if err != nil || err2 != nil {
 			errs.Add(fmt.Errorf("Delay range min and max values need to be valid floats. For example: 0.1-0.5"))
 		}
-	} else if len(parseOpts.Delay) > 0 {
+	} else if len(parseOpts.General.Delay) > 0 {
 		conf.Delay.IsRange = false
 		conf.Delay.HasDelay = true
-		conf.Delay.Min, err = strconv.ParseFloat(parseOpts.Delay, 64)
+		conf.Delay.Min, err = strconv.ParseFloat(parseOpts.General.Delay, 64)
 		if err != nil {
 			errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
 		}
 	}
 
 	// Verify proxy url format
-	if len(parseOpts.ProxyURL) > 0 {
-		_, err := url.Parse(parseOpts.ProxyURL)
+	if len(parseOpts.HTTP.ProxyURL) > 0 {
+		_, err := url.Parse(parseOpts.HTTP.ProxyURL)
 		if err != nil {
 			errs.Add(fmt.Errorf("Bad proxy url (-x) format: %s", err))
 		} else {
-			conf.ProxyURL = parseOpts.ProxyURL
+			conf.ProxyURL = parseOpts.HTTP.ProxyURL
 		}
 	}
 
 	// Verify replayproxy url format
-	if len(parseOpts.ReplayProxyURL) > 0 {
-		_, err := url.Parse(parseOpts.ReplayProxyURL)
+	if len(parseOpts.HTTP.ReplayProxyURL) > 0 {
+		_, err := url.Parse(parseOpts.HTTP.ReplayProxyURL)
 		if err != nil {
 			errs.Add(fmt.Errorf("Bad replay-proxy url (-replay-proxy) format: %s", err))
 		} else {
-			conf.ReplayProxyURL = parseOpts.ReplayProxyURL
+			conf.ReplayProxyURL = parseOpts.HTTP.ReplayProxyURL
 		}
 	}
 
@@ -287,19 +311,19 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 		outputFormats := []string{"all", "json", "ejson", "html", "md", "csv", "ecsv"}
 		found := false
 		for _, f := range outputFormats {
-			if f == parseOpts.OutputFormat {
+			if f == parseOpts.Output.OutputFormat {
 				conf.OutputFormat = f
 				found = true
 			}
 		}
 		if !found {
-			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.OutputFormat))
+			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.Output.OutputFormat))
 		}
 	}
 
 	// Auto-calibration strings
-	if len(parseOpts.AutoCalibrationStrings) > 0 {
-		conf.AutoCalibrationStrings = parseOpts.AutoCalibrationStrings
+	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibrationStrings = parseOpts.General.AutoCalibrationStrings
 	}
 	// Using -acc implies -ac
 	if len(conf.AutoCalibrationStrings) > 0 {
@@ -310,7 +334,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 	if len(conf.Data) > 0 &&
 		conf.Method == "GET" &&
 		//don't modify the method automatically if a request file is being used as input
-		len(parseOpts.Request) == 0 {
+		len(parseOpts.Input.Request) == 0 {
 
 		conf.Method = "POST"
 	}
@@ -332,41 +356,41 @@ func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
 		}
 	}
 
-	if parseOpts.Rate < 0 {
+	if parseOpts.General.Rate < 0 {
 		conf.Rate = 0
 	} else {
-		conf.Rate = int64(parseOpts.Rate)
+		conf.Rate = int64(parseOpts.General.Rate)
 	}
 
 	// Common stuff
-	conf.IgnoreWordlistComments = parseOpts.IgnoreWordlistComments
-	conf.DirSearchCompat = parseOpts.DirSearchCompat
-	conf.Data = parseOpts.Data
-	conf.Colors = parseOpts.Colors
-	conf.InputNum = parseOpts.InputNum
-	conf.InputMode = parseOpts.InputMode
-	conf.Method = parseOpts.Method
-	conf.OutputFile = parseOpts.OutputFile
-	conf.OutputDirectory = parseOpts.OutputDirectory
-	conf.IgnoreBody = parseOpts.IgnoreBody
-	conf.Quiet = parseOpts.Quiet
-	conf.StopOn403 = parseOpts.StopOn403
-	conf.StopOnAll = parseOpts.StopOnAll
-	conf.StopOnErrors = parseOpts.StopOnErrors
-	conf.FollowRedirects = parseOpts.FollowRedirects
-	conf.Recursion = parseOpts.Recursion
-	conf.RecursionDepth = parseOpts.RecursionDepth
-	conf.AutoCalibration = parseOpts.AutoCalibration
-	conf.Threads = parseOpts.Threads
-	conf.Timeout = parseOpts.Timeout
-	conf.MaxTime = parseOpts.MaxTime
-	conf.MaxTimeJob = parseOpts.MaxTimeJob
-	conf.Verbose = parseOpts.Verbose
+	conf.IgnoreWordlistComments = parseOpts.Input.IgnoreWordlistComments
+	conf.DirSearchCompat = parseOpts.Input.DirSearchCompat
+	conf.Data = parseOpts.HTTP.Data
+	conf.Colors = parseOpts.General.Colors
+	conf.InputNum = parseOpts.Input.InputNum
+	conf.InputMode = parseOpts.Input.InputMode
+	conf.Method = parseOpts.HTTP.Method
+	conf.OutputFile = parseOpts.Output.OutputFile
+	conf.OutputDirectory = parseOpts.Output.OutputDirectory
+	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
+	conf.Quiet = parseOpts.General.Quiet
+	conf.StopOn403 = parseOpts.General.StopOn403
+	conf.StopOnAll = parseOpts.General.StopOnAll
+	conf.StopOnErrors = parseOpts.General.StopOnErrors
+	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
+	conf.Recursion = parseOpts.HTTP.Recursion
+	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
+	conf.AutoCalibration = parseOpts.General.AutoCalibration
+	conf.Threads = parseOpts.General.Threads
+	conf.Timeout = parseOpts.HTTP.Timeout
+	conf.MaxTime = parseOpts.General.MaxTime
+	conf.MaxTimeJob = parseOpts.General.MaxTimeJob
+	conf.Verbose = parseOpts.General.Verbose
 	return &conf, errs.ErrorOrNil()
 }
 
 func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
-	file, err := os.Open(parseOpts.Request)
+	file, err := os.Open(parseOpts.Input.Request)
 	if err != nil {
 		return fmt.Errorf("could not open request file: %s", err)
 	}
@@ -416,7 +440,7 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 		conf.Headers["Host"] = parsed.Host
 	} else {
 		// Build the request URL from the request
-		conf.Url = parseOpts.RequestProto + "://" + conf.Headers["Host"] + parts[1]
+		conf.Url = parseOpts.Input.RequestProto + "://" + conf.Headers["Host"] + parts[1]
 	}
 
 	// Set the request body
