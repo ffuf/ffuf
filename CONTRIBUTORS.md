@@ -19,6 +19,7 @@
 * [oh6hay](https://github.com/oh6hay)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
+* [Sam-Lane](https://github.com/Sam-Lane)
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)

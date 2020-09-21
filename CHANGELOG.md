@@ -3,6 +3,7 @@
   - New
 
   - Changed
+    - Fixed a bug that caused the progress bar to break if the width of the terminal was not large enough for it to print on a single line.
 
 - v1.1.0
   - New
