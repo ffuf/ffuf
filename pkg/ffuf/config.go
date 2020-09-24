@@ -35,6 +35,7 @@ type Config struct {
 	Matchers               map[string]FilterProvider `json:"matchers"`
 	Threads                int                       `json:"threads"`
 	Context                context.Context           `json:"-"`
+	Cancel                 context.CancelFunc        `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	ReplayProxyURL         string                    `json:"replayproxyurl"`
 	CommandLine            string                    `json:"cmdline"`
@@ -52,9 +53,10 @@ type InputProviderConfig struct {
 	Value   string `json:"value"`
 }
 
-func NewConfig(ctx context.Context) Config {
+func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	var conf Config
 	conf.Context = ctx
+	conf.Cancel = cancel
 	conf.Headers = make(map[string]string)
 	conf.Method = "GET"
 	conf.Url = ""

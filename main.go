@@ -82,7 +82,7 @@ func (m *wordlistFlag) Set(value string) error {
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	conf := ffuf.NewConfig(ctx)
+	conf := ffuf.NewConfig(ctx, cancel)
 	opts := cliOptions{}
 	var ignored bool
 	flag.BoolVar(&conf.IgnoreWordlistComments, "ic", false, "Ignore wordlist comments")
