@@ -146,7 +146,11 @@ func (j *Job) sleepIfNeeded() {
 		}
 		sleepDuration = sleepDuration * time.Millisecond
 	}
-	time.Sleep(sleepDuration)
+	// makes the sleep cancellable by context
+	select {
+	case <-j.Config.Context.Done(): // cancelled
+	case <-time.After(sleepDuration): // sleep
+	}
 }
 
 func (j *Job) startExecution() {
@@ -428,6 +432,7 @@ func (j *Job) CheckStop() {
 //Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
+	j.Config.Cancel()
 	return
 }
 
