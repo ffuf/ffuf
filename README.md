@@ -19,7 +19,7 @@ A fast web fuzzer written in Go.
   or
 - git clone https://github.com/ffuf/ffuf ; cd ffuf ; go build 
 
-The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
+The only dependency of ffuf is Go 1.13. No dependencies outside of Go standard library are needed.
 
 ## Example usage
 
