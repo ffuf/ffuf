@@ -16,6 +16,7 @@
 * [jimen0](https://github.com/jimen0)
 * [joohoi](https://github.com/joohoi)
 * [jvesiluoma](https://github.com/jvesiluoma)
+* [Kiblyn11](https://github.com/Kiblyn11)
 * [lc](https://github.com/lc)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [oh6hay](https://github.com/oh6hay)

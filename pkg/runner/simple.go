@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/textproto"
@@ -51,6 +52,10 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
 			MaxConnsPerHost:     500,
+			DialContext: (&net.Dialer{
+				Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
+			}).DialContext,
+			TLSHandshakeTimeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 				Renegotiation:      tls.RenegotiateOnceAsClient,
@@ -92,7 +97,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	var err error
 	var rawreq []byte
 	data := bytes.NewReader(req.Data)
-	httpreq, err = http.NewRequest(req.Method, req.Url, data)
+	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
 	if err != nil {
 		return ffuf.Response{}, err
 	}

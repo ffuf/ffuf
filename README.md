@@ -25,6 +25,13 @@ Ffuf depends on Go 1.13 or greater.
 
 ## Example usage
 
+The usage examples below show just the simplest tasks you can accomplish using `ffuf`. 
+
+For more extensive documentation, with real life usage examples and tips, be sure to check out the awesome guide:
+"[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
+Michael Skelton ([@codingo](https://github.com/codingo)).
+
+
 ### Typical directory discovery
 
 [![asciicast](https://asciinema.org/a/211350.png)](https://asciinema.org/a/211350)

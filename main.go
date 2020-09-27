@@ -170,14 +170,14 @@ func main() {
 	// Prepare context and set up Config struct
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	conf, err := ffuf.ConfigFromOptions(opts)
+	conf, err := ffuf.ConfigFromOptions(opts, ctx, cancel)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
-	conf.SetContext(ctx)
+	conf.SetContext(ctx, cancel)
 
 	job, err := prepareJob(conf)
 	if err != nil {

@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/textproto"
@@ -144,10 +145,10 @@ func NewConfigOptions() *ConfigOptions {
 
 //ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
-func ConfigFromOptions(parseOpts *ConfigOptions) (*Config, error) {
+func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel context.CancelFunc) (*Config, error) {
 	//TODO: refactor in a proper flag library that can handle things like required flags
 	errs := NewMultierror()
-	conf := NewConfig()
+	conf := NewConfig(ctx, cancel)
 
 	var err error
 	var err2 error

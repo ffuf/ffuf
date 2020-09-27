@@ -7,6 +7,7 @@ import (
 type Config struct {
 	AutoCalibration        bool                      `json:"autocalibration"`
 	AutoCalibrationStrings []string                  `json:"autocalibration_strings"`
+	Cancel                 context.CancelFunc        `json:"-"`
 	Colors                 bool                      `json:"colors"`
 	CommandKeywords        []string                  `json:"-"`
 	CommandLine            string                    `json:"cmdline"`
@@ -53,10 +54,12 @@ type InputProviderConfig struct {
 	Value   string `json:"value"`
 }
 
-func NewConfig() Config {
+func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	var conf Config
 	conf.AutoCalibrationStrings = make([]string, 0)
 	conf.CommandKeywords = make([]string, 0)
+	conf.Context = ctx
+	conf.Cancel = cancel
 	conf.Data = ""
 	conf.Delay = optRange{0, 0, false, false}
 	conf.DirSearchCompat = false
@@ -87,6 +90,7 @@ func NewConfig() Config {
 	return conf
 }
 
-func (c *Config) SetContext(ctx context.Context) {
+func (c *Config) SetContext(ctx context.Context, cancel context.CancelFunc) {
 	c.Context = ctx
+	c.Cancel = cancel
 }
