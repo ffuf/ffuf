@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"flag"
 	"fmt"
 	"strconv"
 	"strings"
@@ -94,4 +95,90 @@ func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) {
 	if len(lineCalib) > 0 {
 		AddFilter(j.Config, "line", strings.Join(lineCalib, ","))
 	}
+}
+
+func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
+	errs := ffuf.NewMultierror()
+	// If any other matcher is set, ignore -mc default value
+	matcherSet := false
+	statusSet := false
+	warningIgnoreBody := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "mc" {
+			statusSet = true
+		}
+		if f.Name == "ms" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+		if f.Name == "ml" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+		if f.Name == "mr" {
+			matcherSet = true
+		}
+		if f.Name == "mw" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+	})
+	if statusSet || !matcherSet {
+		if err := AddMatcher(conf, "status", parseOpts.Matcher.Status); err != nil {
+			errs.Add(err)
+		}
+	}
+
+	if parseOpts.Filter.Status != "" {
+		if err := AddFilter(conf, "status", parseOpts.Filter.Status); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Size != "" {
+		warningIgnoreBody = true
+		if err := AddFilter(conf, "size", parseOpts.Filter.Size); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Regexp != "" {
+		if err := AddFilter(conf, "regexp", parseOpts.Filter.Regexp); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Words != "" {
+		warningIgnoreBody = true
+		if err := AddFilter(conf, "word", parseOpts.Filter.Words); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Lines != "" {
+		warningIgnoreBody = true
+		if err := AddFilter(conf, "line", parseOpts.Filter.Lines); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Size != "" {
+		if err := AddMatcher(conf, "size", parseOpts.Matcher.Size); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Regexp != "" {
+		if err := AddMatcher(conf, "regexp", parseOpts.Matcher.Regexp); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Words != "" {
+		if err := AddMatcher(conf, "word", parseOpts.Matcher.Words); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Lines != "" {
+		if err := AddMatcher(conf, "line", parseOpts.Matcher.Lines); err != nil {
+			errs.Add(err)
+		}
+	}
+	if conf.IgnoreBody && warningIgnoreBody {
+		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
+	}
+	return errs.ErrorOrNil()
 }

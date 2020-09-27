@@ -13,17 +13,27 @@ type MainInputProvider struct {
 	msbIterator int
 }
 
-func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, error) {
+func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 	validmode := false
+	errs := ffuf.NewMultierror()
 	for _, mode := range []string{"clusterbomb", "pitchfork"} {
 		if conf.InputMode == mode {
 			validmode = true
 		}
 	}
 	if !validmode {
-		return &MainInputProvider{}, fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode)
+		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
+		return &MainInputProvider{}, errs
 	}
-	return &MainInputProvider{Config: conf, msbIterator: 0}, nil
+	mainip := MainInputProvider{Config: conf, msbIterator: 0}
+	// Initialize the correct inputprovider
+	for _, v := range conf.InputProviders {
+		err := mainip.AddProvider(v)
+		if err != nil {
+			errs.Add(err)
+		}
+	}
+	return &mainip, errs
 }
 
 func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error {

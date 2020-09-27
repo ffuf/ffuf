@@ -5,46 +5,47 @@ import (
 )
 
 type Config struct {
-	Headers                map[string]string         `json:"headers"`
-	Extensions             []string                  `json:"extensions"`
-	DirSearchCompat        bool                      `json:"dirsearch_compatibility"`
-	Method                 string                    `json:"method"`
-	Url                    string                    `json:"url"`
-	Data                   string                    `json:"postdata"`
-	Quiet                  bool                      `json:"quiet"`
+	AutoCalibration        bool                      `json:"autocalibration"`
+	AutoCalibrationStrings []string                  `json:"autocalibration_strings"`
+	Cancel                 context.CancelFunc        `json:"-"`
 	Colors                 bool                      `json:"colors"`
-	InputProviders         []InputProviderConfig     `json:"inputproviders"`
 	CommandKeywords        []string                  `json:"-"`
-	InputNum               int                       `json:"cmd_inputnum"`
+	CommandLine            string                    `json:"cmdline"`
+	ConfigFile             string                    `json:"configfile"`
+	Context                context.Context           `json:"-"`
+	Data                   string                    `json:"postdata"`
+	Delay                  optRange                  `json:"delay"`
+	DirSearchCompat        bool                      `json:"dirsearch_compatibility"`
+	Extensions             []string                  `json:"extensions"`
+	Filters                map[string]FilterProvider `json:"filters"`
+	FollowRedirects        bool                      `json:"follow_redirects"`
+	Headers                map[string]string         `json:"headers"`
+	IgnoreBody             bool                      `json:"ignorebody"`
+	IgnoreWordlistComments bool                      `json:"ignore_wordlist_comments"`
 	InputMode              string                    `json:"inputmode"`
+	InputNum               int                       `json:"cmd_inputnum"`
+	InputProviders         []InputProviderConfig     `json:"inputproviders"`
+	Matchers               map[string]FilterProvider `json:"matchers"`
+	MaxTime                int                       `json:"maxtime"`
+	MaxTimeJob             int                       `json:"maxtime_job"`
+	Method                 string                    `json:"method"`
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
-	IgnoreBody             bool                      `json:"ignorebody"`
-	IgnoreWordlistComments bool                      `json:"ignore_wordlist_comments"`
-	StopOn403              bool                      `json:"stop_403"`
-	StopOnErrors           bool                      `json:"stop_errors"`
-	StopOnAll              bool                      `json:"stop_all"`
-	FollowRedirects        bool                      `json:"follow_redirects"`
-	AutoCalibration        bool                      `json:"autocalibration"`
-	AutoCalibrationStrings []string                  `json:"autocalibration_strings"`
-	Timeout                int                       `json:"timeout"`
 	ProgressFrequency      int                       `json:"-"`
-	Delay                  optRange                  `json:"delay"`
-	Filters                map[string]FilterProvider `json:"filters"`
-	Matchers               map[string]FilterProvider `json:"matchers"`
-	Threads                int                       `json:"threads"`
-	Context                context.Context           `json:"-"`
-	Cancel                 context.CancelFunc        `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
-	ReplayProxyURL         string                    `json:"replayproxyurl"`
-	CommandLine            string                    `json:"cmdline"`
-	Verbose                bool                      `json:"verbose"`
-	MaxTime                int                       `json:"maxtime"`
-	MaxTimeJob             int                       `json:"maxtime_job"`
+	Quiet                  bool                      `json:"quiet"`
+	Rate                   int64                     `json:"rate"`
 	Recursion              bool                      `json:"recursion"`
 	RecursionDepth         int                       `json:"recursion_depth"`
-	Rate                   int64                     `json:"rate"`
+	ReplayProxyURL         string                    `json:"replayproxyurl"`
+	StopOn403              bool                      `json:"stop_403"`
+	StopOnAll              bool                      `json:"stop_all"`
+	StopOnErrors           bool                      `json:"stop_errors"`
+	Threads                int                       `json:"threads"`
+	Timeout                int                       `json:"timeout"`
+	Url                    string                    `json:"url"`
+	Verbose                bool                      `json:"verbose"`
 }
 
 type InputProviderConfig struct {
@@ -55,37 +56,41 @@ type InputProviderConfig struct {
 
 func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	var conf Config
+	conf.AutoCalibrationStrings = make([]string, 0)
+	conf.CommandKeywords = make([]string, 0)
 	conf.Context = ctx
 	conf.Cancel = cancel
-	conf.Headers = make(map[string]string)
-	conf.Method = "GET"
-	conf.Url = ""
 	conf.Data = ""
-	conf.Quiet = false
-	conf.IgnoreWordlistComments = false
-	conf.StopOn403 = false
-	conf.StopOnErrors = false
-	conf.StopOnAll = false
-	conf.FollowRedirects = false
-	conf.InputProviders = make([]InputProviderConfig, 0)
-	conf.CommandKeywords = make([]string, 0)
-	conf.AutoCalibrationStrings = make([]string, 0)
-	conf.InputNum = 0
-	conf.InputMode = "clusterbomb"
-	conf.ProxyURL = ""
-	conf.Filters = make(map[string]FilterProvider)
-	conf.Matchers = make(map[string]FilterProvider)
 	conf.Delay = optRange{0, 0, false, false}
-	conf.Extensions = make([]string, 0)
-	conf.Timeout = 10
-	// Progress update frequency, in milliseconds
-	conf.ProgressFrequency = 125
 	conf.DirSearchCompat = false
-	conf.Verbose = false
+	conf.Extensions = make([]string, 0)
+	conf.Filters = make(map[string]FilterProvider)
+	conf.FollowRedirects = false
+	conf.Headers = make(map[string]string)
+	conf.IgnoreWordlistComments = false
+	conf.InputMode = "clusterbomb"
+	conf.InputNum = 0
+	conf.InputProviders = make([]InputProviderConfig, 0)
+	conf.Matchers = make(map[string]FilterProvider)
 	conf.MaxTime = 0
 	conf.MaxTimeJob = 0
+	conf.Method = "GET"
+	conf.ProgressFrequency = 125
+	conf.ProxyURL = ""
+	conf.Quiet = false
+	conf.Rate = 0
 	conf.Recursion = false
 	conf.RecursionDepth = 0
-	conf.Rate = 0
+	conf.StopOn403 = false
+	conf.StopOnAll = false
+	conf.StopOnErrors = false
+	conf.Timeout = 10
+	conf.Url = ""
+	conf.Verbose = false
 	return conf
+}
+
+func (c *Config) SetContext(ctx context.Context, cancel context.CancelFunc) {
+	c.Context = ctx
+	c.Cancel = cancel
 }
