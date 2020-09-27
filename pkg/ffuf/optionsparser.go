@@ -7,9 +7,12 @@ import (
 	"net/textproto"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/pelletier/go-toml"
 )
 
 type ConfigOptions struct {
@@ -40,12 +43,13 @@ type GeneralOptions struct {
 	AutoCalibration        bool
 	AutoCalibrationStrings []string
 	Colors                 bool
+	ConfigFile             string `toml:"-"`
 	Delay                  string
 	MaxTime                int
 	MaxTimeJob             int
 	Quiet                  bool
 	Rate                   int
-	ShowVersion            bool
+	ShowVersion            bool `toml:"-"`
 	StopOn403              bool
 	StopOnAll              bool
 	StopOnErrors           bool
@@ -473,4 +477,22 @@ func keywordPresent(keyword string, conf *Config) bool {
 		}
 	}
 	return false
+}
+
+func ReadConfig(configFile string) (*ConfigOptions, error) {
+	conf := NewConfigOptions()
+	configData, err := ioutil.ReadFile(configFile)
+	if err == nil {
+		err = toml.Unmarshal(configData, conf)
+	}
+	return conf, err
+}
+
+func ReadDefaultConfig() (*ConfigOptions, error) {
+	userhome, err := os.UserHomeDir()
+	if err != nil {
+		return NewConfigOptions(), err
+	}
+	defaultconf := filepath.Join(userhome, ".ffufrc")
+	return ReadConfig(defaultconf)
 }

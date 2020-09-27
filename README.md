@@ -14,12 +14,14 @@ A fast web fuzzer written in Go.
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
-  or
-- If you have recent go compiler installed: `go get github.com/ffuf/ffuf`
-  or
-- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go build 
+  
+  _or_
+- If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
+  
+  _or_
+- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
 
-The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
+Ffuf depends on Go 1.13 or greater.
 
 ## Example usage
 
@@ -103,6 +105,21 @@ radamsa -n 1000 -o %n.txt example1.txt example2.txt
 ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
 ```
 
+### Configuration files
+
+When running ffuf, it first checks if a default configuration file exists. The file path for it is `~/.ffufrc` / `$HOME/.ffufrc`
+for most *nixes (for example `/home/joohoi/.ffufrc`) and `%USERPROFILE%\.ffufrc` for Windows. You can configure one or 
+multiple options in this file, and they will be applied on every subsequent ffuf job. An example of .ffufrc file can be
+found [here](https://github.com/ffuf/ffuf/blob/master/ffufrc.example). 
+
+The configuration options provided on the command line override the ones loaded from `~/.ffufrc`.
+Note: this does not apply for CLI flags that can be provided more than once. One of such examples is `-H` (header) flag.
+In this case, the `-H` values provided on the command line will be _appended_ to the ones from the config file instead.
+
+Additionally, in case you wish to use bunch of configuration files for different use cases, you can do this by defining
+the configuration file path using `-config` command line flag that takes the file path to the configuration file as its
+parameter. 
+
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
@@ -129,6 +146,7 @@ GENERAL OPTIONS:
   -ac              Automatically calibrate filtering options (default: false)
   -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
   -c               Colorize output. (default: false)
+  -config          Load configuration from a file
   -maxtime         Maximum running time in seconds for entire process. (default: 0)
   -maxtime-job     Maximum running time in seconds per job. (default: 0)
   -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"

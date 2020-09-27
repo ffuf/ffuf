@@ -44,11 +44,17 @@ func (m *wordlistFlag) Set(value string) error {
 	return nil
 }
 
-func main() {
-	opts := ffuf.NewConfigOptions()
+//ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
+func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
 	var wordlists wordlistFlag
+
+	cookies = opts.HTTP.Cookies
+	autocalibrationstrings = opts.General.AutoCalibrationStrings
+	headers = opts.HTTP.Headers
+	inputcommands = opts.Input.Inputcommands
+
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
@@ -72,6 +78,7 @@ func main() {
 	flag.IntVar(&opts.HTTP.RecursionDepth, "recursion-depth", opts.HTTP.RecursionDepth, "Maximum recursion depth.")
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
 	flag.StringVar(&opts.Filter.Lines, "fl", opts.Filter.Lines, "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&opts.Filter.Regexp, "fr", opts.Filter.Regexp, "Filter regexp")
 	flag.StringVar(&opts.Filter.Size, "fs", opts.Filter.Size, "Filter HTTP response size. Comma separated list of sizes and ranges")
@@ -93,10 +100,10 @@ func main() {
 	flag.StringVar(&opts.Matcher.Lines, "ml", opts.Matcher.Lines, "Match amount of lines in response")
 	flag.StringVar(&opts.Matcher.Regexp, "mr", opts.Matcher.Regexp, "Match regexp")
 	flag.StringVar(&opts.Matcher.Size, "ms", opts.Matcher.Size, "Match HTTP response size")
-	flag.StringVar(&opts.Matcher.Status, "mc", opts.Matcher.Size, "Match HTTP status codes, or \"all\" for everything.")
+	flag.StringVar(&opts.Matcher.Status, "mc", opts.Matcher.Status, "Match HTTP status codes, or \"all\" for everything.")
 	flag.StringVar(&opts.Matcher.Words, "mw", opts.Matcher.Words, "Match amount of words in response")
 	flag.StringVar(&opts.Output.DebugLog, "debug-log", opts.Output.DebugLog, "Write all of the internal logging to the specified file.")
-	flag.StringVar(&opts.Output.OutputDirectory, opts.Output.OutputDirectory, "", "Directory path to store matched results to.")
+	flag.StringVar(&opts.Output.OutputDirectory, "od", opts.Output.OutputDirectory, "Directory path to store matched results to.")
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
 	flag.StringVar(&opts.Output.OutputFormat, "of", opts.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
 	flag.Var(&autocalibrationstrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
@@ -107,11 +114,24 @@ func main() {
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.Usage = Usage
 	flag.Parse()
+
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
 	opts.HTTP.Cookies = cookies
 	opts.HTTP.Headers = headers
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
+	return opts
+}
+
+func main() {
+
+	var err, optserr error
+
+	// prepare the default config options from default config file
+	var opts *ffuf.ConfigOptions
+	opts, optserr = ffuf.ReadDefaultConfig()
+
+	opts = ParseFlags(opts)
 
 	if opts.General.ShowVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
@@ -128,6 +148,23 @@ func main() {
 		}
 	} else {
 		log.SetOutput(ioutil.Discard)
+	}
+	if optserr != nil {
+		log.Printf("Error while opening default config file: %s", optserr)
+	}
+
+	if opts.General.ConfigFile != "" {
+		opts, err = ffuf.ReadConfig(opts.General.ConfigFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Encoutered error(s): %s\n", err)
+			Usage()
+			fmt.Fprintf(os.Stderr, "Encoutered error(s): %s\n", err)
+			os.Exit(1)
+		}
+		// Reset the flag package state
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+		// Re-parse the cli options
+		opts = ParseFlags(opts)
 	}
 
 	// Prepare context and set up Config struct

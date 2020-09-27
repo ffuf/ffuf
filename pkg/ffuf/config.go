@@ -10,6 +10,7 @@ type Config struct {
 	Colors                 bool                      `json:"colors"`
 	CommandKeywords        []string                  `json:"-"`
 	CommandLine            string                    `json:"cmdline"`
+	ConfigFile             string                    `json:"configfile"`
 	Context                context.Context           `json:"-"`
 	Data                   string                    `json:"postdata"`
 	Delay                  optRange                  `json:"delay"`
