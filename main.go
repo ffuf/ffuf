@@ -177,8 +177,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
-	conf.SetContext(ctx, cancel)
-
 	job, err := prepareJob(conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)

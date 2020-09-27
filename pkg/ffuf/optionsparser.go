@@ -311,7 +311,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	//Check the output file format option
-	if conf.OutputFile != "" {
+	if parseOpts.Output.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
 		outputFormats := []string{"all", "json", "ejson", "html", "md", "csv", "ecsv"}
 		found := false
@@ -331,34 +331,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.AutoCalibrationStrings = parseOpts.General.AutoCalibrationStrings
 	}
 	// Using -acc implies -ac
-	if len(conf.AutoCalibrationStrings) > 0 {
+	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
 		conf.AutoCalibration = true
-	}
-
-	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
-	if len(conf.Data) > 0 &&
-		conf.Method == "GET" &&
-		//don't modify the method automatically if a request file is being used as input
-		len(parseOpts.Input.Request) == 0 {
-
-		conf.Method = "POST"
-	}
-
-	conf.CommandLine = strings.Join(os.Args, " ")
-
-	for _, provider := range conf.InputProviders {
-		if !keywordPresent(provider.Keyword, &conf) {
-			errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-			errs.Add(fmt.Errorf(errmsg))
-		}
-	}
-
-	// Do checks for recursion mode
-	if conf.Recursion {
-		if !strings.HasSuffix(conf.Url, "FUZZ") {
-			errmsg := fmt.Sprintf("When using -recursion the URL (-u) must end with FUZZ keyword.")
-			errs.Add(fmt.Errorf(errmsg))
-		}
 	}
 
 	if parseOpts.General.Rate < 0 {
@@ -391,6 +365,32 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.MaxTime = parseOpts.General.MaxTime
 	conf.MaxTimeJob = parseOpts.General.MaxTimeJob
 	conf.Verbose = parseOpts.General.Verbose
+
+	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
+	if len(conf.Data) > 0 &&
+		conf.Method == "GET" &&
+		//don't modify the method automatically if a request file is being used as input
+		len(parseOpts.Input.Request) == 0 {
+
+		conf.Method = "POST"
+	}
+
+	conf.CommandLine = strings.Join(os.Args, " ")
+
+	for _, provider := range conf.InputProviders {
+		if !keywordPresent(provider.Keyword, &conf) {
+			errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
+			errs.Add(fmt.Errorf(errmsg))
+		}
+	}
+
+	// Do checks for recursion mode
+	if parseOpts.HTTP.Recursion {
+		if !strings.HasSuffix(conf.Url, "FUZZ") {
+			errmsg := fmt.Sprintf("When using -recursion the URL (-u) must end with FUZZ keyword.")
+			errs.Add(fmt.Errorf(errmsg))
+		}
+	}
 	return &conf, errs.ErrorOrNil()
 }
 
