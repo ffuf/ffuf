@@ -2,6 +2,9 @@
 - master
   - New
     - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
+    - New CLI flag `-config` to define a configuration file with preconfigured settings for the job.
+    - Ffuf now reads a default configuration file `$HOME/.ffufrc` upon startup. Options set in this file
+    are overwritten by the ones provided on CLI.
     - Change banner logging to stderr instead of stdout.
 
   - Changed
