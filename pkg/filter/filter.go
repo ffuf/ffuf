@@ -31,9 +31,12 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 //AddFilter adds a new filter to Config
 func AddFilter(conf *ffuf.Config, name string, option string) error {
 	newf, err := NewFilterByName(name, option)
-	if err == nil {
-		conf.Filters[name] = newf
-	}
+        if err == nil {
+                // valid filter and create only if no user given exists
+                if conf.Filters[name] == nil {
+                   conf.Filters[name] = newf
+                }
+        }
 	return err
 }
 
