@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/textproto"
@@ -51,8 +52,13 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
 			MaxConnsPerHost:     500,
+			DialContext: (&net.Dialer{
+				Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
+			}).DialContext,
+			TLSHandshakeTimeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
+				Renegotiation:      tls.RenegotiateOnceAsClient,
 			},
 		}}
 
@@ -91,7 +97,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	var err error
 	var rawreq []byte
 	data := bytes.NewReader(req.Data)
-	httpreq, err = http.NewRequest(req.Method, req.Url, data)
+	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
 	if err != nil {
 		return ffuf.Response{}, err
 	}
@@ -105,6 +111,8 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if _, ok := req.Headers["Host"]; ok {
 		httpreq.Host = req.Headers["Host"]
 	}
+
+	req.Host = httpreq.Host
 	httpreq = httpreq.WithContext(r.config.Context)
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
@@ -126,7 +134,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	size, err := strconv.Atoi(httpresp.Header.Get("Content-Length"))
 	if err == nil {
 		resp.ContentLength = int64(size)
-		if size > MAX_DOWNLOAD_SIZE {
+		if (r.config.IgnoreBody) || (size > MAX_DOWNLOAD_SIZE) {
 			resp.Cancelled = true
 			return resp, nil
 		}

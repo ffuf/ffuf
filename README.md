@@ -14,12 +14,23 @@ A fast web fuzzer written in Go.
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
-  or
-- If you have go compiler installed: `go get github.com/ffuf/ffuf`
+  
+  _or_
+- If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
+  
+  _or_
+- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
 
-The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
+Ffuf depends on Go 1.13 or greater.
 
 ## Example usage
+
+The usage examples below show just the simplest tasks you can accomplish using `ffuf`. 
+
+For more extensive documentation, with real life usage examples and tips, be sure to check out the awesome guide:
+"[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
+Michael Skelton ([@codingo](https://github.com/codingo)).
+
 
 ### Typical directory discovery
 
@@ -101,18 +112,34 @@ radamsa -n 1000 -o %n.txt example1.txt example2.txt
 ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
 ```
 
+### Configuration files
+
+When running ffuf, it first checks if a default configuration file exists. The file path for it is `~/.ffufrc` / `$HOME/.ffufrc`
+for most *nixes (for example `/home/joohoi/.ffufrc`) and `%USERPROFILE%\.ffufrc` for Windows. You can configure one or 
+multiple options in this file, and they will be applied on every subsequent ffuf job. An example of .ffufrc file can be
+found [here](https://github.com/ffuf/ffuf/blob/master/ffufrc.example). 
+
+The configuration options provided on the command line override the ones loaded from `~/.ffufrc`.
+Note: this does not apply for CLI flags that can be provided more than once. One of such examples is `-H` (header) flag.
+In this case, the `-H` values provided on the command line will be _appended_ to the ones from the config file instead.
+
+Additionally, in case you wish to use bunch of configuration files for different use cases, you can do this by defining
+the configuration file path using `-config` command line flag that takes the file path to the configuration file as its
+parameter. 
+
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.0
+Fuzz Faster U Fool - v1.2.0-git
 
 HTTP OPTIONS:
   -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
   -X               HTTP method to use (default: GET)
   -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
   -d               POST data
+  -ignore-body     Do not fetch the response content. (default: false)
   -r               Follow redirects (default: false)
   -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
   -recursion-depth Maximum recursion depth. (default: 0)
@@ -126,9 +153,11 @@ GENERAL OPTIONS:
   -ac              Automatically calibrate filtering options (default: false)
   -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
   -c               Colorize output. (default: false)
-  -maxtime         Maximum running time in seconds for the entire process. (default: 0)
+  -config          Load configuration from a file
+  -maxtime         Maximum running time in seconds for entire process. (default: 0)
   -maxtime-job     Maximum running time in seconds per job. (default: 0)
   -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
+  -rate            Rate of requests per second (default: 0)
   -s               Do not print additional information (silent mode) (default: false)
   -sa              Stop on all error cases. Implies -sf and -se. (default: false)
   -se              Stop on spurious errors (default: false)
@@ -165,7 +194,7 @@ OUTPUT OPTIONS:
   -debug-log       Write all of the internal logging to the specified file.
   -o               Write output to file
   -od              Directory path to store matched results to.
-  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (default: json)
+  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
 
 EXAMPLE USAGE:
   Fuzz file paths from wordlist.txt, match all responses but filter out those with content-size 42.
@@ -183,6 +212,7 @@ EXAMPLE USAGE:
     ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr "VAL" -c
 
   More information and examples: https://github.com/ffuf/ffuf
+
 ```
 
 ## Helper scripts and advanced payloads

@@ -54,14 +54,14 @@ func Usage() {
 		Description:   "Options controlling the HTTP request and its parts.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"H", "X", "b", "d", "r", "u", "recursion", "recursion-depth", "replay-proxy", "timeout", "x"},
+		ExpectedFlags: []string{"H", "X", "b", "d", "r", "u", "recursion", "recursion-depth", "replay-proxy", "timeout", "ignore-body", "x"},
 	}
 	u_general := UsageSection{
 		Name:          "GENERAL OPTIONS",
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "c", "maxtime", "maxtime-job", "p", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "c", "config", "maxtime", "maxtime-job", "p", "rate", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -115,7 +115,7 @@ func Usage() {
 			}
 		}
 		if !found {
-			fmt.Printf("DEBUG: Flag %s was found but not defined in usage.go.\n", f.Name)
+			fmt.Printf("DEBUG: Flag %s was found but not defined in help.go.\n", f.Name)
 			os.Exit(1)
 		}
 		if len(f.Name) > max_length {

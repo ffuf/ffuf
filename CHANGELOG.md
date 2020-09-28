@@ -1,10 +1,33 @@
 ## Changelog
-
 - master
+  - New
+    - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
+    - New CLI flag `-config` to define a configuration file with preconfigured settings for the job.
+    - Ffuf now reads a default configuration file `$HOME/.ffufrc` upon startup. Options set in this file
+    are overwritten by the ones provided on CLI.
+    - Change banner logging to stderr instead of stdout.
+
+  - Changed
+    - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.
+    - Cancelling via SIGINT (Ctrl-C) is now more responsive
+    - Fixed issue where a thread would hang due to TCP errors
+    - The `-w` flag now accepts comma delimited values in the form of `file1:W1,file2:W2`.
+
+- v1.1.0
   - New
     - New CLI flag `-maxtime-job` to set max. execution time per job.
     - Changed behaviour of `-maxtime`, can now be used for entire process.
+    - A new flag `-ignore-body` so ffuf does not fetch the response content. Default value=false.
+    - Added the wordlists to the header information.
+    - Added support to output "all" formats (specify the path/filename sans file extension and ffuf will add the appropriate suffix for the filetype)
+
   - Changed
+    - Fixed a bug related to the autocalibration feature making the random seed initialization also to take place before autocalibration needs it.
+    - Added tls renegotiation flag to fix #193 in http.Client
+    - Fixed HTML report to display select/combo-box for rows per page (and increased default from 10 to 250 rows).
+    - Added Host information to JSON output file
+    - Fixed request method when supplying request file
+    - Fixed crash with 3XX responses that weren't redirects (304 Not Modified, 300 Multiple Choices etc)
 
 - v1.0.2
   - Changed
