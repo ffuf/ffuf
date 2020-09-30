@@ -1,5 +1,7 @@
 package ffuf
 
+import "time"
+
 // Request holds the meaningful data that is passed for runner for making the query
 type Request struct {
 	Method   string
@@ -10,6 +12,7 @@ type Request struct {
 	Input    map[string][]byte
 	Position int
 	Raw      string
+	Start    time.Time
 }
 
 func NewRequest(conf *Config) Request {
@@ -17,5 +20,6 @@ func NewRequest(conf *Config) Request {
 	req.Method = conf.Method
 	req.Url = conf.Url
 	req.Headers = make(map[string]string)
+	req.Start = time.Now()
 	return req
 }

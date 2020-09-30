@@ -41,6 +41,7 @@ type Result struct {
 	ResultFile       string            `json:"resultfile"`
 	Host             string            `json:"host"`
 	HTMLColor        string            `json:"-"`
+	Duration         time.Duration     `json:"duration"`
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -51,7 +52,7 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 }
 
 func (s *Stdoutput) Banner() error {
-	fmt.Fprintf(os.Stderr ,"%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
+	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
 
@@ -304,6 +305,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,
 			Host:             resp.Request.Host,
+			Duration:         resp.Duration,
 		}
 		s.Results = append(s.Results, sResult)
 	}
@@ -378,7 +380,7 @@ func (s *Stdoutput) resultQuiet(resp ffuf.Response) {
 func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, resp.StatusCode, resp.ContentLength, resp.ContentWords, resp.ContentLines)
+	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %s]", TERMINAL_CLEAR_LINE, resp.StatusCode, resp.ContentLength, resp.ContentWords, resp.ContentLines, resp.Duration.String())
 	res_hdr = s.colorize(res_hdr, resp.StatusCode)
 	reslines := ""
 	if s.config.Verbose {
@@ -405,7 +407,7 @@ func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
 	var res_str string
-	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
+	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d, Duration: %s]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines, resp.Duration.String())
 	fmt.Println(res_str)
 }
 
