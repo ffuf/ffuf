@@ -25,17 +25,14 @@ func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
 	for _, inputprovider := range config.InputProviders {
 		header = append(header, inputprovider.Keyword)
 	}
-
-	for _, item := range staticheaders {
-		header = append(header, item)
-	}
+	header = append(header, staticheaders...)
 
 	if err := w.Write(header); err != nil {
 		return err
 	}
 	for _, r := range res {
 		if encode {
-			inputs := make(map[string][]byte, 0)
+			inputs := make(map[string][]byte, len(r.Input))
 			for k, v := range r.Input {
 				inputs[k] = []byte(base64encode(v))
 			}

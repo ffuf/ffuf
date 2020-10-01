@@ -10,7 +10,7 @@ import (
 func TestNewSizeFilter(t *testing.T) {
 	f, _ := NewSizeFilter("1,2,3,444,5-90")
 	sizeRepr := f.Repr()
-	if strings.Index(sizeRepr, "1,2,3,444,5-90") == -1 {
+	if !strings.Contains(sizeRepr, "1,2,3,444,5-90") {
 		t.Errorf("Size filter was expected to have 5 values")
 	}
 }

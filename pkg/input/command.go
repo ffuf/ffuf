@@ -47,10 +47,7 @@ func (c *CommandInput) IncrementPosition() {
 
 //Next will increment the cursor position, and return a boolean telling if there's iterations left
 func (c *CommandInput) Next() bool {
-	if c.count >= c.config.InputNum {
-		return false
-	}
-	return true
+	return c.count < c.config.InputNum
 }
 
 //Value returns the input from command stdoutput

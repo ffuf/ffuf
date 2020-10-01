@@ -107,12 +107,10 @@ func (s *Stdoutput) Banner() error {
 
 	// Proxies
 	if len(s.config.ProxyURL) > 0 {
-		proxy := fmt.Sprintf("%s", s.config.ProxyURL)
-		printOption([]byte("Proxy"), []byte(proxy))
+		printOption([]byte("Proxy"), []byte(s.config.ProxyURL))
 	}
 	if len(s.config.ReplayProxyURL) > 0 {
-		replayproxy := fmt.Sprintf("%s", s.config.ReplayProxyURL)
-		printOption([]byte("ReplayProxy"), []byte(replayproxy))
+		printOption([]byte("ReplayProxy"), []byte(s.config.ReplayProxyURL))
 	}
 
 	// Timeout
@@ -152,7 +150,7 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 		return
 	}
 
-	dur := time.Now().Sub(status.StartedAt)
+	dur := time.Since(status.StartedAt)
 	runningSecs := int(dur / time.Second)
 	var reqRate int64
 	if runningSecs > 0 {
@@ -289,7 +287,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	// Check if we need the data later
 	if s.config.OutputFile != "" {
 		// No need to store results if we're not going to use them later
-		inputs := make(map[string][]byte, 0)
+		inputs := make(map[string][]byte, len(resp.Request.Input))
 		for k, v := range resp.Request.Input {
 			inputs[k] = v
 		}
@@ -404,14 +402,13 @@ func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	var res_str string
-	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
-	fmt.Println(res_str)
+	res := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
+	fmt.Println(res)
 }
 
 func (s *Stdoutput) colorize(input string, status int64) string {
 	if !s.config.Colors {
-		return fmt.Sprintf("%s", input)
+		return input
 	}
 	colorCode := ANSI_CLEAR
 	if status >= 200 && status < 300 {

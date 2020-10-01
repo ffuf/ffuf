@@ -10,7 +10,7 @@ import (
 func TestNewWordFilter(t *testing.T) {
 	f, _ := NewWordFilter("200,301,400-410,500")
 	wordsRepr := f.Repr()
-	if strings.Index(wordsRepr, "200,301,400-410,500") == -1 {
+	if !strings.Contains(wordsRepr, "200,301,400-410,500") {
 		t.Errorf("Word filter was expected to have 4 values")
 	}
 }
