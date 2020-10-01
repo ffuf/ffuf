@@ -216,37 +216,37 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ejson"
 	err = writeEJSON(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".html"
 	err = writeHTML(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".md"
 	err = writeMarkdown(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".csv"
 	err = writeCSV(s.config, s.Results, false)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ecsv"
 	err = writeCSV(s.config, s.Results, true)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	return nil
@@ -272,7 +272,7 @@ func (s *Stdoutput) Finalize() error {
 			err = writeCSV(s.config, s.Results, true)
 		}
 		if err != nil {
-			s.Error(fmt.Sprintf("%s", err))
+			s.Error(err.Error())
 		}
 	}
 	fmt.Fprintf(os.Stderr, "\n")
@@ -316,7 +316,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 		err := os.Mkdir(s.config.OutputDirectory, 0750)
 		if err != nil {
 			if !os.IsExist(err) {
-				s.Error(fmt.Sprintf("%s", err))
+				s.Error(err.Error())
 				return ""
 			}
 		}
@@ -329,7 +329,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	filePath = path.Join(s.config.OutputDirectory, fileName)
 	err := ioutil.WriteFile(filePath, []byte(fileContent), 0640)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 	return fileName
 }
