@@ -77,15 +77,15 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 	req.Data = []byte(r.config.Data)
 
 	for keyword, inputitem := range input {
-		req.Method = strings.Replace(req.Method, keyword, string(inputitem), -1)
+		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
 		headers := make(map[string]string, 0)
 		for h, v := range req.Headers {
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.Replace(h, keyword, string(inputitem), -1))
-			headers[CanonicalHeader] = strings.Replace(v, keyword, string(inputitem), -1)
+			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
+			headers[CanonicalHeader] = strings.ReplaceAll(v, keyword, string(inputitem))
 		}
 		req.Headers = headers
-		req.Url = strings.Replace(req.Url, keyword, string(inputitem), -1)
-		req.Data = []byte(strings.Replace(string(req.Data), keyword, string(inputitem), -1))
+		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
+		req.Data = []byte(strings.ReplaceAll(string(req.Data), keyword, string(inputitem)))
 	}
 
 	req.Input = input

@@ -41,7 +41,7 @@ func (f *RegexpFilter) Filter(response *ffuf.Response) (bool, error) {
 	matchdata = append(matchdata, response.Data...)
 	pattern := f.valueRaw
 	for keyword, inputitem := range response.Request.Input {
-		pattern = strings.Replace(pattern, keyword, regexp.QuoteMeta(string(inputitem)), -1)
+		pattern = strings.ReplaceAll(pattern, keyword, regexp.QuoteMeta(string(inputitem)))
 	}
 	matched, err := regexp.Match(pattern, matchdata)
 	if err != nil {
