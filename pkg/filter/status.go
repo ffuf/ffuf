@@ -19,7 +19,7 @@ func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
 	var intranges []ffuf.ValueRange
 	for _, sv := range strings.Split(value, ",") {
 		if sv == "all" {
-			intranges = append(intranges, ffuf.ValueRange{AllStatuses, AllStatuses})
+			intranges = append(intranges, ffuf.ValueRange{Min: AllStatuses, Max: AllStatuses})
 		} else {
 			vr, err := ffuf.ValueRangeFromString(sv)
 			if err != nil {
