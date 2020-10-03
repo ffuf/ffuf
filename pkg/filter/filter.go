@@ -62,7 +62,7 @@ func CalibrateIfNeeded(j *ffuf.Job) error {
 	return nil
 }
 
-func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) {
+func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) error {
 	sizeCalib := make([]string, 0)
 	wordCalib := make([]string, 0)
 	lineCalib := make([]string, 0)
@@ -87,14 +87,24 @@ func calibrateFilters(j *ffuf.Job, responses []ffuf.Response) {
 	lineCalib = ffuf.UniqStringSlice(lineCalib)
 
 	if len(sizeCalib) > 0 {
-		AddFilter(j.Config, "size", strings.Join(sizeCalib, ","))
+		err := AddFilter(j.Config, "size", strings.Join(sizeCalib, ","))
+		if err != nil {
+			return err
+		}
 	}
 	if len(wordCalib) > 0 {
-		AddFilter(j.Config, "word", strings.Join(wordCalib, ","))
+		err := AddFilter(j.Config, "word", strings.Join(wordCalib, ","))
+		if err != nil {
+			return err
+		}
 	}
 	if len(lineCalib) > 0 {
-		AddFilter(j.Config, "line", strings.Join(lineCalib, ","))
+		err := AddFilter(j.Config, "line", strings.Join(lineCalib, ","))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {

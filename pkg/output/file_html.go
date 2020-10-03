@@ -188,7 +188,10 @@ func writeHTML(config *ffuf.Config, results []Result) error {
 
 	templateName := "output.html"
 	t := template.New(templateName).Delims("{{", "}}")
-	t.Parse(htmlTemplate)
-	t.Execute(f, outHTML)
-	return nil
+	_, err = t.Parse(htmlTemplate)
+	if err != nil {
+		return err
+	}
+	err = t.Execute(f, outHTML)
+	return err
 }

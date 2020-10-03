@@ -119,7 +119,10 @@ func (j *Job) Start() {
 		j.startExecution()
 	}
 
-	j.Output.Finalize()
+	err := j.Output.Finalize()
+	if err != nil {
+		j.Output.Error(err.Error())
+	}
 }
 
 func (j *Job) jobsInQueue() bool {

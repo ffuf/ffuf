@@ -44,7 +44,10 @@ func writeMarkdown(config *ffuf.Config, res []Result) error {
 
 	templateName := "output.md"
 	t := template.New(templateName).Delims("{{", "}}")
-	t.Parse(markdownTemplate)
-	t.Execute(f, outMD)
-	return nil
+	_, err = t.Parse(markdownTemplate)
+	if err != nil {
+		return err
+	}
+	err = t.Execute(f, outMD)
+	return err
 }
