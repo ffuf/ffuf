@@ -123,10 +123,7 @@ func (j *Job) Start() {
 }
 
 func (j *Job) jobsInQueue() bool {
-	if j.queuepos < len(j.queuejobs) {
-		return true
-	}
-	return false
+	return j.queuepos < len(j.queuejobs)
 }
 
 func (j *Job) prepareQueueJob() {
@@ -192,14 +189,13 @@ func (j *Job) startExecution() {
 	}
 	wg.Wait()
 	j.updateProgress()
-	return
 }
 
 func (j *Job) interruptMonitor() {
 	sigChan := make(chan os.Signal, 2)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		for _ = range sigChan {
+		for range sigChan {
 			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
 			j.Stop()
 		}
@@ -321,7 +317,6 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	if j.Config.Recursion && len(resp.GetRedirectLocation(false)) > 0 {
 		j.handleRecursionJob(resp)
 	}
-	return
 }
 
 //handleRecursionJob adds a new recursion job to the job queue if a new directory is found
@@ -356,7 +351,7 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 
 	results := make([]Response, 0)
 	for _, input := range cInputs {
-		inputs := make(map[string][]byte, 0)
+		inputs := make(map[string][]byte, len(j.Config.InputProviders))
 		for _, v := range j.Config.InputProviders {
 			inputs[v.Keyword] = []byte(input)
 		}
@@ -409,7 +404,7 @@ func (j *Job) CheckStop() {
 
 	// Check for runtime of entire process
 	if j.Config.MaxTime > 0 {
-		dur := time.Now().Sub(j.startTime)
+		dur := time.Since(j.startTime)
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTime {
 			j.Error = "Maximum running time for entire process reached, exiting."
@@ -419,7 +414,7 @@ func (j *Job) CheckStop() {
 
 	// Check for runtime of current job
 	if j.Config.MaxTimeJob > 0 {
-		dur := time.Now().Sub(j.startTimeJob)
+		dur := time.Since(j.startTimeJob)
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTimeJob {
 			j.Error = "Maximum running time for this job reached, continuing with next job if one exists."
@@ -433,11 +428,9 @@ func (j *Job) CheckStop() {
 func (j *Job) Stop() {
 	j.Running = false
 	j.Config.Cancel()
-	return
 }
 
 //Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
-	return
 }

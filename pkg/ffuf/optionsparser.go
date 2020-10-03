@@ -387,7 +387,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	// Do checks for recursion mode
 	if parseOpts.HTTP.Recursion {
 		if !strings.HasSuffix(conf.Url, "FUZZ") {
-			errmsg := fmt.Sprintf("When using -recursion the URL (-u) must end with FUZZ keyword.")
+			errmsg := "When using -recursion the URL (-u) must end with FUZZ keyword."
 			errs.Add(fmt.Errorf(errmsg))
 		}
 	}
@@ -460,20 +460,20 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 
 func keywordPresent(keyword string, conf *Config) bool {
 	//Search for keyword from HTTP method, URL and POST data too
-	if strings.Index(conf.Method, keyword) != -1 {
+	if strings.Contains(conf.Method, keyword) {
 		return true
 	}
-	if strings.Index(conf.Url, keyword) != -1 {
+	if strings.Contains(conf.Url, keyword) {
 		return true
 	}
-	if strings.Index(conf.Data, keyword) != -1 {
+	if strings.Contains(conf.Data, keyword) {
 		return true
 	}
 	for k, v := range conf.Headers {
-		if strings.Index(k, keyword) != -1 {
+		if strings.Contains(k, keyword) {
 			return true
 		}
-		if strings.Index(v, keyword) != -1 {
+		if strings.Contains(v, keyword) {
 			return true
 		}
 	}

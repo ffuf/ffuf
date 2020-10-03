@@ -25,7 +25,7 @@ func UniqStringSlice(inslice []string) []string {
 		found[v] = true
 	}
 	ret := []string{}
-	for k, _ := range found {
+	for k := range found {
 		ret = append(ret, k)
 	}
 	return ret

@@ -10,7 +10,7 @@ import (
 func TestNewRegexpFilter(t *testing.T) {
 	f, _ := NewRegexpFilter("s([a-z]+)arch")
 	statusRepr := f.Repr()
-	if strings.Index(statusRepr, "s([a-z]+)arch") == -1 {
+	if !strings.Contains(statusRepr, "s([a-z]+)arch") {
 		t.Errorf("Status filter was expected to have a regexp value")
 	}
 }

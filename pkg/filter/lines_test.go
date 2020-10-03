@@ -10,7 +10,7 @@ import (
 func TestNewLineFilter(t *testing.T) {
 	f, _ := NewLineFilter("200,301,400-410,500")
 	linesRepr := f.Repr()
-	if strings.Index(linesRepr, "200,301,400-410,500") == -1 {
+	if !strings.Contains(linesRepr, "200,301,400-410,500") {
 		t.Errorf("Word filter was expected to have 4 values")
 	}
 }
