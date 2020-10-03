@@ -12,7 +12,7 @@ type ValueRange struct {
 
 func ValueRangeFromString(instr string) (ValueRange, error) {
 	// is the value a range
-	minmax := regexp.MustCompile("^(\\d+)\\-(\\d+)$").FindAllStringSubmatch(instr, -1)
+	minmax := regexp.MustCompile(`^(\d+)-(\d+)$`).FindAllStringSubmatch(instr, -1)
 	if minmax != nil {
 		// yes
 		minval, err := strconv.ParseInt(minmax[0][1], 10, 0)

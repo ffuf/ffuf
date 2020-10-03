@@ -50,8 +50,8 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	return &outp
 }
 
-func (s *Stdoutput) Banner() error {
-	fmt.Fprintf(os.Stderr ,"%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
+func (s *Stdoutput) Banner() {
+	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
 
@@ -141,7 +141,6 @@ func (s *Stdoutput) Banner() error {
 		printOption([]byte("Filter"), []byte(f.Repr()))
 	}
 	fmt.Fprintf(os.Stderr, "%s\n\n", BANNER_SEP)
-	return nil
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
