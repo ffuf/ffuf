@@ -9,6 +9,7 @@
 * [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
 * [eur0pa](https://github.com/eur0pa)
+* [fabiobauer](https://github.com/fabiobauer)
 * [fang0654](https://github.com/fang0654)
 * [helpermika](https://github.com/helpermika)
 * [Ice3man543](https://github.com/Ice3man543)
@@ -25,4 +26,3 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
-* [fabiobauer](https://github.com/fabiobauer)
