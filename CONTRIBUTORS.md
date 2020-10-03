@@ -25,3 +25,4 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
+* [fabiobauer](https://github.com/fabiobauer)
