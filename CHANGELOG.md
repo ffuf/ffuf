@@ -13,6 +13,7 @@
     - Fixed issue where a thread would hang due to TCP errors
     - Fixed the issue where the option -ac was overwriting existing filters. Now auto-calibration will add them where needed.
     - The `-w` flag now accepts comma delimited values in the form of `file1:W1,file2:W2`.
+    - Links in the HTML report are now clickable
 
 - v1.1.0
   - New
