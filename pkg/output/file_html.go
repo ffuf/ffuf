@@ -176,6 +176,10 @@ func colorizeResults(results []Result) []Result {
 
 func writeHTML(config *ffuf.Config, results []Result) error {
 
+  if(config.OutputCreateEmptyFile && (len(results) == 0)){
+		return nil
+  }
+  
 	results = colorizeResults(results)
 
 	ti := time.Now()
