@@ -26,3 +26,4 @@
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [SolomonSklash](https://github.com/SolomonSklash)
+* [0x5ECF4ULT](https://github.com/0x5ECF4ULT)
