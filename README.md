@@ -21,6 +21,10 @@ A fast web fuzzer written in Go.
   _or_
 - git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
 
+  _or_
+- git clone https://github.com/ffuf/ffuf ; cd ffuf ; docker build --rm -t ffuf .
+- ~~`docker pull ffuf/ffuf`~~ Coming soon (I hope!)
+
 Ffuf depends on Go 1.13 or greater.
 
 ## Example usage
