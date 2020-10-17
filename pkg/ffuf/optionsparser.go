@@ -38,6 +38,7 @@ type HTTPOptions struct {
 	ReplayProxyURL  string
 	Timeout         int
 	URL             string
+	PATH			string
 }
 
 type GeneralOptions struct {
@@ -124,6 +125,9 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.ReplayProxyURL = ""
 	c.HTTP.Timeout = 10
 	c.HTTP.URL = ""
+	//Added path
+	c.HTTP.PATH = ""
+	//
 	c.Input.DirSearchCompat = false
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
@@ -236,6 +240,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	//Prepare URL
 	if parseOpts.HTTP.URL != "" {
 		conf.Url = parseOpts.HTTP.URL
+	}
+
+	//Adding PATH
+	if parseOpts.HTTP.PATH != ""{
+		conf.Path = parseOpts.HTTP.PATH
 	}
 
 	//Prepare headers and make canonical

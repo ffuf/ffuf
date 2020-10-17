@@ -10,6 +10,7 @@ type Request struct {
 	Input    map[string][]byte
 	Position int
 	Raw      string
+	Path 	 string
 }
 
 func NewRequest(conf *Config) Request {

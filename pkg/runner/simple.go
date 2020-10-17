@@ -75,6 +75,10 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 	req.Url = r.config.Url
 	req.Method = r.config.Method
 	req.Data = []byte(r.config.Data)
+	//added path
+	if r.config.Path != "" {
+		req.Path = r.config.Path
+	}
 
 	for keyword, inputitem := range input {
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
@@ -86,6 +90,10 @@ func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
 		req.Headers = headers
 		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
 		req.Data = []byte(strings.ReplaceAll(string(req.Data), keyword, string(inputitem)))
+		// Replace path if needed
+		req.Path   = strings.ReplaceAll(req.Path,   keyword, string(inputitem))
+		r.config.Path = req.Path
+		//
 	}
 
 	req.Input = input
@@ -100,6 +108,11 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
 	if err != nil {
 		return ffuf.Response{}, err
+	}
+
+	// set PATH if is different from null
+	if r.config.Path != "" {
+		httpreq.URL.Path = r.config.Path
 	}
 
 	// set default User-Agent header if not present

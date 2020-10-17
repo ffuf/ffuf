@@ -14,6 +14,7 @@ import (
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/output"
 	"github.com/ffuf/ffuf/pkg/runner"
+	"github.com/ffuf/ffuf/pkg/help"
 )
 
 type multiStringFlag []string
@@ -93,6 +94,9 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.HTTP.ProxyURL, "x", opts.HTTP.ProxyURL, "HTTP Proxy URL")
 	flag.StringVar(&opts.HTTP.ReplayProxyURL, "replay-proxy", opts.HTTP.ReplayProxyURL, "Replay matched requests using this proxy.")
 	flag.StringVar(&opts.HTTP.URL, "u", opts.HTTP.URL, "Target URL")
+	//
+	flag.StringVar(&opts.HTTP.PATH, "path", opts.HTTP.PATH, "Arbitrary PATH to query.")
+	//
 	flag.StringVar(&opts.Input.Extensions, "e", opts.Input.Extensions, "Comma separated list of extensions. Extends FUZZ keyword.")
 	flag.StringVar(&opts.Input.InputMode, "mode", opts.Input.InputMode, "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork")
 	flag.StringVar(&opts.Input.Request, "request", opts.Input.Request, "File containing the raw http request")
@@ -112,7 +116,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Var(&headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.Var(&inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
-	flag.Usage = Usage
+	flag.Usage = help.Usage
 	flag.Parse()
 
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
@@ -157,7 +161,7 @@ func main() {
 		opts, err = ffuf.ReadConfig(opts.General.ConfigFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Encoutered error(s): %s\n", err)
-			Usage()
+			help.Usage()
 			fmt.Fprintf(os.Stderr, "Encoutered error(s): %s\n", err)
 			os.Exit(1)
 		}
@@ -173,20 +177,20 @@ func main() {
 	conf, err := ffuf.ConfigFromOptions(opts, ctx, cancel)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		Usage()
+		help.Usage()
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 	job, err := prepareJob(conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		Usage()
+		help.Usage()
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 	if err := filter.SetupFilters(opts, conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
-		Usage()
+		help.Usage()
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
