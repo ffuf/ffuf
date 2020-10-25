@@ -117,7 +117,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false
 	c.HTTP.IgnoreBody = false
-	c.HTTP.Method = "GET"
+	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
@@ -341,14 +341,33 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.Rate = int64(parseOpts.General.Rate)
 	}
 
+	if conf.Method == "" {
+		if parseOpts.HTTP.Method == "" {
+			// Only set if defined on command line, because we might be reparsing the CLI after
+			// populating it through raw request in the first iteration
+			conf.Method = "GET"
+		} else {
+			conf.Method = parseOpts.HTTP.Method
+		}
+	} else {
+		if parseOpts.HTTP.Method != "" {
+			// Method overridden in CLI
+			conf.Method = parseOpts.HTTP.Method
+		}
+	}
+
+	if parseOpts.HTTP.Data != "" {
+		// Only set if defined on command line, because we might be reparsing the CLI after
+		// populating it through raw request in the first iteration
+		conf.Data = parseOpts.HTTP.Data
+	}
+
 	// Common stuff
 	conf.IgnoreWordlistComments = parseOpts.Input.IgnoreWordlistComments
 	conf.DirSearchCompat = parseOpts.Input.DirSearchCompat
-	conf.Data = parseOpts.HTTP.Data
 	conf.Colors = parseOpts.General.Colors
 	conf.InputNum = parseOpts.Input.InputNum
 	conf.InputMode = parseOpts.Input.InputMode
-	conf.Method = parseOpts.HTTP.Method
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
