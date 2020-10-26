@@ -176,7 +176,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				// The wordlist was supplied without a keyword parameter
 				wl = []string{v}
 			} else {
-				filepart := v[:strings.LastIndex(v, ":")]
+				filepart := v
+				if strings.Contains(filepart, ":") {
+					filepart = v[:strings.LastIndex(filepart, ":")]
+				}
+
 				if FileExists(filepart) {
 					wl = []string{filepart, v[strings.LastIndex(v, ":")+1:]}
 				} else {
