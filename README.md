@@ -21,7 +21,7 @@ A fast web fuzzer written in Go.
   _or_
 - git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
 
-Ffuf depends on Go 1.13 or greater.
+Ffuf depends on Go 1.14 or greater.
 
 ## Example usage
 
@@ -136,9 +136,10 @@ Fuzz Faster U Fool - v1.2.0-git
 
 HTTP OPTIONS:
   -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
-  -X               HTTP method to use (default: GET)
+  -X               HTTP method to use
   -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
   -d               POST data
+  -http3           Use HTTP/3 and QUIC (default: false)
   -ignore-body     Do not fetch the response content. (default: false)
   -r               Follow redirects (default: false)
   -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)

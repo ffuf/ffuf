@@ -33,6 +33,7 @@ type HTTPOptions struct {
 	IgnoreBody      bool
 	Method          string
 	ProxyURL        string
+	Quic            bool
 	Recursion       bool
 	RecursionDepth  int
 	ReplayProxyURL  string
@@ -119,6 +120,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
+	c.HTTP.Quic = false
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.ReplayProxyURL = ""
@@ -375,6 +377,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
+	conf.Quic = parseOpts.HTTP.Quic
 	conf.Quiet = parseOpts.General.Quiet
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll

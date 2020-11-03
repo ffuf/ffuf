@@ -34,6 +34,7 @@ type Config struct {
 	OutputFormat           string                    `json:"outputformat"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
+	Quic                   bool                      `json:"quic"`
 	Quiet                  bool                      `json:"quiet"`
 	Rate                   int64                     `json:"rate"`
 	Recursion              bool                      `json:"recursion"`
@@ -77,6 +78,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Method = "GET"
 	conf.ProgressFrequency = 125
 	conf.ProxyURL = ""
+	conf.Quic = false
 	conf.Quiet = false
 	conf.Rate = 0
 	conf.Recursion = false

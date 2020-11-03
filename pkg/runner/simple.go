@@ -16,6 +16,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
+
+	"github.com/lucas-clemente/quic-go/http3"
 )
 
 //Download results < 5MB
@@ -61,7 +63,14 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 				Renegotiation:      tls.RenegotiateOnceAsClient,
 			},
 		}}
-
+	if conf.Quic {
+		simplerunner.client.Transport = &http3.RoundTripper{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				Renegotiation:      tls.RenegotiateOnceAsClient,
+			},
+		}
+	}
 	if conf.FollowRedirects {
 		simplerunner.client.CheckRedirect = nil
 	}
