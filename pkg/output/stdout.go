@@ -166,9 +166,8 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	secs := dur / time.Second
 
 	percentage := int(math.Round((float64(status.ReqCount) / float64(status.ReqTotal)) * 100))
-	percentage_str := strconv.Itoa(percentage) + "%"
-
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] %s :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, percentage_str, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	
+	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] %d%% :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, percentage, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Info(infostring string) {
