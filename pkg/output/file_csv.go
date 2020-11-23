@@ -12,6 +12,11 @@ import (
 var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "resultfile"}
 
 func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
+	
+	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+		return nil
+	}
+	
 	header := make([]string, 0)
 	f, err := os.Create(config.OutputFile)
 	if err != nil {

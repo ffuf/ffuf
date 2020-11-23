@@ -58,6 +58,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
+	flag.BoolVar(&opts.Output.OutputCreateEmptyFile, "or", opts.Output.OutputCreateEmptyFile, "Don't create the output file if we don't have results")
 	flag.BoolVar(&opts.General.AutoCalibration, "ac", opts.General.AutoCalibration, "Automatically calibrate filtering options")
 	flag.BoolVar(&opts.General.Colors, "c", opts.General.Colors, "Colorize output.")
 	flag.BoolVar(&opts.General.Quiet, "s", opts.General.Quiet, "Do not print additional information (silent mode)")

@@ -60,6 +60,7 @@
     outputdirectory = "/tmp/rawoutputdir"
     outputfile = "output.json"
     outputformat = "json"
+    outputcreateemptyfile = false
 
 [filter]
     lines = ""
