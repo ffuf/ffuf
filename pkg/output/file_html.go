@@ -76,7 +76,8 @@ const (
               <th>Position</th>
               <th>Length</th>
               <th>Words</th>
-              <th>Lines</th>
+			  <th>Lines</th>
+			  <th>Type</th>
 			  <th>Resultfile</th>
           </tr>
         </thead>
@@ -84,7 +85,7 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
@@ -96,7 +97,8 @@ const (
                     <td>{{ $result.Position }}</td>
                     <td>{{ $result.ContentLength }}</td>
                     <td>{{ $result.ContentWords }}</td>
-                    <td>{{ $result.ContentLines }}</td>
+					<td>{{ $result.ContentLines }}</td>
+					<td>{{ $result.ContentType }}</td>
                     <td>{{ $result.ResultFile }}</td>
                 </tr>
             {{ end }}
