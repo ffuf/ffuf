@@ -6,6 +6,7 @@
     - Ffuf now reads a default configuration file `$HOME/.ffufrc` upon startup. Options set in this file
     are overwritten by the ones provided on CLI.
     - Change banner logging to stderr instead of stdout.
+    - New CLI flag `-input-shell` to set the shell to be used by `input-cmd`
 
   - Changed
     - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.
