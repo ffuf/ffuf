@@ -195,6 +195,7 @@ OUTPUT OPTIONS:
   -o               Write output to file
   -od              Directory path to store matched results to.
   -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
+  -or              Don't create the output file if we don't have results
 
 EXAMPLE USAGE:
   Fuzz file paths from wordlist.txt, match all responses but filter out those with content-size 42.

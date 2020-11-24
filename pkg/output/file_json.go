@@ -36,6 +36,11 @@ type jsonFileOutput struct {
 }
 
 func writeEJSON(config *ffuf.Config, res []Result) error {
+	
+	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+		return nil
+	}
+	
 	t := time.Now()
 	outJSON := ejsonFileOutput{
 		CommandLine: config.CommandLine,
