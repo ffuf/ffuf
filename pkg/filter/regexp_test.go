@@ -35,7 +35,13 @@ func TestRegexpFiltering(t *testing.T) {
 		{"s1arch", false},
 		{"invalid", false},
 	} {
-		resp := ffuf.Response{Data: []byte(test.input)}
+		inp := make(map[string][]byte)
+		resp := ffuf.Response{
+			Data: []byte(test.input),
+			Request: &ffuf.Request{
+				Input: inp,
+			},
+		}
 		filterReturn, _ := f.Filter(&resp)
 		if filterReturn != test.output {
 			t.Errorf("Filter test %d: Was expecing filter return value of %t but got %t", i, test.output, filterReturn)
