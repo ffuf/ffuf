@@ -4,6 +4,7 @@
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
+* [choket](https://github.com/choket)
 * [codingo](https://github.com/codingo)
 * [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
