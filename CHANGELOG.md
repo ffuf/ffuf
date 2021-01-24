@@ -1,6 +1,10 @@
 ## Changelog
 - master
   - New
+  - Changed
+    
+- v1.2.0
+  - New
     - Added 405 Method Not Allowed to list of status codes matched by default.
     - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
     - New CLI flag `-config` to define a configuration file with preconfigured settings for the job.
