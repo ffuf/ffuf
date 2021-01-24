@@ -2,6 +2,10 @@
 - master
   - New
   - Changed
+  
+- v1.2.1
+  - Changed
+    - Fixed a build breaking bug in `input-shell` parameter
     
 - v1.2.0
   - New
