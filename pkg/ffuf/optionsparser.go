@@ -64,6 +64,7 @@ type InputOptions struct {
 	IgnoreWordlistComments bool
 	InputMode              string
 	InputNum               int
+	InputShell             string
 	Inputcommands          []string
 	Request                string
 	RequestProto           string
@@ -374,6 +375,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Colors = parseOpts.General.Colors
 	conf.InputNum = parseOpts.Input.InputNum
 	conf.InputMode = parseOpts.Input.InputMode
+	conf.InputShell = parseOpts.Input.InputShell
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.OutputCreateEmptyFile = parseOpts.Output.OutputCreateEmptyFile
