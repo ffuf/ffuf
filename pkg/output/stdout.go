@@ -168,16 +168,26 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	//Create full progress string
-	progressString = fmt.Sprintf("%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
-	if len(progressString)+1 >= s.config.TerminalWidth {
-		//if that progress string plus one is larger than the terminal width then replace the progress string with a shorter one
-		progressString = fmt.Sprintf("%s[%.f%%%%]-[%d/%d]", TERMINAL_CLEAR_LINE, ffuf.Percent(status.ReqCount, status.ReqTotal), status.QueuePos, status.QueueTotal)
+	var progressComponents = []string{
+		fmt.Sprintf("%sProgress: [%d/%d] :: ", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal),
+		fmt.Sprintf("Job [%d/%d] :: ", status.QueuePos, status.QueueTotal),
+		fmt.Sprintf("%d req/sec :: ", reqRate),
+		fmt.Sprintf("Duration: [%d:%02d:%02d] :: ", hours, mins, secs),
+		fmt.Sprintf("Errors: %d ::", status.ErrorCount),
+	}
 
-		if len(progressString) > s.config.TerminalWidth {
-			//finally if the new minified version of progress bar is too large to fit on the users terminal screen silence the progress
-			s.config.Quiet = true
-			return
+	for i, c := range progressComponents {
+		if len(progressString+c)+1 <= s.config.TerminalWidth {
+			progressString += c
+		} else {
+			if i == 0 {
+				//progress component alone is to large to fix the width try minified version
+				progressString = fmt.Sprintf("%s[%.f%%%%]-[%d/%d]", TERMINAL_CLEAR_LINE, ffuf.Percent(status.ReqCount, status.ReqTotal), status.QueuePos, status.QueueTotal)
+				if len(progressString)+1 >= s.config.TerminalWidth {
+					//if minified version is still too big return with not printing anything.
+					return
+				}
+			}
 		}
 	}
 
