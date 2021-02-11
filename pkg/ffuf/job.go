@@ -293,7 +293,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc403()
 		}
 	}
-	if j.Config.StopOnAll {
+	if j.Config.StopOn429 || j.Config.StopOnAll {
 		// increment 429 counter if the response code is 429
 		if resp.StatusCode == 429 {
 			j.inc429()
@@ -390,6 +390,15 @@ func (j *Job) CheckStop() {
 				j.Stop()
 			}
 		}
+
+		if j.Config.StopOn429 || j.Config.StopOnAll {
+			if float64(j.Count429) > 50 {
+				// More then 50 429 responses detected
+				j.Error = "Getting an unusual amount of 429 responses, exiting."
+				j.Stop()
+			}
+		}
+
 		if j.Config.StopOnErrors || j.Config.StopOnAll {
 			if j.SpuriousErrorCounter > j.Config.Threads*2 {
 				// Most of the requests are erroring
@@ -398,11 +407,11 @@ func (j *Job) CheckStop() {
 			}
 
 		}
-		if j.Config.StopOnAll && (float64(j.Count429)/float64(j.Counter) > 0.2) {
-			// Over 20% of responses are 429
-			j.Error = "Getting an unusual amount of 429 responses, exiting."
-			j.Stop()
-		}
+		/*		if j.Config.StopOnAll && (float64(j.Count429)/float64(j.Counter) > 0.2) {
+				// Over 20% of responses are 429
+				j.Error = "Getting an unusual amount of 429 responses, exiting."
+				j.Stop()
+			}*/
 	}
 
 	// Check for runtime of entire process

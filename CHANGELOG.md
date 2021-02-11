@@ -1,7 +1,10 @@
 ## Changelog
 - master
   - New
+    - Introduced a `-st` flag which stops when ffuf detects more then 50 responses of type 429
   - Changed
+    - `-sf` got refactored into `-sf` (stop on forbidden only) and `-st` (stop on throtteled)
+    - `-sa` contains now also `-st`
   
 - v1.2.1
   - Changed

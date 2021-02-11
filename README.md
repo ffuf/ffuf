@@ -162,6 +162,7 @@ GENERAL OPTIONS:
   -sa              Stop on all error cases. Implies -sf and -se. (default: false)
   -se              Stop on spurious errors (default: false)
   -sf              Stop when > 95% of responses return 403 Forbidden (default: false)
+  -st              Stop when more then 75 responses return 429 Throtteled (default: false)
   -t               Number of concurrent threads. (default: 40)
   -v               Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 

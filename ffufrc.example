@@ -33,6 +33,7 @@
     quiet = false
     rate = 0
     stopon403 = false
+    stopon429 = false
     stoponall = false
     stoponerrors = false
     threads = 40

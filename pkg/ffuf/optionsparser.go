@@ -52,6 +52,7 @@ type GeneralOptions struct {
 	Rate                   int
 	ShowVersion            bool `toml:"-"`
 	StopOn403              bool
+	StopOn429              bool
 	StopOnAll              bool
 	StopOnErrors           bool
 	Threads                int
@@ -72,11 +73,11 @@ type InputOptions struct {
 }
 
 type OutputOptions struct {
-	DebugLog        string
-	OutputDirectory string
-	OutputFile      string
-	OutputFormat    string
-	OutputCreateEmptyFile	bool
+	DebugLog              string
+	OutputDirectory       string
+	OutputFile            string
+	OutputFormat          string
+	OutputCreateEmptyFile bool
 }
 
 type FilterOptions struct {
@@ -112,6 +113,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Rate = 0
 	c.General.ShowVersion = false
 	c.General.StopOn403 = false
+	c.General.StopOn429 = false
 	c.General.StopOnAll = false
 	c.General.StopOnErrors = false
 	c.General.Threads = 40
@@ -382,6 +384,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
 	conf.StopOn403 = parseOpts.General.StopOn403
+	conf.StopOn429 = parseOpts.General.StopOn429
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
