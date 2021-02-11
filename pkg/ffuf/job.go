@@ -407,11 +407,7 @@ func (j *Job) CheckStop() {
 			}
 
 		}
-		/*		if j.Config.StopOnAll && (float64(j.Count429)/float64(j.Counter) > 0.2) {
-				// Over 20% of responses are 429
-				j.Error = "Getting an unusual amount of 429 responses, exiting."
-				j.Stop()
-			}*/
+
 	}
 
 	// Check for runtime of entire process
