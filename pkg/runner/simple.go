@@ -159,6 +159,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		lineSeperator = "\","
 	}
 
+	if strings.Contains(httpresp.Header.Get("Content-Type"), "xml") {
+		wordSeperator = "<"
+	}
+
 	wordsSize := len(strings.Split(string(resp.Data), wordSeperator))
 	linesSize := len(strings.Split(string(resp.Data), lineSeperator))
 
