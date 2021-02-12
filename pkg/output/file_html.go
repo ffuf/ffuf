@@ -77,6 +77,7 @@ const (
               <th>Length</th>
               <th>Words</th>
               <th>Lines</th>
+			  <th>Type</th>
 			  <th>Resultfile</th>
           </tr>
         </thead>
@@ -84,7 +85,7 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
@@ -97,6 +98,7 @@ const (
                     <td>{{ $result.ContentLength }}</td>
                     <td>{{ $result.ContentWords }}</td>
                     <td>{{ $result.ContentLines }}</td>
+					<td>{{ $result.ContentType }}</td>
                     <td>{{ $result.ResultFile }}</td>
                 </tr>
             {{ end }}
@@ -176,10 +178,10 @@ func colorizeResults(results []Result) []Result {
 
 func writeHTML(config *ffuf.Config, results []Result) error {
 
-  if(config.OutputCreateEmptyFile && (len(results) == 0)){
+	if config.OutputCreateEmptyFile && (len(results) == 0) {
 		return nil
-  }
-  
+	}
+
 	results = colorizeResults(results)
 
 	ti := time.Now()

@@ -36,6 +36,7 @@ type Result struct {
 	ContentLength    int64             `json:"length"`
 	ContentWords     int64             `json:"words"`
 	ContentLines     int64             `json:"lines"`
+	ContentType      string            `json:"content-type"`
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
 	ResultFile       string            `json:"resultfile"`
@@ -210,9 +211,9 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+	if config.OutputCreateEmptyFile && (len(res) == 0) {
 		return nil
-  	}
+	}
 
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(s.config, s.Results)
@@ -301,6 +302,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			ContentLength:    resp.ContentLength,
 			ContentWords:     resp.ContentWords,
 			ContentLines:     resp.ContentLines,
+			ContentType:      resp.ContentType,
 			RedirectLocation: resp.GetRedirectLocation(false),
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,

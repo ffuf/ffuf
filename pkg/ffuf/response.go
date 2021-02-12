@@ -13,6 +13,7 @@ type Response struct {
 	ContentLength int64
 	ContentWords  int64
 	ContentLines  int64
+	ContentType   string
 	Cancelled     bool
 	Request       *Request
 	Raw           string
@@ -50,6 +51,7 @@ func NewResponse(httpresp *http.Response, req *Request) Response {
 	var resp Response
 	resp.Request = req
 	resp.StatusCode = int64(httpresp.StatusCode)
+	resp.ContentType = httpresp.Header.Get("Content-Type")
 	resp.Headers = httpresp.Header
 	resp.Cancelled = false
 	resp.Raw = ""
