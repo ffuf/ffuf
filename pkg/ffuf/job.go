@@ -392,7 +392,7 @@ func (j *Job) CheckStop() {
 		}
 
 		if j.Config.StopOn429 || j.Config.StopOnAll {
-			if float64(j.Count429) > 50 {
+			if float64(j.Count429) > 75 {
 				// More then 50 429 responses detected
 				j.Error = "Getting an unusual amount of 429 responses, exiting."
 				j.Stop()
