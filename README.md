@@ -11,14 +11,22 @@
 
 A fast web fuzzer written in Go.
 
+## This is a fork
+
+The original can be found here: [Dffuf](https://github.com/ffuf/ffuf)
+
+## Changes compared to original
+- a flag "-st" exists - it forces ffuf to stop after 75 429 responses
+- content type is now saved into result files
+- javascript, xml and json responses now have another kind of calculation of words and lines
+- with those changes "-ac" is more solid and wont drop you interesting findings, but still be cautious
+
 ## Installation
 
-- [Download](https://github.com/Damian89/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/Damian89/ffuf/releases/latest), unpack and run!
-  
-  _or_
 - If you have recent go compiler installed: `go get -u github.com/Damian89/ffuf` (the same command works for updating)
   
   _or_
+  
 - git clone https://github.com/Damian89/ffuf ; cd ffuf ; go get ; go build 
 
 Ffuf depends on Go 1.13 or greater.
