@@ -151,8 +151,17 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		resp.Data = respbody
 	}
 
-	wordsSize := len(strings.Split(string(resp.Data), " "))
-	linesSize := len(strings.Split(string(resp.Data), "\n"))
+	wordSeperator := " "
+	lineSeperator := "\n"
+
+	if strings.Contains(httpresp.Header.Get("Content-Type"), "json") {
+		wordSeperator = "{"
+		lineSeperator = "\","
+	}
+
+	wordsSize := len(strings.Split(string(resp.Data), wordSeperator))
+	linesSize := len(strings.Split(string(resp.Data), lineSeperator))
+
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
 
