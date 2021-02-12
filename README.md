@@ -13,13 +13,13 @@ A fast web fuzzer written in Go.
 
 ## Installation
 
-- [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
+- [Download](https://github.com/Damian89/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/Damian89/ffuf/releases/latest), unpack and run!
   
   _or_
-- If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
+- If you have recent go compiler installed: `go get -u github.com/Damian89/ffuf` (the same command works for updating)
   
   _or_
-- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
+- git clone https://github.com/Damian89/ffuf ; cd ffuf ; go get ; go build 
 
 Ffuf depends on Go 1.13 or greater.
 
@@ -117,7 +117,7 @@ ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST
 When running ffuf, it first checks if a default configuration file exists. The file path for it is `~/.ffufrc` / `$HOME/.ffufrc`
 for most *nixes (for example `/home/joohoi/.ffufrc`) and `%USERPROFILE%\.ffufrc` for Windows. You can configure one or 
 multiple options in this file, and they will be applied on every subsequent ffuf job. An example of .ffufrc file can be
-found [here](https://github.com/ffuf/ffuf/blob/master/ffufrc.example). 
+found [here](https://github.com/Damian89/ffuf/blob/master/ffufrc.example). 
 
 The configuration options provided on the command line override the ones loaded from `~/.ffufrc`.
 Note: this does not apply for CLI flags that can be provided more than once. One of such examples is `-H` (header) flag.
@@ -213,15 +213,15 @@ EXAMPLE USAGE:
   Fuzz multiple locations. Match only responses reflecting the value of "VAL" keyword. Colored.
     ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr "VAL" -c
 
-  More information and examples: https://github.com/ffuf/ffuf
+  More information and examples: https://github.com/Damian89/ffuf
 
 ```
 
 ## Helper scripts and advanced payloads
 
-See [ffuf-scripts](https://github.com/ffuf/ffuf-scripts) repository for helper scripts and payload generators
+See [ffuf-scripts](https://github.com/Damian89/ffuf-scripts) repository for helper scripts and payload generators
 for different workflows and usage scenarios.
 
 ## License
 
-ffuf is released under MIT license. See [LICENSE](https://github.com/ffuf/ffuf/blob/master/LICENSE).
+ffuf is released under MIT license. See [LICENSE](https://github.com/Damian89/ffuf/blob/master/LICENSE).

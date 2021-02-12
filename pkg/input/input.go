@@ -3,7 +3,7 @@ package input
 import (
 	"fmt"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/Damian89/ffuf/pkg/ffuf"
 )
 
 type MainInputProvider struct {

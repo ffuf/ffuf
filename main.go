@@ -9,11 +9,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
-	"github.com/ffuf/ffuf/pkg/filter"
-	"github.com/ffuf/ffuf/pkg/input"
-	"github.com/ffuf/ffuf/pkg/output"
-	"github.com/ffuf/ffuf/pkg/runner"
+	"github.com/Damian89/ffuf/pkg/ffuf"
+	"github.com/Damian89/ffuf/pkg/filter"
+	"github.com/Damian89/ffuf/pkg/input"
+	"github.com/Damian89/ffuf/pkg/output"
+	"github.com/Damian89/ffuf/pkg/runner"
 )
 
 type multiStringFlag []string

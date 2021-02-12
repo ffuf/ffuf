@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/Damian89/ffuf/pkg/ffuf"
 )
 
 //Download results < 5MB
@@ -166,8 +166,21 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		wordSeperator = "<"
 	}
 
+	if strings.Contains(httpresp.Header.Get("Content-Type"), "javascript") {
+		wordSeperator = "("
+		lineSeperator = "})"
+	}
+
 	wordsSize := len(strings.Split(string(resp.Data), wordSeperator))
 	linesSize := len(strings.Split(string(resp.Data), lineSeperator))
+
+	if wordsSize <= 1 {
+		wordsSize = len(strings.Split(string(resp.Data), " "))
+	}
+
+	if linesSize <= 1 {
+		linesSize = len(strings.Split(string(resp.Data), "\n"))
+	}
 
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
