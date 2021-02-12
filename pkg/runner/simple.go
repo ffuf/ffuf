@@ -151,6 +151,9 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		resp.Data = respbody
 	}
 
+	/**
+	 * Certainly this area needs a little bit of rework!
+	 */
 	wordSeperator := " "
 	lineSeperator := "\n"
 
