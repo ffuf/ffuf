@@ -2,7 +2,11 @@
 - master
   - New
   - Changed
-  
+
+- v1.2.2
+  - New
+    - New CLI Flag `-sp` to automatically trim prefixed slashes in a wordlist
+ 
 - v1.2.1
   - Changed
     - Fixed a build breaking bug in `input-shell` parameter
