@@ -54,6 +54,7 @@ type GeneralOptions struct {
 	StopOn403              bool
 	StopOnAll              bool
 	StopOnErrors           bool
+	StripSlash             bool
 	Threads                int
 	Verbose                bool
 }
@@ -114,6 +115,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
 	c.General.StopOnErrors = false
+	c.General.StripSlash = false
 	c.General.Threads = 40
 	c.General.Verbose = false
 	c.HTTP.Data = ""
@@ -384,6 +386,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
+	conf.StripSlash = parseOpts.General.StripSlash
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth

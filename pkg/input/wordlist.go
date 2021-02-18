@@ -109,7 +109,11 @@ func (w *WordlistInput) readFile(path string) error {
 	re := regexp.MustCompile(`(?i)%ext%`)
 	for reader.Scan() {
 		if w.config.DirSearchCompat && len(w.config.Extensions) > 0 {
-			text := []byte(reader.Text())
+			raw := reader.Text()
+			if w.config.StripSlash {
+				raw = strings.TrimPrefix(raw, "/")
+			}
+			text := []byte(raw)
 			if re.Match(text) {
 				for _, ext := range w.config.Extensions {
 					contnt := re.ReplaceAll(text, []byte(ext))
@@ -128,7 +132,9 @@ func (w *WordlistInput) readFile(path string) error {
 			}
 		} else {
 			text := reader.Text()
-
+			if w.config.StripSlash {
+				text = strings.TrimPrefix(text, "/")
+			}
 			if w.config.IgnoreWordlistComments {
 				text, ok = stripComments(text)
 				if !ok {
