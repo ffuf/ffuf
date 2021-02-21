@@ -33,7 +33,7 @@ type Config struct {
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
-	OutputCreateEmptyFile  bool	                     `json:"OutputCreateEmptyFile"`
+	OutputCreateEmptyFile  bool                      `json:"OutputCreateEmptyFile"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	Quiet                  bool                      `json:"quiet"`
@@ -44,6 +44,7 @@ type Config struct {
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnAll              bool                      `json:"stop_all"`
 	StopOnErrors           bool                      `json:"stop_errors"`
+	StripSlash             bool                      `json:"strip_slash"`
 	Threads                int                       `json:"threads"`
 	Timeout                int                       `json:"timeout"`
 	Url                    string                    `json:"url"`
@@ -87,6 +88,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.StopOn403 = false
 	conf.StopOnAll = false
 	conf.StopOnErrors = false
+	conf.StripSlash = false
 	conf.Timeout = 10
 	conf.Url = ""
 	conf.Verbose = false
