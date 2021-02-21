@@ -173,9 +173,9 @@ func (s *Stdoutput) Info(infostring string) {
 		fmt.Fprintf(os.Stderr, "%s", infostring)
 	} else {
 		if !s.config.Colors {
-			fmt.Fprintf(os.Stderr, "%s[INFO] %s\n", TERMINAL_CLEAR_LINE, infostring)
+			fmt.Fprintf(os.Stderr, "%s[INFO] %s\n\n", TERMINAL_CLEAR_LINE, infostring)
 		} else {
-			fmt.Fprintf(os.Stderr, "%s[%sINFO%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_BLUE, ANSI_CLEAR, infostring)
+			fmt.Fprintf(os.Stderr, "%s[%sINFO%s] %s\n\n", TERMINAL_CLEAR_LINE, ANSI_BLUE, ANSI_CLEAR, infostring)
 		}
 	}
 }
@@ -211,9 +211,9 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+	if config.OutputCreateEmptyFile && (len(res) == 0) {
 		return nil
-  	}
+	}
 
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(s.config, s.Results)

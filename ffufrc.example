@@ -15,7 +15,8 @@
     method = "GET"
     proxyurl = "http://127.0.0.1:8080"
     recursion = false
-    recursiondepth = 0
+    recursion_depth = 0
+    recursion_strategy = "default"
     replayproxyurl = "http://127.0.0.1:8080"
     timeout = 10
     url = "https://example.org/FUZZ"

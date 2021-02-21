@@ -135,18 +135,19 @@ To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-
 Fuzz Faster U Fool - v1.2.0-git
 
 HTTP OPTIONS:
-  -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
-  -X               HTTP method to use (default: GET)
-  -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
-  -d               POST data
-  -ignore-body     Do not fetch the response content. (default: false)
-  -r               Follow redirects (default: false)
-  -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
-  -recursion-depth Maximum recursion depth. (default: 0)
-  -replay-proxy    Replay matched requests using this proxy.
-  -timeout         HTTP request timeout in seconds. (default: 10)
-  -u               Target URL
-  -x               HTTP Proxy URL
+  -H                  Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
+  -X                  HTTP method to use
+  -b                  Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
+  -d                  POST data
+  -ignore-body        Do not fetch the response content. (default: false)
+  -r                  Follow redirects (default: false)
+  -recursion          Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
+  -recursion-depth    Maximum recursion depth. (default: 0)
+  -recursion-strategy Recursion strategy: "default" for a redirect based, and "greedy" to recurse on all matches (default: default)
+  -replay-proxy       Replay matched requests using this proxy.
+  -timeout            HTTP request timeout in seconds. (default: 10)
+  -u                  Target URL
+  -x                  HTTP Proxy URL
 
 GENERAL OPTIONS:
   -V               Show version information. (default: false)
