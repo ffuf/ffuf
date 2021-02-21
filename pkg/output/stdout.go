@@ -36,6 +36,7 @@ type Result struct {
 	ContentLength    int64             `json:"length"`
 	ContentWords     int64             `json:"words"`
 	ContentLines     int64             `json:"lines"`
+	ContentType      string            `json:"content-type"`
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
 	ResultFile       string            `json:"resultfile"`
@@ -172,9 +173,9 @@ func (s *Stdoutput) Info(infostring string) {
 		fmt.Fprintf(os.Stderr, "%s", infostring)
 	} else {
 		if !s.config.Colors {
-			fmt.Fprintf(os.Stderr, "%s[INFO] %s\n", TERMINAL_CLEAR_LINE, infostring)
+			fmt.Fprintf(os.Stderr, "%s[INFO] %s\n\n", TERMINAL_CLEAR_LINE, infostring)
 		} else {
-			fmt.Fprintf(os.Stderr, "%s[%sINFO%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_BLUE, ANSI_CLEAR, infostring)
+			fmt.Fprintf(os.Stderr, "%s[%sINFO%s] %s\n\n", TERMINAL_CLEAR_LINE, ANSI_BLUE, ANSI_CLEAR, infostring)
 		}
 	}
 }
@@ -210,9 +211,9 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+	if config.OutputCreateEmptyFile && (len(res) == 0) {
 		return nil
-  	}
+	}
 
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(s.config, s.Results)
@@ -301,6 +302,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			ContentLength:    resp.ContentLength,
 			ContentWords:     resp.ContentWords,
 			ContentLines:     resp.ContentLines,
+			ContentType:      resp.ContentType,
 			RedirectLocation: resp.GetRedirectLocation(false),
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,
