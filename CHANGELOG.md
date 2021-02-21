@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+     - All output file formats now include the `Content-Type`.
   - Changed
   
 - v1.2.1
