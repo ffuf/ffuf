@@ -22,6 +22,10 @@ const (
 
 func writeMarkdown(config *ffuf.Config, res []Result) error {
 
+	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+		return nil
+	}
+
 	ti := time.Now()
 
 	keywords := make([]string, 0)

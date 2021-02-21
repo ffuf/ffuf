@@ -1,12 +1,23 @@
 ## Changelog
 - master
   - New
+     - All output file formats now include the `Content-Type`.
+  - Changed
+  
+- v1.2.1
+  - Changed
+    - Fixed a build breaking bug in `input-shell` parameter
+    
+- v1.2.0
+  - New
+    - Added 405 Method Not Allowed to list of status codes matched by default.
     - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
     - New CLI flag `-config` to define a configuration file with preconfigured settings for the job.
     - Ffuf now reads a default configuration file `$HOME/.ffufrc` upon startup. Options set in this file
     are overwritten by the ones provided on CLI.
     - Change banner logging to stderr instead of stdout.
-    - All output file formats now include the `Content-Type`.
+    - New CLI flag `-or` to avoid creating result files if we didn't get any. 
+    - New CLI flag `-input-shell` to set the shell to be used by `input-cmd`
 
   - Changed
     - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.

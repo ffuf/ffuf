@@ -64,6 +64,7 @@ type InputOptions struct {
 	IgnoreWordlistComments bool
 	InputMode              string
 	InputNum               int
+	InputShell             string
 	Inputcommands          []string
 	Request                string
 	RequestProto           string
@@ -75,6 +76,7 @@ type OutputOptions struct {
 	OutputDirectory string
 	OutputFile      string
 	OutputFormat    string
+	OutputCreateEmptyFile	bool
 }
 
 type FilterOptions struct {
@@ -134,12 +136,13 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
-	c.Matcher.Status = "200,204,301,302,307,401,403"
+	c.Matcher.Status = "200,204,301,302,307,401,403,405"
 	c.Matcher.Words = ""
 	c.Output.DebugLog = ""
 	c.Output.OutputDirectory = ""
 	c.Output.OutputFile = ""
 	c.Output.OutputFormat = "json"
+	c.Output.OutputCreateEmptyFile = false
 	return c
 }
 
@@ -372,8 +375,10 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Colors = parseOpts.General.Colors
 	conf.InputNum = parseOpts.Input.InputNum
 	conf.InputMode = parseOpts.Input.InputMode
+	conf.InputShell = parseOpts.Input.InputShell
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
+	conf.OutputCreateEmptyFile = parseOpts.Output.OutputCreateEmptyFile
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
 	conf.StopOn403 = parseOpts.General.StopOn403

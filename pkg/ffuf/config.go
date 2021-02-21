@@ -25,6 +25,7 @@ type Config struct {
 	InputMode              string                    `json:"inputmode"`
 	InputNum               int                       `json:"cmd_inputnum"`
 	InputProviders         []InputProviderConfig     `json:"inputproviders"`
+	InputShell             string                    `json:"inputshell"`
 	Matchers               map[string]FilterProvider `json:"matchers"`
 	MaxTime                int                       `json:"maxtime"`
 	MaxTimeJob             int                       `json:"maxtime_job"`
@@ -32,6 +33,7 @@ type Config struct {
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
+	OutputCreateEmptyFile  bool	                     `json:"OutputCreateEmptyFile"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	Quiet                  bool                      `json:"quiet"`
@@ -70,6 +72,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.IgnoreWordlistComments = false
 	conf.InputMode = "clusterbomb"
 	conf.InputNum = 0
+	conf.InputShell = ""
 	conf.InputProviders = make([]InputProviderConfig, 0)
 	conf.Matchers = make(map[string]FilterProvider)
 	conf.MaxTime = 0

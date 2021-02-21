@@ -1,8 +1,10 @@
 # Contributors
 * [AverageSecurityGuy](https://github.com/averagesecurityguy)
+* [bp0](https://github.com/bp0lr)
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
+* [choket](https://github.com/choket)
 * [codingo](https://github.com/codingo)
 * [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
@@ -16,6 +18,7 @@
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [jimen0](https://github.com/jimen0)
 * [joohoi](https://github.com/joohoi)
+* [jsgv](https://github.com/jsgv)
 * [jvesiluoma](https://github.com/jvesiluoma)
 * [Kiblyn11](https://github.com/Kiblyn11)
 * [lc](https://github.com/lc)

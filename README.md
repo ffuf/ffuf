@@ -166,7 +166,7 @@ GENERAL OPTIONS:
   -v               Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:
-  -mc              Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403)
+  -mc              Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405)
   -ml              Match amount of lines in response
   -mr              Match regexp
   -ms              Match HTTP response size
@@ -195,6 +195,7 @@ OUTPUT OPTIONS:
   -o               Write output to file
   -od              Directory path to store matched results to.
   -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
+  -or              Don't create the output file if we don't have results
 
 EXAMPLE USAGE:
   Fuzz file paths from wordlist.txt, match all responses but filter out those with content-size 42.
