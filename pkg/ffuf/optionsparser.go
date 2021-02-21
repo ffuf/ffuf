@@ -26,18 +26,19 @@ type ConfigOptions struct {
 }
 
 type HTTPOptions struct {
-	Cookies         []string
-	Data            string
-	FollowRedirects bool
-	Headers         []string
-	IgnoreBody      bool
-	Method          string
-	ProxyURL        string
-	Recursion       bool
-	RecursionDepth  int
-	ReplayProxyURL  string
-	Timeout         int
-	URL             string
+	Cookies           []string
+	Data              string
+	FollowRedirects   bool
+	Headers           []string
+	IgnoreBody        bool
+	Method            string
+	ProxyURL          string
+	Recursion         bool
+	RecursionDepth    int
+	RecursionStrategy string
+	ReplayProxyURL    string
+	Timeout           int
+	URL               string
 }
 
 type GeneralOptions struct {
@@ -72,11 +73,11 @@ type InputOptions struct {
 }
 
 type OutputOptions struct {
-	DebugLog        string
-	OutputDirectory string
-	OutputFile      string
-	OutputFormat    string
-	OutputCreateEmptyFile	bool
+	DebugLog              string
+	OutputDirectory       string
+	OutputFile            string
+	OutputFormat          string
+	OutputCreateEmptyFile bool
 }
 
 type FilterOptions struct {
@@ -123,6 +124,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.ProxyURL = ""
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
+	c.HTTP.RecursionStrategy = "default"
 	c.HTTP.ReplayProxyURL = ""
 	c.HTTP.Timeout = 10
 	c.HTTP.URL = ""
@@ -387,6 +389,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
+	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
