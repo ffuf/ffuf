@@ -2,7 +2,7 @@
 - master
   - New
   - Changed
-    - Fix a badchar in progress output ([#390](https://github.com/ffuf/ffuf/pull/390), thx to [@noraj](https://github.com/noraj))
+    - Fix a badchar in progress output
   
 - v1.2.1
   - Changed
