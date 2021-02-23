@@ -3,6 +3,7 @@
   - New
      - All output file formats now include the `Content-Type`.
   - Changed
+    - Fix a badchar in progress output
   
 - v1.2.1
   - Changed

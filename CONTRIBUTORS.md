@@ -23,6 +23,7 @@
 * [Kiblyn11](https://github.com/Kiblyn11)
 * [lc](https://github.com/lc)
 * [nnwakelam](https://twitter.com/nnwakelam)
+* [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
