@@ -1,6 +1,7 @@
 package ffuf
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 )
@@ -40,4 +41,9 @@ func FileExists(path string) bool {
 	}
 
 	return !md.IsDir()
+}
+
+//Version returns the ffuf version string
+func Version() string {
+	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
 }
