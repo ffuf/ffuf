@@ -52,7 +52,7 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 }
 
 func (s *Stdoutput) Banner() {
-	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
+	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.Version(), BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
 
