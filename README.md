@@ -11,6 +11,27 @@
 
 A fast web fuzzer written in Go.
 
+
+## Official Discord Channel
+
+ffuf has a channel at Porchetta Industries Discord server alongside of channels for many other tools.
+
+Come to hang out & to discuss about ffuf, it's usage and development!
+
+[![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner2)](https://discord.gg/VWcdZCUsQP)
+
+ - [Installation](https://github.com/ffuf/ffuf#installation)
+ - [Example usage](https://github.com/ffuf/ffuf#example-usage)
+   - [Content discovery](https://github.com/ffuf/ffuf#typical-directory-discovery)
+   - [Vhost discovery](https://github.com/ffuf/ffuf#virtual-host-discovery-without-dns-records)
+   - [Parameter fuzzing](https://github.com/ffuf/ffuf#get-parameter-fuzzing)
+   - [POST data fuzzing](https://github.com/ffuf/ffuf#post-data-fuzzing)
+   - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
+   - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
+ - [Help](https://github.com/ffuf/ffuf#usage)
+ - [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
+
+
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
@@ -215,6 +236,24 @@ EXAMPLE USAGE:
   More information and examples: https://github.com/ffuf/ffuf
 
 ```
+
+## Sponsorware
+
+`ffuf` employs a sponsorware model. This means that all new features developed by its author are initially exclusively 
+available for their sponsors. 30 days after the exclusive release, all the new features will be released at the freely
+available open source repository at https://github.com/ffuf/ffuf . 
+
+This model enables me to provide concrete benefits for the generous individuals and companies that enable me to work on 
+`ffuf`. The different sponsorship tiers can be seen [here](https://github.com/sponsors/joohoi).
+
+All the community contributions are and will be available directly in the freely available open source repository. The
+exclusive version benefits only include new features created by [@joohoi](https://github.com/joohoi)
+
+### Access the sponsorware through code contributions
+
+People that create significant contributions to the `ffuf` project itself should and will have access to the sponsorware
+as well. If you are planning to create such a contribution, please contact [@joohoi](https://github.com/joohoi)
+first to ensure that there aren't other people working on the same feature.
 
 ## Helper scripts and advanced payloads
 
