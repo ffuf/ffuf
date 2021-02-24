@@ -11,6 +11,19 @@
 
 A fast web fuzzer written in Go.
 
+- [Installation](https://github.com/ffuf/ffuf#installation)
+- [Example usage](https://github.com/ffuf/ffuf#example-usage)
+    - [Content discovery](https://github.com/ffuf/ffuf#typical-directory-discovery)
+    - [Vhost discovery](https://github.com/ffuf/ffuf#virtual-host-discovery-without-dns-records)
+    - [Parameter fuzzing](https://github.com/ffuf/ffuf#get-parameter-fuzzing)
+    - [POST data fuzzing](https://github.com/ffuf/ffuf#post-data-fuzzing)
+    - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
+    - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
+- [Help](https://github.com/ffuf/ffuf#usage)
+- [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
+
+## Sponsors
+[![Offensive Security](_img/offsec-logo.png)](https://www.offensive-security.com/)
 
 ## Official Discord Channel
 
@@ -20,16 +33,7 @@ Come to hang out & to discuss about ffuf, it's usage and development!
 
 [![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner2)](https://discord.gg/VWcdZCUsQP)
 
- - [Installation](https://github.com/ffuf/ffuf#installation)
- - [Example usage](https://github.com/ffuf/ffuf#example-usage)
-   - [Content discovery](https://github.com/ffuf/ffuf#typical-directory-discovery)
-   - [Vhost discovery](https://github.com/ffuf/ffuf#virtual-host-discovery-without-dns-records)
-   - [Parameter fuzzing](https://github.com/ffuf/ffuf#get-parameter-fuzzing)
-   - [POST data fuzzing](https://github.com/ffuf/ffuf#post-data-fuzzing)
-   - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
-   - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
- - [Help](https://github.com/ffuf/ffuf#usage)
- - [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
+
 
 
 ## Installation
