@@ -136,7 +136,7 @@ func main() {
 	opts = ParseFlags(opts)
 
 	if opts.General.ShowVersion {
-		fmt.Printf("ffuf version: %s\n", ffuf.VERSION)
+		fmt.Printf("ffuf version: %s\n", ffuf.Version())
 		os.Exit(0)
 	}
 	if len(opts.Output.DebugLog) != 0 {
