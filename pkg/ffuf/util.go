@@ -28,18 +28,20 @@ func UniqStringSlice(inslice []string) []string {
 		found[v] = true
 	}
 	ret := []string{}
-	for k, _ := range found {
+	for k := range found {
 		ret = append(ret, k)
 	}
 	return ret
 }
 
-//FileExists checks if the filepath exists and is not a directory
+//FileExists checks if the filepath exists and is not a directory.
+//Returns false in case it's not possible to describe the named file.
 func FileExists(path string) bool {
 	md, err := os.Stat(path)
-	if os.IsNotExist(err) {
+	if err != nil {
 		return false
 	}
+
 	return !md.IsDir()
 }
 

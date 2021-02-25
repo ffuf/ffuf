@@ -10,7 +10,7 @@ import (
 func TestNewLineFilter(t *testing.T) {
 	f, _ := NewLineFilter("200,301,400-410,500")
 	linesRepr := f.Repr()
-	if strings.Index(linesRepr, "200,301,400-410,500") == -1 {
+	if !strings.Contains(linesRepr, "200,301,400-410,500") {
 		t.Errorf("Word filter was expected to have 4 values")
 	}
 }
@@ -43,7 +43,7 @@ func TestLineFiltering(t *testing.T) {
 		for i := int64(0); i < test.input; i++ {
 			data = append(data, "A")
 		}
-		resp := ffuf.Response{Data: []byte(strings.Join(data, " "))}
+		resp := ffuf.Response{Data: []byte(strings.Join(data, "\n"))}
 		filterReturn, _ := f.Filter(&resp)
 		if filterReturn != test.output {
 			t.Errorf("Filter test %d: Was expecing filter return value of %t but got %t", i, test.output, filterReturn)

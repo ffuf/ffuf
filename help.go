@@ -61,7 +61,7 @@ func Usage() {
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "c", "maxtime", "maxtime-job", "p", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "c", "config", "maxtime", "maxtime-job", "p", "rate", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -89,14 +89,14 @@ func Usage() {
 		Description:   "Options for input data for fuzzing. Wordlists and input generators.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"D", "ic", "input-cmd", "input-num", "mode", "request", "request-proto", "e", "w"},
+		ExpectedFlags: []string{"D", "ic", "input-cmd", "input-num", "input-shell", "mode", "request", "request-proto", "e", "w"},
 	}
 	u_output := UsageSection{
 		Name:          "OUTPUT OPTIONS",
 		Description:   "Options for output. Output file formats, file names and debug file locations.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"debug-log", "o", "of", "od"},
+		ExpectedFlags: []string{"debug-log", "o", "of", "od", "or"},
 	}
 	sections := []UsageSection{u_http, u_general, u_compat, u_matcher, u_filter, u_input, u_output}
 

@@ -36,6 +36,7 @@ type Result struct {
 	ContentLength    int64             `json:"length"`
 	ContentWords     int64             `json:"words"`
 	ContentLines     int64             `json:"lines"`
+	ContentType      string            `json:"content-type"`
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
 	ResultFile       string            `json:"resultfile"`
@@ -50,8 +51,8 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	return &outp
 }
 
-func (s *Stdoutput) Banner() error {
-	fmt.Printf("%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
+func (s *Stdoutput) Banner() {
+	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, ffuf.VERSION, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
 
@@ -107,12 +108,10 @@ func (s *Stdoutput) Banner() error {
 
 	// Proxies
 	if len(s.config.ProxyURL) > 0 {
-		proxy := fmt.Sprintf("%s", s.config.ProxyURL)
-		printOption([]byte("Proxy"), []byte(proxy))
+		printOption([]byte("Proxy"), []byte(s.config.ProxyURL))
 	}
 	if len(s.config.ReplayProxyURL) > 0 {
-		replayproxy := fmt.Sprintf("%s", s.config.ReplayProxyURL)
-		printOption([]byte("ReplayProxy"), []byte(replayproxy))
+		printOption([]byte("ReplayProxy"), []byte(s.config.ReplayProxyURL))
 	}
 
 	// Timeout
@@ -142,8 +141,7 @@ func (s *Stdoutput) Banner() error {
 	for _, f := range s.config.Filters {
 		printOption([]byte("Filter"), []byte(f.Repr()))
 	}
-	fmt.Printf("%s\n\n", BANNER_SEP)
-	return nil
+	fmt.Fprintf(os.Stderr, "%s\n\n", BANNER_SEP)
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
@@ -153,11 +151,11 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	}
 
 	var progressString string
-	dur := time.Now().Sub(status.StartedAt)
+	dur := time.Since(status.StartedAt)
 	runningSecs := int(dur / time.Second)
-	var reqRate int
+	var reqRate int64
 	if runningSecs > 0 {
-		reqRate = int(status.ReqCount / runningSecs)
+		reqRate = status.ReqSec
 	} else {
 		reqRate = 0
 	}
@@ -237,40 +235,44 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
+	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+		return nil
+  	}
+
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ejson"
 	err = writeEJSON(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".html"
 	err = writeHTML(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".md"
 	err = writeMarkdown(s.config, s.Results)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".csv"
 	err = writeCSV(s.config, s.Results, false)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ecsv"
 	err = writeCSV(s.config, s.Results, true)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 
 	return nil
@@ -296,7 +298,7 @@ func (s *Stdoutput) Finalize() error {
 			err = writeCSV(s.config, s.Results, true)
 		}
 		if err != nil {
-			s.Error(fmt.Sprintf("%s", err))
+			s.Error(err.Error())
 		}
 	}
 	fmt.Fprintf(os.Stderr, "\n")
@@ -313,7 +315,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	// Check if we need the data later
 	if s.config.OutputFile != "" {
 		// No need to store results if we're not going to use them later
-		inputs := make(map[string][]byte, 0)
+		inputs := make(map[string][]byte, len(resp.Request.Input))
 		for k, v := range resp.Request.Input {
 			inputs[k] = v
 		}
@@ -324,6 +326,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 			ContentLength:    resp.ContentLength,
 			ContentWords:     resp.ContentWords,
 			ContentLines:     resp.ContentLines,
+			ContentType:      resp.ContentType,
 			RedirectLocation: resp.GetRedirectLocation(false),
 			Url:              resp.Request.Url,
 			ResultFile:       resp.ResultFile,
@@ -340,7 +343,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 		err := os.Mkdir(s.config.OutputDirectory, 0750)
 		if err != nil {
 			if !os.IsExist(err) {
-				s.Error(fmt.Sprintf("%s", err))
+				s.Error(err.Error())
 				return ""
 			}
 		}
@@ -353,7 +356,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	filePath = path.Join(s.config.OutputDirectory, fileName)
 	err := ioutil.WriteFile(filePath, []byte(fileContent), 0640)
 	if err != nil {
-		s.Error(fmt.Sprintf("%s", err))
+		s.Error(err.Error())
 	}
 	return fileName
 }
@@ -428,14 +431,13 @@ func (s *Stdoutput) resultMultiline(resp ffuf.Response) {
 }
 
 func (s *Stdoutput) resultNormal(resp ffuf.Response) {
-	var res_str string
-	res_str = fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
-	fmt.Println(res_str)
+	res := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(resp), s.colorize(fmt.Sprintf("%d", resp.StatusCode), resp.StatusCode), resp.ContentLength, resp.ContentWords, resp.ContentLines)
+	fmt.Println(res)
 }
 
 func (s *Stdoutput) colorize(input string, status int64) string {
 	if !s.config.Colors {
-		return fmt.Sprintf("%s", input)
+		return input
 	}
 	colorCode := ANSI_CLEAR
 	if status >= 200 && status < 300 {
@@ -454,7 +456,7 @@ func (s *Stdoutput) colorize(input string, status int64) string {
 }
 
 func printOption(name []byte, value []byte) {
-	fmt.Printf(" :: %-16s : %s\n", name, value)
+	fmt.Fprintf(os.Stderr, " :: %-16s : %s\n", name, value)
 }
 
 func inSlice(key string, slice []string) bool {

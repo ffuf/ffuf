@@ -10,7 +10,7 @@ import (
 func TestNewStatusFilter(t *testing.T) {
 	f, _ := NewStatusFilter("200,301,400-410,500")
 	statusRepr := f.Repr()
-	if strings.Index(statusRepr, "200,301,400-410,500") == -1 {
+	if !strings.Contains(statusRepr, "200,301,400-410,500") {
 		t.Errorf("Status filter was expected to have 4 values")
 	}
 }

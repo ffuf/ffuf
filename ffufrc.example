@@ -1,0 +1,77 @@
+# This is an example of a ffuf configuration file.
+# https://github.com/ffuf/ffuf
+
+[http]
+    cookies = [
+        "cookiename=cookievalue"
+    ]
+    data = "post=data&key=value"
+    followredirects = false
+    headers = [
+        "X-Header-Name: value",
+        "X-Another-Header: value"
+    ]
+    ignorebody = false
+    method = "GET"
+    proxyurl = "http://127.0.0.1:8080"
+    recursion = false
+    recursiondepth = 0
+    replayproxyurl = "http://127.0.0.1:8080"
+    timeout = 10
+    url = "https://example.org/FUZZ"
+
+[general]
+    autocalibration = false
+    autocalibrationstrings = [
+        "randomtest",
+        "admin"
+    ]
+    colors = false
+    delay = ""
+    maxtime = 0
+    maxtimejob = 0
+    quiet = false
+    rate = 0
+    stopon403 = false
+    stoponall = false
+    stoponerrors = false
+    threads = 40
+    verbose = false
+
+[input]
+    dirsearchcompat = false
+    extensions = ""
+    ignorewordlistcomments = false
+    inputmode = "clusterbomb"
+    inputnum = 100
+    inputcommands = [
+        "seq 1 100:CUSTOMKEYWORD"
+    ]
+    request = "requestfile.txt"
+    requestproto = "https"
+    wordlists = [
+        "/path/to/wordlist:FUZZ",
+        "/path/to/hostlist:HOST"
+    ]
+
+
+[output]
+    debuglog = "debug.log"
+    outputdirectory = "/tmp/rawoutputdir"
+    outputfile = "output.json"
+    outputformat = "json"
+    outputcreateemptyfile = false
+
+[filter]
+    lines = ""
+    regexp = ""
+    size = ""
+    status = ""
+    words = ""
+
+[matcher]
+    lines = ""
+    regexp = ""
+    size = ""
+    status = "200,204,301,302,307,401,403,405"
+    words = ""

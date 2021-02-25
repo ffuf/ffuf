@@ -11,15 +11,51 @@
 
 A fast web fuzzer written in Go.
 
+- [Installation](https://github.com/ffuf/ffuf#installation)
+- [Example usage](https://github.com/ffuf/ffuf#example-usage)
+    - [Content discovery](https://github.com/ffuf/ffuf#typical-directory-discovery)
+    - [Vhost discovery](https://github.com/ffuf/ffuf#virtual-host-discovery-without-dns-records)
+    - [Parameter fuzzing](https://github.com/ffuf/ffuf#get-parameter-fuzzing)
+    - [POST data fuzzing](https://github.com/ffuf/ffuf#post-data-fuzzing)
+    - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
+    - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
+- [Help](https://github.com/ffuf/ffuf#usage)
+- [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
+
+## Sponsors
+[![Offensive Security](_img/offsec-logo.png)](https://www.offensive-security.com/)
+
+## Official Discord Channel
+
+ffuf has a channel at Porchetta Industries Discord server alongside of channels for many other tools.
+
+Come to hang out & to discuss about ffuf, it's usage and development!
+
+[![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner2)](https://discord.gg/VWcdZCUsQP)
+
+
+
+
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
-  or
-- If you have go compiler installed: `go get github.com/ffuf/ffuf`
+  
+  _or_
+- If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
+  
+  _or_
+- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
 
-The only dependency of ffuf is Go 1.11. No dependencies outside of Go standard library are needed.
+Ffuf depends on Go 1.13 or greater.
 
 ## Example usage
+
+The usage examples below show just the simplest tasks you can accomplish using `ffuf`. 
+
+For more extensive documentation, with real life usage examples and tips, be sure to check out the awesome guide:
+"[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
+Michael Skelton ([@codingo](https://github.com/codingo)).
+
 
 ### Typical directory discovery
 
@@ -86,7 +122,7 @@ For this example, we'll fuzz JSON data that's sent over POST. [Radamsa](https://
 When `--input-cmd` is used, ffuf will display matches as their position. This same position value will be available for the callee as an environment variable `$FFUF_NUM`. We'll use this position value as the seed for the mutator. Files example1.txt and example2.txt contain valid JSON payloads. We are matching all the responses, but filtering out response code `400 - Bad request`:
 
 ```
-ffuf --input-cmd 'radamsa --seed $FFUF_NUM example1.txt example2.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
+ffuf --input-cmd 'radamsa --seed $FFUF_NUM example1.txt example2.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/FUZZ -mc all -fc 400
 ```
 
 It of course isn't very efficient to call the mutator for each payload, so we can also pre-generate the payloads, still using [Radamsa](https://gitlab.com/akihe/radamsa) as an example:
@@ -101,18 +137,34 @@ radamsa -n 1000 -o %n.txt example1.txt example2.txt
 ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
 ```
 
+### Configuration files
+
+When running ffuf, it first checks if a default configuration file exists. The file path for it is `~/.ffufrc` / `$HOME/.ffufrc`
+for most *nixes (for example `/home/joohoi/.ffufrc`) and `%USERPROFILE%\.ffufrc` for Windows. You can configure one or 
+multiple options in this file, and they will be applied on every subsequent ffuf job. An example of .ffufrc file can be
+found [here](https://github.com/ffuf/ffuf/blob/master/ffufrc.example). 
+
+The configuration options provided on the command line override the ones loaded from `~/.ffufrc`.
+Note: this does not apply for CLI flags that can be provided more than once. One of such examples is `-H` (header) flag.
+In this case, the `-H` values provided on the command line will be _appended_ to the ones from the config file instead.
+
+Additionally, in case you wish to use bunch of configuration files for different use cases, you can do this by defining
+the configuration file path using `-config` command line flag that takes the file path to the configuration file as its
+parameter. 
+
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.0
+Fuzz Faster U Fool - v1.2.0-git
 
 HTTP OPTIONS:
   -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
   -X               HTTP method to use (default: GET)
   -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
   -d               POST data
+  -ignore-body     Do not fetch the response content. (default: false)
   -r               Follow redirects (default: false)
   -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
   -recursion-depth Maximum recursion depth. (default: 0)
@@ -126,9 +178,11 @@ GENERAL OPTIONS:
   -ac              Automatically calibrate filtering options (default: false)
   -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
   -c               Colorize output. (default: false)
-  -maxtime         Maximum running time in seconds for the entire process. (default: 0)
+  -config          Load configuration from a file
+  -maxtime         Maximum running time in seconds for entire process. (default: 0)
   -maxtime-job     Maximum running time in seconds per job. (default: 0)
   -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
+  -rate            Rate of requests per second (default: 0)
   -s               Do not print additional information (silent mode) (default: false)
   -sa              Stop on all error cases. Implies -sf and -se. (default: false)
   -se              Stop on spurious errors (default: false)
@@ -137,7 +191,7 @@ GENERAL OPTIONS:
   -v               Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:
-  -mc              Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403)
+  -mc              Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405)
   -ml              Match amount of lines in response
   -mr              Match regexp
   -ms              Match HTTP response size
@@ -165,7 +219,8 @@ OUTPUT OPTIONS:
   -debug-log       Write all of the internal logging to the specified file.
   -o               Write output to file
   -od              Directory path to store matched results to.
-  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (default: json)
+  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
+  -or              Don't create the output file if we don't have results
 
 EXAMPLE USAGE:
   Fuzz file paths from wordlist.txt, match all responses but filter out those with content-size 42.
@@ -183,7 +238,26 @@ EXAMPLE USAGE:
     ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr "VAL" -c
 
   More information and examples: https://github.com/ffuf/ffuf
+
 ```
+
+## Sponsorware
+
+`ffuf` employs a sponsorware model. This means that all new features developed by its author are initially exclusively 
+available for their sponsors. 30 days after the exclusive release, all the new features will be released at the freely
+available open source repository at https://github.com/ffuf/ffuf . 
+
+This model enables me to provide concrete benefits for the generous individuals and companies that enable me to work on 
+`ffuf`. The different sponsorship tiers can be seen [here](https://github.com/sponsors/joohoi).
+
+All the community contributions are and will be available directly in the freely available open source repository. The
+exclusive version benefits only include new features created by [@joohoi](https://github.com/joohoi)
+
+### Access the sponsorware through code contributions
+
+People that create significant contributions to the `ffuf` project itself should and will have access to the sponsorware
+as well. If you are planning to create such a contribution, please contact [@joohoi](https://github.com/joohoi)
+first to ensure that there aren't other people working on the same feature.
 
 ## Helper scripts and advanced payloads
 
