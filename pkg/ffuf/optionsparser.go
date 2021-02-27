@@ -72,11 +72,11 @@ type InputOptions struct {
 }
 
 type OutputOptions struct {
-	DebugLog        string
-	OutputDirectory string
-	OutputFile      string
-	OutputFormat    string
-	OutputCreateEmptyFile	bool
+	DebugLog              string
+	OutputDirectory       string
+	OutputFile            string
+	OutputFormat          string
+	OutputCreateEmptyFile bool
 }
 
 type FilterOptions struct {
