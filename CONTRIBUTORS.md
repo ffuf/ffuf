@@ -13,6 +13,7 @@
 * [eur0pa](https://github.com/eur0pa)
 * [fabiobauer](https://github.com/fabiobauer)
 * [fang0654](https://github.com/fang0654)
+* [firefart](https://github.com/firefart)
 * [helpermika](https://github.com/helpermika)
 * [Ice3man543](https://github.com/Ice3man543)
 * [JamTookTheBait](https://github.com/JamTookTheBait)

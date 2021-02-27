@@ -2,13 +2,14 @@
 - master
   - New
      - All output file formats now include the `Content-Type`.
+     - Docker support
   - Changed
     - Fix a badchar in progress output
-  
+
 - v1.2.1
   - Changed
     - Fixed a build breaking bug in `input-shell` parameter
-    
+
 - v1.2.0
   - New
     - Added 405 Method Not Allowed to list of status codes matched by default.
