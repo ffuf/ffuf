@@ -108,7 +108,7 @@ func (j *Job) Start() {
 	for j.jobsInQueue() {
 		j.prepareQueueJob()
 
-		if j.queuepos > 1 && !j.RunningJob {
+		if j.queuepos > 1 {
 			// Print info for queued recursive jobs
 			j.Output.Info(fmt.Sprintf("Scanning: %s", j.Config.Url))
 		}
