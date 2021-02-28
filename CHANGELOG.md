@@ -1,7 +1,8 @@
 ## Changelog
 - master
   - New
-     - All output file formats now include the `Content-Type`.
+    - All output file formats now include the `Content-Type`.
+    - Added a flag for automatic naming of output files. The name depends on the value of the URL.
   - Changed
     - Fix a badchar in progress output
   

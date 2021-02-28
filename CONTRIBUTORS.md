@@ -21,6 +21,7 @@
 * [jsgv](https://github.com/jsgv)
 * [jvesiluoma](https://github.com/jvesiluoma)
 * [Kiblyn11](https://github.com/Kiblyn11)
+* [KwnyPwny](https://github.com/KwnyPwny)
 * [lc](https://github.com/lc)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)
