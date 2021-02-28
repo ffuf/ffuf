@@ -36,12 +36,12 @@ const (
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
 	/>
-	<link 
-	  rel="stylesheet" 
-	  type="text/css" 
+	<link
+	  rel="stylesheet"
+	  type="text/css"
 	  href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css"
 	/>
-  
+
   </head>
 
   <body>
@@ -181,7 +181,7 @@ func writeHTML(config *ffuf.Config, results []Result) error {
   if(config.OutputCreateEmptyFile && (len(results) == 0)){
 		return nil
   }
-  
+
 	results = colorizeResults(results)
 
 	ti := time.Now()
@@ -198,7 +198,7 @@ func writeHTML(config *ffuf.Config, results []Result) error {
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(config.OutputFile)
+	f, err := os.Create(config.OutputFile + ".html")
 	if err != nil {
 		return err
 	}

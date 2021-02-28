@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"regexp"
 
 	"github.com/pelletier/go-toml"
 )
@@ -77,6 +78,7 @@ type OutputOptions struct {
 	OutputFile      string
 	OutputFormat    string
 	OutputCreateEmptyFile	bool
+	AutoName	bool
 }
 
 type FilterOptions struct {
@@ -143,6 +145,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Output.OutputFile = ""
 	c.Output.OutputFormat = "json"
 	c.Output.OutputCreateEmptyFile = false
+	c.Output.AutoName = false
 	return c
 }
 
@@ -317,6 +320,18 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	//Prefer Outputfile if it was defined
+	if parseOpts.Output.OutputFile != "" {
+		conf.OutputFile = parseOpts.Output.OutputFile
+	} else {
+		if parseOpts.Output.AutoName {
+			specialChars := regexp.MustCompile(`[:/\?\=\&]+`)
+			autoName := specialChars.ReplaceAllString(conf.Url, "-")
+			parseOpts.Output.OutputFile = autoName
+			conf.OutputFile = autoName
+		}
+	}
+
 	//Check the output file format option
 	if parseOpts.Output.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
@@ -376,9 +391,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.InputNum = parseOpts.Input.InputNum
 	conf.InputMode = parseOpts.Input.InputMode
 	conf.InputShell = parseOpts.Input.InputShell
-	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.OutputCreateEmptyFile = parseOpts.Output.OutputCreateEmptyFile
+	conf.AutoName = parseOpts.Output.AutoName
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
 	conf.StopOn403 = parseOpts.General.StopOn403

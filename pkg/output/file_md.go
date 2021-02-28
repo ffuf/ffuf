@@ -40,7 +40,7 @@ func writeMarkdown(config *ffuf.Config, res []Result) error {
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(config.OutputFile)
+	f, err := os.Create(config.OutputFile + ".md")
 	if err != nil {
 		return err
 	}

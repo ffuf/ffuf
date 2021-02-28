@@ -34,6 +34,7 @@ type Config struct {
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
 	OutputCreateEmptyFile  bool	                     `json:"OutputCreateEmptyFile"`
+	AutoName               bool                      `json:"AutoName"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	Quiet                  bool                      `json:"quiet"`
