@@ -159,13 +159,27 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 		reqRate = 0
 	}
 
+	// Running Duration
 	hours := dur / time.Hour
 	dur -= hours * time.Hour
 	mins := dur / time.Minute
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	// Estimated Time of Completion (ETC)
+	var etcDur time.Duration
+	if reqRate > 0 {
+		etcDur = time.Duration((int64(status.ReqTotal)-int64(status.ReqCount))/reqRate) * time.Second
+	} else {
+		etcDur = time.Duration(0)
+	}
+	etcHours := etcDur / time.Hour
+	etcDur -= etcHours * time.Hour
+	etcMins := etcDur / time.Minute
+	etcDur -= etcMins * time.Minute
+	etcSecs := etcDur / time.Second
+
+	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: ETC: [%d:%02d:%02d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, etcHours, etcMins, etcSecs, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Info(infostring string) {
@@ -211,9 +225,9 @@ func (s *Stdoutput) writeToAll(config *ffuf.Config, res []Result) error {
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+	if config.OutputCreateEmptyFile && (len(res) == 0) {
 		return nil
-  	}
+	}
 
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(s.config, s.Results)
