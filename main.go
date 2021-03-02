@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
@@ -179,7 +180,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
+
+	if runtime.GOOS == "windows" {
+		// 60 is large width to default to for windows.
+		conf.TerminalWidth = 60
+	} else {
+		_, cols, err := ffuf.SizeofTTY()
+
+		if err != nil {
+			conf.TerminalWidth = 80
+		}
+		conf.TerminalWidth = cols
+	}
+
 	job, err := prepareJob(conf)
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()

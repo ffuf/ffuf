@@ -4,6 +4,7 @@
      - All output file formats now include the `Content-Type`.
   - Changed
     - Fix a badchar in progress output
+    - Fixed a bug that caused the progress bar to break if the width of the terminal was not large enough for it to print on a single line.
   
 - v1.2.1
   - Changed
@@ -19,8 +20,6 @@
     - Change banner logging to stderr instead of stdout.
     - New CLI flag `-or` to avoid creating result files if we didn't get any. 
     - New CLI flag `-input-shell` to set the shell to be used by `input-cmd`
-
-  - Changed
     - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.
     - Cancelling via SIGINT (Ctrl-C) is now more responsive
     - Fixed issue where a thread would hang due to TCP errors

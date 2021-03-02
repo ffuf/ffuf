@@ -44,6 +44,7 @@ type Config struct {
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnAll              bool                      `json:"stop_all"`
 	StopOnErrors           bool                      `json:"stop_errors"`
+  TerminalWidth          int                       `json:"terminal_width"`
 	Threads                int                       `json:"threads"`
 	Timeout                int                       `json:"timeout"`
 	Url                    string                    `json:"url"`

@@ -150,6 +150,7 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 		return
 	}
 
+	var progressString string
 	dur := time.Since(status.StartedAt)
 	runningSecs := int(dur / time.Second)
 	var reqRate int64
@@ -165,7 +166,30 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	var progressComponents = []string{
+		fmt.Sprintf("%sProgress: [%d/%d] :: ", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal),
+		fmt.Sprintf("Job [%d/%d] :: ", status.QueuePos, status.QueueTotal),
+		fmt.Sprintf("%d req/sec :: ", reqRate),
+		fmt.Sprintf("Duration: [%d:%02d:%02d] :: ", hours, mins, secs),
+		fmt.Sprintf("Errors: %d ::", status.ErrorCount),
+	}
+
+	for i, c := range progressComponents {
+		if len(progressString+c)+1 <= s.config.TerminalWidth {
+			progressString += c
+		} else {
+			if i == 0 {
+				//progress component alone is to large to fix the width try minified version
+				progressString = fmt.Sprintf("%s[%.f%%%%]-[%d/%d]", TERMINAL_CLEAR_LINE, ffuf.Percent(status.ReqCount, status.ReqTotal), status.QueuePos, status.QueueTotal)
+				if len(progressString)+1 >= s.config.TerminalWidth {
+					//if minified version is still too big return with not printing anything.
+					return
+				}
+			}
+		}
+	}
+
+	fmt.Fprintf(os.Stderr, progressString)
 }
 
 func (s *Stdoutput) Info(infostring string) {
