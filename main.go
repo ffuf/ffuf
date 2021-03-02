@@ -192,7 +192,7 @@ func main() {
 		conf.TerminalWidth = cols
 	}
 
-	job, err := prepareJob(&conf)
+	job, err := prepareJob(conf)
   
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
