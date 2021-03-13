@@ -25,6 +25,7 @@ type Job struct {
 	Total                int
 	Running              bool
 	RunningJob           bool
+	Paused               bool
 	Count403             int
 	Count429             int
 	Error                string
@@ -33,7 +34,9 @@ type Job struct {
 	startTimeJob         time.Time
 	queuejobs            []QueueJob
 	queuepos             int
+	skipQueue            bool
 	currentDepth         int
+	pauseWg              sync.WaitGroup
 }
 
 type QueueJob struct {
@@ -49,10 +52,12 @@ func NewJob(conf *Config) *Job {
 	j.SpuriousErrorCounter = 0
 	j.Running = false
 	j.RunningJob = false
+	j.Paused = false
 	j.queuepos = 0
 	j.queuejobs = make([]QueueJob, 0)
 	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
+	j.skipQueue = false
 	return &j
 }
 
@@ -85,6 +90,17 @@ func (j *Job) resetSpuriousErrors() {
 	j.SpuriousErrorCounter = 0
 }
 
+//DeleteQueueItem deletes a recursion job from the queue by its index in the slice
+func (j *Job) DeleteQueueItem(index int) {
+	index = j.queuepos + index - 1
+	j.queuejobs = append(j.queuejobs[:index], j.queuejobs[index+1:]...)
+}
+
+//QueuedJobs returns the slice of queued recursive jobs
+func (j *Job) QueuedJobs() []QueueJob {
+	return j.queuejobs[j.queuepos-1:]
+}
+
 //Start the execution of the Job
 func (j *Job) Start() {
 	if j.startTime.IsZero() {
@@ -107,10 +123,8 @@ func (j *Job) Start() {
 	j.interruptMonitor()
 	for j.jobsInQueue() {
 		j.prepareQueueJob()
-		j.Input.Reset()
-		j.startTimeJob = time.Now()
+		j.Reset()
 		j.RunningJob = true
-		j.Counter = 0
 		j.startExecution()
 	}
 
@@ -118,6 +132,15 @@ func (j *Job) Start() {
 	if err != nil {
 		j.Output.Error(err.Error())
 	}
+}
+
+// Reset resets the counters and wordlist position for a job
+func (j *Job) Reset() {
+	j.Input.Reset()
+	j.Counter = 0
+	j.skipQueue = false
+	j.startTimeJob = time.Now()
+	j.Output.Reset()
 }
 
 func (j *Job) jobsInQueue() bool {
@@ -128,6 +151,11 @@ func (j *Job) prepareQueueJob() {
 	j.Config.Url = j.queuejobs[j.queuepos].Url
 	j.currentDepth = j.queuejobs[j.queuepos].depth
 	j.queuepos += 1
+}
+
+//SkipQueue allows to skip the current job and advance to the next queued recursion job
+func (j *Job) SkipQueue() {
+	j.skipQueue = true
 }
 
 func (j *Job) sleepIfNeeded() {
@@ -148,6 +176,24 @@ func (j *Job) sleepIfNeeded() {
 	}
 }
 
+// Pause pauses the job process
+func (j *Job) Pause() {
+	if !j.Paused {
+		j.Paused = true
+		j.pauseWg.Add(1)
+		j.Output.Info("------ PAUSING ------")
+	}
+}
+
+// Resume resumes the job process
+func (j *Job) Resume() {
+	if j.Paused {
+		j.Paused = false
+		j.Output.Info("------ RESUMING -----")
+		j.pauseWg.Done()
+	}
+}
+
 func (j *Job) startExecution() {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -161,7 +207,7 @@ func (j *Job) startExecution() {
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
 	limiter := make(chan bool, j.Config.Threads)
 
-	for j.Input.Next() {
+	for j.Input.Next() && !j.skipQueue {
 		// Check if we should stop the process
 		j.CheckStop()
 
@@ -169,6 +215,7 @@ func (j *Job) startExecution() {
 			defer j.Output.Warning(j.Error)
 			break
 		}
+		j.pauseWg.Wait()
 		limiter <- true
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
@@ -201,6 +248,11 @@ func (j *Job) interruptMonitor() {
 	go func() {
 		for range sigChan {
 			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
+			// resume if paused
+			if j.Paused {
+				j.pauseWg.Done()
+			}
+			// Stop the job
 			j.Stop()
 		}
 	}()
@@ -209,8 +261,8 @@ func (j *Job) interruptMonitor() {
 func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 	defer wg.Done()
 	totalProgress := j.Input.Total()
-	for j.Counter <= totalProgress {
-
+	for j.Counter <= totalProgress && !j.skipQueue {
+		j.pauseWg.Wait()
 		if !j.Running {
 			break
 		}

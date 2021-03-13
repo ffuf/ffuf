@@ -4,6 +4,7 @@ package ffuf
 type FilterProvider interface {
 	Filter(response *Response) (bool, error)
 	Repr() string
+	ReprVerbose() string
 }
 
 //RunnerProvider is an interface for request executors
@@ -40,6 +41,27 @@ type OutputProvider interface {
 	Progress(status Progress)
 	Info(infostring string)
 	Error(errstring string)
+	Raw(output string)
 	Warning(warnstring string)
 	Result(resp Response)
+	PrintResult(res Result)
+	SaveFile(filename, format string) error
+	GetResults() []Result
+	SetResults(results []Result)
+	Reset()
+}
+
+type Result struct {
+	Input            map[string][]byte `json:"input"`
+	Position         int               `json:"position"`
+	StatusCode       int64             `json:"status"`
+	ContentLength    int64             `json:"length"`
+	ContentWords     int64             `json:"words"`
+	ContentLines     int64             `json:"lines"`
+	ContentType      string            `json:"content-type"`
+	RedirectLocation string            `json:"redirectlocation"`
+	Url              string            `json:"url"`
+	ResultFile       string            `json:"resultfile"`
+	Host             string            `json:"host"`
+	HTMLColor        string            `json:"-"`
 }

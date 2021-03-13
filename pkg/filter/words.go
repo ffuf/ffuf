@@ -60,5 +60,9 @@ func (f *WordFilter) Repr() string {
 			strval = append(strval, strconv.Itoa(int(iv.Min))+"-"+strconv.Itoa(int(iv.Max)))
 		}
 	}
-	return fmt.Sprintf("Response words: %s", strings.Join(strval, ","))
+	return strings.Join(strval, ",")
+}
+
+func (f *WordFilter) ReprVerbose() string {
+	return fmt.Sprintf("Response words: %s", f.Repr())
 }
