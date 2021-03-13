@@ -4,16 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/filter"
+	"github.com/ffuf/ffuf/pkg/input"
+	"github.com/ffuf/ffuf/pkg/interactive"
+	"github.com/ffuf/ffuf/pkg/output"
+	"github.com/ffuf/ffuf/pkg/runner"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
-
-	"github.com/ffuf/ffuf/pkg/ffuf"
-	"github.com/ffuf/ffuf/pkg/filter"
-	"github.com/ffuf/ffuf/pkg/input"
-	"github.com/ffuf/ffuf/pkg/output"
-	"github.com/ffuf/ffuf/pkg/runner"
 )
 
 type multiStringFlag []string
@@ -198,6 +198,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
 		os.Exit(1)
 	}
+	go func() {
+		err := interactive.Handle(job)
+		if err != nil {
+			log.Printf("Error while trying to initialize interactive session: %s", err)
+		}
+	}()
 
 	// Job handles waiting for goroutines to complete itself
 	job.Start()

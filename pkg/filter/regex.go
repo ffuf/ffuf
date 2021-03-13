@@ -51,5 +51,9 @@ func (f *RegexpFilter) Filter(response *ffuf.Response) (bool, error) {
 }
 
 func (f *RegexpFilter) Repr() string {
+	return f.valueRaw
+}
+
+func (f *RegexpFilter) ReprVerbose() string {
 	return fmt.Sprintf("Regexp: %s", f.valueRaw)
 }
