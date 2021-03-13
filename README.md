@@ -20,6 +20,7 @@ A fast web fuzzer written in Go.
     - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
     - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
 - [Help](https://github.com/ffuf/ffuf#usage)
+    - [Interactive mode](https://github.com/ffuf/ffuf#interactive-mode)
 - [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
 
 ## Sponsors
@@ -172,7 +173,7 @@ HTTP OPTIONS:
   -replay-proxy       Replay matched requests using this proxy.
   -timeout            HTTP request timeout in seconds. (default: 10)
   -u                  Target URL
-  -x                  HTTP Proxy URL
+  -x                  Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080
 
 GENERAL OPTIONS:
   -V               Show version information. (default: false)
@@ -241,6 +242,43 @@ EXAMPLE USAGE:
   More information and examples: https://github.com/ffuf/ffuf
 
 ```
+
+### Interactive mode
+
+By pressing `ENTER` during ffuf execution, the process is paused and user is dropped to a shell-like interactive mode:
+```
+entering interactive mode
+type "help" for a list of commands, or ENTER to resume.
+> help
+
+available commands:
+ fc [value]             - (re)configure status code filter 
+ fl [value]             - (re)configure line count filter 
+ fw [value]             - (re)configure word count filter 
+ fs [value]             - (re)configure size filter 
+ queueshow              - show recursive job queue
+ queuedel [number]      - delete a recursion job in the queue
+ queueskip              - advance to the next queued recursion job
+ restart                - restart and resume the current ffuf job
+ resume                 - resume current ffuf job (or: ENTER) 
+ show                   - show results
+ savejson [filename]    - save current matches to a file
+ help                   - you are looking at it
+> 
+```
+
+in this mode, filters can be reconfigured, queue managed and the current state saved to disk.
+
+When (re)configuring the filters, they get applied posthumously and all the false positive matches from memory that
+would have been filtered out by the newly added filters get deleted.
+
+The new state of matches can be printed out with a command `show` that will print out all the matches as like they 
+would have been found by `ffuf`.
+
+As "negative" matches are not stored to memory, relaxing the filters cannot unfortunately bring back the lost matches.
+For this kind of scenario, the user is able to use the command `restart`, which resets the state and starts the current
+job from the beginning.
+
 
 ## Sponsorware
 

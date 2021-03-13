@@ -3,6 +3,8 @@
   - New
      - All output file formats now include the `Content-Type`.
      - New CLI flag `-recursion-strategy` that allows adding new queued recursion jobs for non-redirect responses.
+     - Ability to enter interactive mode by pressing `ENTER` during  the ffuf execution. The interactive mode allows
+    user to change filters, manage recursion queue, save snapshot of matches to a file etc.
   - Changed
     - Fix a badchar in progress output
   
