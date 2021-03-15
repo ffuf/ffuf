@@ -6,11 +6,11 @@ builds:
     env:
       - CGO_ENABLED=0
     asmflags:
-      - all=-trimpath={{.Env.GOPATH}}
+      - all=-trimpath
     gcflags:
-      - all=-trimpath={{.Env.GOPATH}}
+      - all=-trimpath
     ldflags: |
-      -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.CommitDate}} -extldflags '-static'
+      -s -w -X github.com/ffuf/ffuf/pkg/ffuf.VERSION_APPENDIX= -extldflags '-static'
     goos:
       - linux
       - windows
