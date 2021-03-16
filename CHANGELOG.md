@@ -1,6 +1,10 @@
 ## Changelog
 - master
   - New
+  - Changed
+
+- v1.3.0
+  - New
      - All output file formats now include the `Content-Type`.
      - New CLI flag `-recursion-strategy` that allows adding new queued recursion jobs for non-redirect responses.
      - Ability to enter interactive mode by pressing `ENTER` during  the ffuf execution. The interactive mode allows
