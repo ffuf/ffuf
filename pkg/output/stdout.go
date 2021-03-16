@@ -318,7 +318,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	var fileContent, fileName, filePath string
 	// Create directory if needed
 	if s.config.OutputDirectory != "" {
-		err := os.Mkdir(s.config.OutputDirectory, 0750)
+		err := os.MkdirAll(s.config.OutputDirectory, 0750)
 		if err != nil {
 			if !os.IsExist(err) {
 				s.Error(err.Error())
