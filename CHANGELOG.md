@@ -4,6 +4,7 @@
      - All output file formats now include the `Content-Type`.
   - Changed
     - Fix a badchar in progress output
+    - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
   
 - v1.2.1
   - Changed
