@@ -22,6 +22,7 @@
 * [jvesiluoma](https://github.com/jvesiluoma)
 * [Kiblyn11](https://github.com/Kiblyn11)
 * [lc](https://github.com/lc)
+* [mprencipe](https://github.com/mprencipe)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
