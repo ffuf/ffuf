@@ -2,6 +2,7 @@
 - master
   - New
      - All output file formats now include the `Content-Type`.
+     - Add an Estimated Time of Completion (ETA) to prompt.
   - Changed
     - Fix a badchar in progress output
   
