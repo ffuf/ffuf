@@ -40,6 +40,7 @@ type Config struct {
 	Rate                   int64                     `json:"rate"`
 	Recursion              bool                      `json:"recursion"`
 	RecursionDepth         int                       `json:"recursion_depth"`
+	RecursionOnCode        []ValueRange              `json:"recursion_on_code"`
 	ReplayProxyURL         string                    `json:"replayproxyurl"`
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnAll              bool                      `json:"stop_all"`
@@ -84,6 +85,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Rate = 0
 	conf.Recursion = false
 	conf.RecursionDepth = 0
+	conf.RecursionOnCode = make([]ValueRange, 0)
 	conf.StopOn403 = false
 	conf.StopOnAll = false
 	conf.StopOnErrors = false

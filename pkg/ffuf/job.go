@@ -322,10 +322,21 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 }
 
+
+func (j *Job) matchedRecursionCode(resp Response) bool {
+    for _, iv := range j.Config.RecursionOnCode {
+        if iv.Min <= resp.StatusCode && resp.StatusCode <= iv.Max {
+            return true
+        }
+    }
+    return false
+}
+
+
 //handleRecursionJob adds a new recursion job to the job queue if a new directory is found
 func (j *Job) handleRecursionJob(resp Response) {
-	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
-		// Not a directory, return early
+	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) || !j.matchedRecursionCode(resp) {
+		// Not a directory or status code not wanted, return early
 		return
 	}
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {

@@ -35,6 +35,7 @@ type HTTPOptions struct {
 	ProxyURL        string
 	Recursion       bool
 	RecursionDepth  int
+	RecursionOnCode string
 	ReplayProxyURL  string
 	Timeout         int
 	URL             string
@@ -123,6 +124,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.ProxyURL = ""
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
+	c.HTTP.RecursionOnCode = ""
 	c.HTTP.ReplayProxyURL = ""
 	c.HTTP.Timeout = 10
 	c.HTTP.URL = ""
@@ -368,6 +370,17 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		// populating it through raw request in the first iteration
 		conf.Data = parseOpts.HTTP.Data
 	}
+
+    if parseOpts.HTTP.RecursionOnCode != "" {
+        for _, sv := range strings.Split(parseOpts.HTTP.RecursionOnCode, ",") {
+            vr, err := ValueRangeFromString(sv)
+            if err != nil {
+                errs.Add(fmt.Errorf("Recursion on status code (-recursion-on-code): invalid value %s", sv))
+            } else {
+                conf.RecursionOnCode = append(conf.RecursionOnCode, vr)
+            }
+        }
+    }
 
 	// Common stuff
 	conf.IgnoreWordlistComments = parseOpts.Input.IgnoreWordlistComments

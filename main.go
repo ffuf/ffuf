@@ -93,6 +93,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.HTTP.Method, "X", opts.HTTP.Method, "HTTP method to use")
 	flag.StringVar(&opts.HTTP.ProxyURL, "x", opts.HTTP.ProxyURL, "HTTP Proxy URL")
 	flag.StringVar(&opts.HTTP.ReplayProxyURL, "replay-proxy", opts.HTTP.ReplayProxyURL, "Replay matched requests using this proxy.")
+	flag.StringVar(&opts.HTTP.RecursionOnCode, "recursion-on-code", opts.HTTP.RecursionOnCode, "Recursion only on matched HTTP status code, comma separated list of codes and ranges")
 	flag.StringVar(&opts.HTTP.URL, "u", opts.HTTP.URL, "Target URL")
 	flag.StringVar(&opts.Input.Extensions, "e", opts.Input.Extensions, "Comma separated list of extensions. Extends FUZZ keyword.")
 	flag.StringVar(&opts.Input.InputMode, "mode", opts.Input.InputMode, "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork")
