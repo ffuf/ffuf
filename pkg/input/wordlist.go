@@ -102,6 +102,7 @@ func (w *WordlistInput) readFile(path string) error {
 		}
 	}
 	defer file.Close()
+
 	var data [][]byte
 	var ok bool
 	reader := bufio.NewScanner(file)
