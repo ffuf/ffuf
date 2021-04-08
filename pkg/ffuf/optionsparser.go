@@ -62,6 +62,7 @@ type InputOptions struct {
 	DirSearchCompat        bool
 	Extensions             string
 	IgnoreWordlistComments bool
+	IgnoreWords            string
 	InputMode              string
 	InputNum               int
 	InputShell             string
@@ -72,11 +73,11 @@ type InputOptions struct {
 }
 
 type OutputOptions struct {
-	DebugLog        string
-	OutputDirectory string
-	OutputFile      string
-	OutputFormat    string
-	OutputCreateEmptyFile	bool
+	DebugLog              string
+	OutputDirectory       string
+	OutputFile            string
+	OutputFormat          string
+	OutputCreateEmptyFile bool
 }
 
 type FilterOptions struct {
@@ -129,6 +130,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.DirSearchCompat = false
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
+	c.Input.IgnoreWords = ""
 	c.Input.InputMode = "clusterbomb"
 	c.Input.InputNum = 100
 	c.Input.Request = ""
@@ -163,6 +165,12 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.Input.Extensions != "" {
 		extensions := strings.Split(parseOpts.Input.Extensions, ",")
 		conf.Extensions = extensions
+	}
+
+	// prepare ignored words
+	if parseOpts.Input.IgnoreWords != "" {
+		ignore_words := strings.Split(parseOpts.Input.IgnoreWords, ",")
+		conf.IgnoreWords = ignore_words
 	}
 
 	// Convert cookies to a header

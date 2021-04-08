@@ -22,6 +22,7 @@ type Config struct {
 	Headers                map[string]string         `json:"headers"`
 	IgnoreBody             bool                      `json:"ignorebody"`
 	IgnoreWordlistComments bool                      `json:"ignore_wordlist_comments"`
+	IgnoreWords            []string                  `json:"ignore_words"`
 	InputMode              string                    `json:"inputmode"`
 	InputNum               int                       `json:"cmd_inputnum"`
 	InputProviders         []InputProviderConfig     `json:"inputproviders"`
@@ -33,7 +34,7 @@ type Config struct {
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
-	OutputCreateEmptyFile  bool	                     `json:"OutputCreateEmptyFile"`
+	OutputCreateEmptyFile  bool                      `json:"OutputCreateEmptyFile"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	Quiet                  bool                      `json:"quiet"`
@@ -70,6 +71,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.FollowRedirects = false
 	conf.Headers = make(map[string]string)
 	conf.IgnoreWordlistComments = false
+	conf.IgnoreWords = make([]string, 0)
 	conf.InputMode = "clusterbomb"
 	conf.InputNum = 0
 	conf.InputShell = ""

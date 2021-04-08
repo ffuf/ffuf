@@ -2,6 +2,7 @@
 - master
   - New
      - All output file formats now include the `Content-Type`.
+     - New CLI flag `-iw` to provide a list of substrings, which, if present within a words from the wordlist (`-w`), exclude this word from the tests. 
   - Changed
     - Fix a badchar in progress output
   

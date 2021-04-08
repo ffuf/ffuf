@@ -102,7 +102,6 @@ func (w *WordlistInput) readFile(path string) error {
 		}
 	}
 	defer file.Close()
-
 	var data [][]byte
 	var ok bool
 	reader := bufio.NewScanner(file)
@@ -110,6 +109,9 @@ func (w *WordlistInput) readFile(path string) error {
 	for reader.Scan() {
 		if w.config.DirSearchCompat && len(w.config.Extensions) > 0 {
 			text := []byte(reader.Text())
+			if len(w.config.IgnoreWords) > 0 && ignoreWords(string(text), w.config.IgnoreWords) {
+				continue
+			}
 			if re.Match(text) {
 				for _, ext := range w.config.Extensions {
 					contnt := re.ReplaceAll(text, []byte(ext))
@@ -128,6 +130,9 @@ func (w *WordlistInput) readFile(path string) error {
 			}
 		} else {
 			text := reader.Text()
+			if len(w.config.IgnoreWords) > 0 && ignoreWords(text, w.config.IgnoreWords) {
+				continue
+			}
 
 			if w.config.IgnoreWordlistComments {
 				text, ok = stripComments(text)
@@ -162,4 +167,15 @@ func stripComments(text string) (string, bool) {
 		return text, true
 	}
 	return text[:index], true
+}
+
+// Check if a word contains substrings of a substring array.
+// Returns true if there was a match.
+func ignoreWords(word string, substrings []string) bool {
+	for _, sub := range substrings {
+		if strings.Contains(word, sub) {
+			return true
+		}
+	}
+	return false
 }
