@@ -20,9 +20,9 @@ const (
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
-func writeMarkdown(config *ffuf.Config, res []Result) error {
+func writeMarkdown(filename string, config *ffuf.Config, res []ffuf.Result) error {
 
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
+	if config.OutputCreateEmptyFile && (len(res) == 0) {
 		return nil
 	}
 
@@ -40,7 +40,7 @@ func writeMarkdown(config *ffuf.Config, res []Result) error {
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(config.OutputFile)
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}

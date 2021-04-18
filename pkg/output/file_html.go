@@ -12,7 +12,7 @@ type htmlFileOutput struct {
 	CommandLine string
 	Time        string
 	Keys        []string
-	Results     []Result
+	Results     []ffuf.Result
 }
 
 const (
@@ -145,8 +145,8 @@ const (
 )
 
 // colorizeResults returns a new slice with HTMLColor attribute
-func colorizeResults(results []Result) []Result {
-	newResults := make([]Result, 0)
+func colorizeResults(results []ffuf.Result) []ffuf.Result {
+	newResults := make([]ffuf.Result, 0)
 
 	for _, r := range results {
 		result := r
@@ -176,12 +176,12 @@ func colorizeResults(results []Result) []Result {
 	return newResults
 }
 
-func writeHTML(config *ffuf.Config, results []Result) error {
+func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) error {
 
-  if(config.OutputCreateEmptyFile && (len(results) == 0)){
+	if config.OutputCreateEmptyFile && (len(results) == 0) {
 		return nil
-  }
-  
+	}
+
 	results = colorizeResults(results)
 
 	ti := time.Now()
@@ -198,7 +198,7 @@ func writeHTML(config *ffuf.Config, results []Result) error {
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(config.OutputFile)
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}

@@ -33,13 +33,14 @@ type Config struct {
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
-	OutputCreateEmptyFile  bool	                     `json:"OutputCreateEmptyFile"`
+	OutputCreateEmptyFile  bool                      `json:"OutputCreateEmptyFile"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	Quiet                  bool                      `json:"quiet"`
 	Rate                   int64                     `json:"rate"`
 	Recursion              bool                      `json:"recursion"`
 	RecursionDepth         int                       `json:"recursion_depth"`
+	RecursionStrategy      string                    `json:"recursion_strategy"`
 	ReplayProxyURL         string                    `json:"replayproxyurl"`
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnAll              bool                      `json:"stop_all"`
@@ -84,6 +85,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Rate = 0
 	conf.Recursion = false
 	conf.RecursionDepth = 0
+	conf.RecursionStrategy = "default"
 	conf.StopOn403 = false
 	conf.StopOnAll = false
 	conf.StopOnErrors = false

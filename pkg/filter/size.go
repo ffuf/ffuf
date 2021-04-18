@@ -60,5 +60,9 @@ func (f *SizeFilter) Repr() string {
 			strval = append(strval, strconv.Itoa(int(iv.Min))+"-"+strconv.Itoa(int(iv.Max)))
 		}
 	}
-	return fmt.Sprintf("Response size: %s", strings.Join(strval, ","))
+	return strings.Join(strval, ",")
+}
+
+func (f *SizeFilter) ReprVerbose() string {
+	return fmt.Sprintf("Response size: %s", f.Repr())
 }

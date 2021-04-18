@@ -75,5 +75,9 @@ func (f *StatusFilter) Repr() string {
 			strval = append(strval, strconv.Itoa(int(iv.Min))+"-"+strconv.Itoa(int(iv.Max)))
 		}
 	}
-	return fmt.Sprintf("Response status: %s", strings.Join(strval, ","))
+	return strings.Join(strval, ",")
+}
+
+func (f *StatusFilter) ReprVerbose() string {
+	return fmt.Sprintf("Response status: %s", f.Repr())
 }
