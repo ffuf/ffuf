@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added response time logging and filtering
   - Changed
     - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
 
