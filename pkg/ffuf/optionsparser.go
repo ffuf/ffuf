@@ -85,6 +85,7 @@ type FilterOptions struct {
 	Regexp string
 	Size   string
 	Status string
+	Time   string
 	Words  string
 }
 
@@ -93,6 +94,7 @@ type MatcherOptions struct {
 	Regexp string
 	Size   string
 	Status string
+	Time   string
 	Words  string
 }
 
@@ -103,6 +105,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Regexp = ""
 	c.Filter.Size = ""
 	c.Filter.Status = ""
+	c.Filter.Time = ""
 	c.Filter.Words = ""
 	c.General.AutoCalibration = false
 	c.General.Colors = false
@@ -139,6 +142,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
 	c.Matcher.Status = "200,204,301,302,307,401,403,405"
+	c.Matcher.Time = ""
 	c.Matcher.Words = ""
 	c.Output.DebugLog = ""
 	c.Output.OutputDirectory = ""

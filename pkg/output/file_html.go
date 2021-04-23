@@ -78,6 +78,7 @@ const (
               <th>Words</th>
 			  <th>Lines</th>
 			  <th>Type</th>
+        <th>Duration</th>
 			  <th>Resultfile</th>
           </tr>
         </thead>
@@ -99,6 +100,7 @@ const (
                     <td>{{ $result.ContentWords }}</td>
 					<td>{{ $result.ContentLines }}</td>
 					<td>{{ $result.ContentType }}</td>
+          <td>{{ $result.Duration }}</td>
                     <td>{{ $result.ResultFile }}</td>
                 </tr>
             {{ end }}

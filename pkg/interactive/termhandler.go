@@ -3,11 +3,12 @@ package interactive
 import (
 	"bufio"
 	"fmt"
-	"github.com/ffuf/ffuf/pkg/ffuf"
-	"github.com/ffuf/ffuf/pkg/filter"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/filter"
 )
 
 type interactive struct {
@@ -110,6 +111,15 @@ func (i *interactive) handleInput(in []byte) {
 				i.updateFilter("size", args[1])
 				i.Job.Output.Info("New response size filter value set")
 			}
+		case "ft":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value for response time filter, or \"none\" for removing it")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"ft\"")
+			} else {
+				i.updateFilter("time", args[1])
+				i.Job.Output.Info("New response time filter value set")
+			}
 		case "queueshow":
 			i.printQueue()
 		case "queuedel":
@@ -205,7 +215,7 @@ func (i *interactive) printPrompt() {
 }
 
 func (i *interactive) printHelp() {
-	var fc, fl, fs, fw string
+	var fc, fl, fs, ft, fw string
 	for name, filter := range i.Job.Config.Filters {
 		switch name {
 		case "status":
@@ -216,6 +226,8 @@ func (i *interactive) printHelp() {
 			fw = "(active: " + filter.Repr() + ")"
 		case "size":
 			fs = "(active: " + filter.Repr() + ")"
+		case "time":
+			ft = "(active: " + filter.Repr() + ")"
 		}
 	}
 	help := `
@@ -224,6 +236,7 @@ available commands:
  fl [value]             - (re)configure line count filter %s
  fw [value]             - (re)configure word count filter %s
  fs [value]             - (re)configure size filter %s
+ ft [value]				- (re)configure time filter %s
  queueshow              - show recursive job queue
  queuedel [number]      - delete a recursion job in the queue
  queueskip              - advance to the next queued recursion job
@@ -233,5 +246,5 @@ available commands:
  savejson [filename]    - save current matches to a file
  help                   - you are looking at it
 `
-	i.Job.Output.Raw(fmt.Sprintf(help, fc, fl, fw, fs))
+	i.Job.Output.Raw(fmt.Sprintf(help, fc, fl, fw, fs, ft))
 }

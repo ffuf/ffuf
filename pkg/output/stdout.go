@@ -316,6 +316,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ContentType:      resp.ContentType,
 		RedirectLocation: resp.GetRedirectLocation(false),
 		Url:              resp.Request.Url,
+		Duration:         resp.Time,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}
@@ -393,7 +394,7 @@ func (s *Stdoutput) resultQuiet(res ffuf.Result) {
 func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines)
+	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %v]", TERMINAL_CLEAR_LINE, res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration)
 	res_hdr = s.colorize(res_hdr, res.StatusCode)
 	reslines := ""
 	if s.config.Verbose {
@@ -419,7 +420,7 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(res), s.colorize(fmt.Sprintf("%d", res.StatusCode), res.StatusCode), res.ContentLength, res.ContentWords, res.ContentLines)
+	resnormal := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d, Duration: %v]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(res), s.colorize(fmt.Sprintf("%d", res.StatusCode), res.StatusCode), res.ContentLength, res.ContentWords, res.ContentLines, res.Duration)
 	fmt.Println(resnormal)
 }
 
