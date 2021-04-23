@@ -128,7 +128,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	req.Host = httpreq.Host
-	httpreq = httpreq.WithContext(httptrace.WithClientTrace(httpreq.Context(), trace))
+	httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
 	}
