@@ -31,6 +31,7 @@
     delay = ""
     maxtime = 0
     maxtimejob = 0
+    noninteractive = false
     quiet = false
     rate = 0
     stopon403 = false
