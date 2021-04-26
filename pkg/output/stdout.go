@@ -26,14 +26,16 @@ const (
 )
 
 type Stdoutput struct {
-	config  *ffuf.Config
-	Results []ffuf.Result
+	config         *ffuf.Config
+	Results        []ffuf.Result
+	CurrentResults []ffuf.Result
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	var outp Stdoutput
 	outp.config = conf
-	outp.Results = []ffuf.Result{}
+	outp.Results = make([]ffuf.Result, 0)
+	outp.CurrentResults = make([]ffuf.Result, 0)
 	return &outp
 }
 
@@ -133,17 +135,23 @@ func (s *Stdoutput) Banner() {
 
 // Reset resets the result slice
 func (s *Stdoutput) Reset() {
-	s.Results = make([]ffuf.Result, 0)
+	s.CurrentResults = make([]ffuf.Result, 0)
+}
+
+// Cycle moves the CurrentResults to Results and resets the results slice
+func (s *Stdoutput) Cycle() {
+	s.Results = append(s.Results, s.CurrentResults...)
+	s.Reset()
 }
 
 // GetResults returns the result slice
-func (s *Stdoutput) GetResults() []ffuf.Result {
-	return s.Results
+func (s *Stdoutput) GetCurrentResults() []ffuf.Result {
+	return s.CurrentResults
 }
 
 // SetResults sets the result slice
-func (s *Stdoutput) SetResults(results []ffuf.Result) {
-	s.Results = results
+func (s *Stdoutput) SetCurrentResults(results []ffuf.Result) {
+	s.CurrentResults = results
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
@@ -222,37 +230,37 @@ func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.
 	}
 
 	s.config.OutputFile = BaseFilename + ".json"
-	err = writeJSON(filename, s.config, s.Results)
+	err = writeJSON(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ejson"
-	err = writeEJSON(filename, s.config, s.Results)
+	err = writeEJSON(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".html"
-	err = writeHTML(filename, s.config, s.Results)
+	err = writeHTML(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".md"
-	err = writeMarkdown(filename, s.config, s.Results)
+	err = writeMarkdown(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".csv"
-	err = writeCSV(filename, s.config, s.Results, false)
+	err = writeCSV(filename, s.config, res, false)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ecsv"
-	err = writeCSV(filename, s.config, s.Results, true)
+	err = writeCSV(filename, s.config, res, true)
 	if err != nil {
 		s.Error(err.Error())
 	}
@@ -266,19 +274,19 @@ func (s *Stdoutput) SaveFile(filename, format string) error {
 	var err error
 	switch format {
 	case "all":
-		err = s.writeToAll(filename, s.config, s.Results)
+		err = s.writeToAll(filename, s.config, append(s.Results, s.CurrentResults...))
 	case "json":
-		err = writeJSON(filename, s.config, s.Results)
+		err = writeJSON(filename, s.config, append(s.Results, s.CurrentResults...))
 	case "ejson":
-		err = writeEJSON(filename, s.config, s.Results)
+		err = writeEJSON(filename, s.config, append(s.Results, s.CurrentResults...))
 	case "html":
-		err = writeHTML(filename, s.config, s.Results)
+		err = writeHTML(filename, s.config, append(s.Results, s.CurrentResults...))
 	case "md":
-		err = writeMarkdown(filename, s.config, s.Results)
+		err = writeMarkdown(filename, s.config, append(s.Results, s.CurrentResults...))
 	case "csv":
-		err = writeCSV(filename, s.config, s.Results, false)
+		err = writeCSV(filename, s.config, append(s.Results, s.CurrentResults...), false)
 	case "ecsv":
-		err = writeCSV(filename, s.config, s.Results, true)
+		err = writeCSV(filename, s.config, append(s.Results, s.CurrentResults...), true)
 	}
 	return err
 }
@@ -319,7 +327,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}
-	s.Results = append(s.Results, sResult)
+	s.CurrentResults = append(s.CurrentResults, sResult)
 	// Output the result
 	s.PrintResult(sResult)
 }

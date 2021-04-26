@@ -263,7 +263,7 @@ available commands:
  queueskip              - advance to the next queued recursion job
  restart                - restart and resume the current ffuf job
  resume                 - resume current ffuf job (or: ENTER) 
- show                   - show results
+ show                   - show results for the current job
  savejson [filename]    - save current matches to a file
  help                   - you are looking at it
 > 
