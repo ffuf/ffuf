@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"github.com/ffuf/ffuf/pkg/ffuf"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
 //Download results < 5MB
