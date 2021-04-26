@@ -3,6 +3,7 @@
   - New
     - Added a CLI flag to disable the interactive mode
   - Changed
+    - Fixed an issue with storing the matches for recursion jobs
     - Fixed the way the "size" is calculated, it should match content-length now
     - Fixed an issue with header canonicalization when a keyword was just a part of the header name  
     - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
