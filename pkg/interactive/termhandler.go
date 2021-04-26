@@ -53,12 +53,12 @@ func (i *interactive) handleInput(in []byte) {
 			i.paused = false
 			i.Job.Resume()
 		case "restart":
-			i.Job.Reset()
+			i.Job.Reset(false)
 			i.paused = false
 			i.Job.Output.Info("Restarting the current ffuf job!")
 			i.Job.Resume()
 		case "show":
-			for _, r := range i.Job.Output.GetResults() {
+			for _, r := range i.Job.Output.GetCurrentResults() {
 				i.Job.Output.PrintResult(r)
 			}
 		case "savejson":
@@ -150,7 +150,7 @@ func (i *interactive) updateFilter(name, value string) {
 		}
 
 		results := make([]ffuf.Result, 0)
-		for _, res := range i.Job.Output.GetResults() {
+		for _, res := range i.Job.Output.GetCurrentResults() {
 			fakeResp := &ffuf.Response{
 				StatusCode:    res.StatusCode,
 				ContentLines:  res.ContentLength,
@@ -162,7 +162,7 @@ func (i *interactive) updateFilter(name, value string) {
 				results = append(results, res)
 			}
 		}
-		i.Job.Output.SetResults(results)
+		i.Job.Output.SetCurrentResults(results)
 	}
 }
 
@@ -229,7 +229,7 @@ available commands:
  queueskip              - advance to the next queued recursion job
  restart                - restart and resume the current ffuf job
  resume                 - resume current ffuf job (or: ENTER) 
- show                   - show results
+ show                   - show results for the current job
  savejson [filename]    - save current matches to a file
  help                   - you are looking at it
 `
