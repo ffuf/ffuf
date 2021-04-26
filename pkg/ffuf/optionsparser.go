@@ -49,6 +49,7 @@ type GeneralOptions struct {
 	Delay                  string
 	MaxTime                int
 	MaxTimeJob             int
+	Noninteractive         bool
 	Quiet                  bool
 	Rate                   int
 	ShowVersion            bool `toml:"-"`
@@ -109,6 +110,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Delay = ""
 	c.General.MaxTime = 0
 	c.General.MaxTimeJob = 0
+	c.General.Noninteractive = false
 	c.General.Quiet = false
 	c.General.Rate = 0
 	c.General.ShowVersion = false
@@ -395,6 +397,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
 	conf.MaxTimeJob = parseOpts.General.MaxTimeJob
+	conf.Noninteractive = parseOpts.General.Noninteractive
 	conf.Verbose = parseOpts.General.Verbose
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP

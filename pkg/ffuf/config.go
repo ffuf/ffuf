@@ -30,6 +30,7 @@ type Config struct {
 	MaxTime                int                       `json:"maxtime"`
 	MaxTimeJob             int                       `json:"maxtime_job"`
 	Method                 string                    `json:"method"`
+	Noninteractive         bool                      `json:"noninteractive"`
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
@@ -79,6 +80,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.MaxTime = 0
 	conf.MaxTimeJob = 0
 	conf.Method = "GET"
+	conf.Noninteractive = false
 	conf.ProgressFrequency = 125
 	conf.ProxyURL = ""
 	conf.Quiet = false
