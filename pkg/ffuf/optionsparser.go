@@ -255,14 +255,14 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			// except if used in custom defined header
 			var CanonicalNeeded = true
 			for _, a := range conf.CommandKeywords {
-				if a == hs[0] {
+				if strings.Contains(hs[0], a) {
 					CanonicalNeeded = false
 				}
 			}
 			// check if part of InputProviders
 			if CanonicalNeeded {
 				for _, b := range conf.InputProviders {
-					if b.Keyword == hs[0] {
+					if strings.Contains(hs[0], b.Keyword) {
 						CanonicalNeeded = false
 					}
 				}
