@@ -3,6 +3,7 @@
   - New
     - Added a CLI flag to disable the interactive mode
   - Changed
+    - Do not read the last newline in the end of the raw request file when using -request
     - Fixed an issue with storing the matches for recursion jobs
     - Fixed the way the "size" is calculated, it should match content-length now
     - Fixed an issue with header canonicalization when a keyword was just a part of the header name  
