@@ -1,6 +1,10 @@
 ## Changelog
 - master
   - New
+  - Changed
+
+- v1.3.1
+  - New
     - Added a CLI flag to disable the interactive mode
   - Changed
     - Do not read the last newline in the end of the raw request file when using -request
