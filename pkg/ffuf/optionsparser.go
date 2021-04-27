@@ -489,6 +489,12 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 	}
 	conf.Data = string(b)
 
+	// Remove newline (typically added by the editor) at the end of the file
+	if strings.HasSuffix(conf.Data, "\r\n") {
+		conf.Data = conf.Data[:len(conf.Data)-2]
+	} else if strings.HasSuffix(conf.Data, "\n") {
+		conf.Data = conf.Data[:len(conf.Data)-1]
+	}
 	return nil
 }
 
