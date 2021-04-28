@@ -513,9 +513,6 @@ func keywordPresent(keyword string, conf *Config) bool {
 	if strings.Contains(conf.Url, keyword) {
 		return true
 	}
-	if strings.Contains(conf.SNI, keyword) {
-		return true
-	}
 	if strings.Contains(conf.Data, keyword) {
 		return true
 	}
