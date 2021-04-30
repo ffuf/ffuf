@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added a CLI flag to specify TLS SNI value
   - Changed
 
 - v1.3.1
