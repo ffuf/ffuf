@@ -356,6 +356,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc429()
 		}
 	}
+	j.pauseWg.Wait()
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
@@ -370,6 +371,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			}
 		}
 		j.Output.Result(resp)
+
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
