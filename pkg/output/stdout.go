@@ -225,10 +225,6 @@ func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
-	if config.OutputCreateEmptyFile && (len(res) == 0) {
-		return nil
-	}
-
 	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(filename, s.config, res)
 	if err != nil {
@@ -272,6 +268,10 @@ func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.
 // SaveFile saves the current results to a file of a given type
 func (s *Stdoutput) SaveFile(filename, format string) error {
 	var err error
+	if s.config.OutputSkipEmptyFile && len(s.Results) == 0 {
+		s.Info("No results and -or defined, output file not written.")
+		return err
+	}
 	switch format {
 	case "all":
 		err = s.writeToAll(filename, s.config, append(s.Results, s.CurrentResults...))

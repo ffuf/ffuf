@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Fixed an issue where output file was created regardless of `-or`
 
 - v1.3.1
   - New
