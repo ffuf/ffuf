@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added a CLI flag to specify TLS SNI value
   - Changed
     - Fixed an issue where output file was created regardless of `-or`
 
