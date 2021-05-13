@@ -171,6 +171,7 @@ HTTP OPTIONS:
   -recursion-depth    Maximum recursion depth. (default: 0)
   -recursion-strategy Recursion strategy: "default" for a redirect based, and "greedy" to recurse on all matches (default: default)
   -replay-proxy       Replay matched requests using this proxy.
+  -sni                Target TLS SNI, does not support FUZZ keyword
   -timeout            HTTP request timeout in seconds. (default: 10)
   -u                  Target URL
   -x                  Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080

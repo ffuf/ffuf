@@ -37,6 +37,7 @@ type HTTPOptions struct {
 	RecursionDepth    int
 	RecursionStrategy string
 	ReplayProxyURL    string
+	SNI               string
 	Timeout           int
 	URL               string
 }
@@ -129,6 +130,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.RecursionStrategy = "default"
 	c.HTTP.ReplayProxyURL = ""
 	c.HTTP.Timeout = 10
+	c.HTTP.SNI = ""
 	c.HTTP.URL = ""
 	c.Input.DirSearchCompat = false
 	c.Input.Extensions = ""
@@ -247,6 +249,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	//Prepare URL
 	if parseOpts.HTTP.URL != "" {
 		conf.Url = parseOpts.HTTP.URL
+	}
+
+	// Prepare SNI
+	if parseOpts.HTTP.SNI != "" {
+		conf.SNI = parseOpts.HTTP.SNI
 	}
 
 	//Prepare headers and make canonical
