@@ -2,7 +2,20 @@
 - master
   - New
     - Added response time logging and filtering
+    - Added a CLI flag to specify TLS SNI value
+
   - Changed
+    - Fixed an issue where output file was created regardless of `-or`
+    - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
+
+- v1.3.1
+  - New
+    - Added a CLI flag to disable the interactive mode
+  - Changed
+    - Do not read the last newline in the end of the raw request file when using -request
+    - Fixed an issue with storing the matches for recursion jobs
+    - Fixed the way the "size" is calculated, it should match content-length now
+    - Fixed an issue with header canonicalization when a keyword was just a part of the header name  
     - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
 
 - v1.3.0

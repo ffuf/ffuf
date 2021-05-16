@@ -59,9 +59,10 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
-	flag.BoolVar(&opts.Output.OutputCreateEmptyFile, "or", opts.Output.OutputCreateEmptyFile, "Don't create the output file if we don't have results")
+	flag.BoolVar(&opts.Output.OutputSkipEmptyFile, "or", opts.Output.OutputSkipEmptyFile, "Don't create the output file if we don't have results")
 	flag.BoolVar(&opts.General.AutoCalibration, "ac", opts.General.AutoCalibration, "Automatically calibrate filtering options")
 	flag.BoolVar(&opts.General.Colors, "c", opts.General.Colors, "Colorize output.")
+	flag.BoolVar(&opts.General.Noninteractive, "noninteractive", opts.General.Noninteractive, "Disable the interactive console functionality")
 	flag.BoolVar(&opts.General.Quiet, "s", opts.General.Quiet, "Do not print additional information (silent mode)")
 	flag.BoolVar(&opts.General.ShowVersion, "V", opts.General.ShowVersion, "Show version information.")
 	flag.BoolVar(&opts.General.StopOn403, "sf", opts.General.StopOn403, "Stop when > 95% of responses return 403 Forbidden")
@@ -97,6 +98,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.HTTP.ReplayProxyURL, "replay-proxy", opts.HTTP.ReplayProxyURL, "Replay matched requests using this proxy.")
 	flag.StringVar(&opts.HTTP.RecursionStrategy, "recursion-strategy", opts.HTTP.RecursionStrategy, "Recursion strategy: \"default\" for a redirect based, and \"greedy\" to recurse on all matches")
 	flag.StringVar(&opts.HTTP.URL, "u", opts.HTTP.URL, "Target URL")
+	flag.StringVar(&opts.HTTP.SNI, "sni", opts.HTTP.SNI, "Target TLS SNI, does not support FUZZ keyword")
 	flag.StringVar(&opts.Input.Extensions, "e", opts.Input.Extensions, "Comma separated list of extensions. Extends FUZZ keyword.")
 	flag.StringVar(&opts.Input.InputMode, "mode", opts.Input.InputMode, "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork")
 	flag.StringVar(&opts.Input.InputShell, "input-shell", opts.Input.InputShell, "Shell to be used for running command")
@@ -201,12 +203,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
 		os.Exit(1)
 	}
-	go func() {
-		err := interactive.Handle(job)
-		if err != nil {
-			log.Printf("Error while trying to initialize interactive session: %s", err)
-		}
-	}()
+	if !conf.Noninteractive {
+		go func() {
+			err := interactive.Handle(job)
+			if err != nil {
+				log.Printf("Error while trying to initialize interactive session: %s", err)
+			}
+		}()
+	}
 
 	// Job handles waiting for goroutines to complete itself
 	job.Start()

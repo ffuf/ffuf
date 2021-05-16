@@ -30,10 +30,11 @@ type Config struct {
 	MaxTime                int                       `json:"maxtime"`
 	MaxTimeJob             int                       `json:"maxtime_job"`
 	Method                 string                    `json:"method"`
+	Noninteractive         bool                      `json:"noninteractive"`
 	OutputDirectory        string                    `json:"outputdirectory"`
 	OutputFile             string                    `json:"outputfile"`
 	OutputFormat           string                    `json:"outputformat"`
-	OutputCreateEmptyFile  bool                      `json:"OutputCreateEmptyFile"`
+	OutputSkipEmptyFile    bool                      `json:"OutputSkipEmptyFile"`
 	ProgressFrequency      int                       `json:"-"`
 	ProxyURL               string                    `json:"proxyurl"`
 	Quiet                  bool                      `json:"quiet"`
@@ -42,6 +43,7 @@ type Config struct {
 	RecursionDepth         int                       `json:"recursion_depth"`
 	RecursionStrategy      string                    `json:"recursion_strategy"`
 	ReplayProxyURL         string                    `json:"replayproxyurl"`
+	SNI                    string                    `json:"sni"`
 	StopOn403              bool                      `json:"stop_403"`
 	StopOnAll              bool                      `json:"stop_all"`
 	StopOnErrors           bool                      `json:"stop_errors"`
@@ -79,6 +81,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.MaxTime = 0
 	conf.MaxTimeJob = 0
 	conf.Method = "GET"
+	conf.Noninteractive = false
 	conf.ProgressFrequency = 125
 	conf.ProxyURL = ""
 	conf.Quiet = false
@@ -86,6 +89,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Recursion = false
 	conf.RecursionDepth = 0
 	conf.RecursionStrategy = "default"
+	conf.SNI = ""
 	conf.StopOn403 = false
 	conf.StopOnAll = false
 	conf.StopOnErrors = false

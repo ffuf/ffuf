@@ -48,9 +48,10 @@ type OutputProvider interface {
 	Result(resp Response)
 	PrintResult(res Result)
 	SaveFile(filename, format string) error
-	GetResults() []Result
-	SetResults(results []Result)
+	GetCurrentResults() []Result
+	SetCurrentResults(results []Result)
 	Reset()
+	Cycle()
 }
 
 type Result struct {

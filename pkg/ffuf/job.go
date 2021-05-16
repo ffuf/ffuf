@@ -123,7 +123,7 @@ func (j *Job) Start() {
 	j.interruptMonitor()
 	for j.jobsInQueue() {
 		j.prepareQueueJob()
-		j.Reset()
+		j.Reset(true)
 		j.RunningJob = true
 		j.startExecution()
 	}
@@ -135,12 +135,16 @@ func (j *Job) Start() {
 }
 
 // Reset resets the counters and wordlist position for a job
-func (j *Job) Reset() {
+func (j *Job) Reset(cycle bool) {
 	j.Input.Reset()
 	j.Counter = 0
 	j.skipQueue = false
 	j.startTimeJob = time.Now()
-	j.Output.Reset()
+	if cycle {
+		j.Output.Cycle()
+	} else {
+		j.Output.Reset()
+	}
 }
 
 func (j *Job) jobsInQueue() bool {
@@ -352,6 +356,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc429()
 		}
 	}
+	j.pauseWg.Wait()
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
@@ -366,6 +371,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			}
 		}
 		j.Output.Result(resp)
+
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
