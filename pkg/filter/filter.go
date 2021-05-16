@@ -30,21 +30,25 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 
 //AddFilter adds a new filter to Config
 func AddFilter(conf *ffuf.Config, name string, option string) error {
-        newf, err := NewFilterByName(name, option)
-        if err == nil {
-                // valid filter create or append
-                if conf.Filters[name] == nil {
-                        conf.Filters[name] = newf
-                } else {
-                        currentfilter := conf.Filters[name].Repr()
-                        newoption := strings.TrimSpace(strings.Split(currentfilter, ":")[1]) + "," + option
-                        newerf, err := NewFilterByName(name, newoption)
-                        if err == nil {
-                                conf.Filters[name] = newerf
-                        }
-                }
-        }
-        return err
+	newf, err := NewFilterByName(name, option)
+	if err == nil {
+		// valid filter create or append
+		if conf.Filters[name] == nil {
+			conf.Filters[name] = newf
+		} else {
+			newoption := conf.Filters[name].Repr() + "," + option
+			newerf, err := NewFilterByName(name, newoption)
+			if err == nil {
+				conf.Filters[name] = newerf
+			}
+		}
+	}
+	return err
+}
+
+//RemoveFilter removes a filter of a given type
+func RemoveFilter(conf *ffuf.Config, name string) {
+	delete(conf.Filters, name)
 }
 
 //AddMatcher adds a new matcher to Config

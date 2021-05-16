@@ -60,5 +60,9 @@ func (f *LineFilter) Repr() string {
 			strval = append(strval, strconv.Itoa(int(iv.Min))+"-"+strconv.Itoa(int(iv.Max)))
 		}
 	}
-	return fmt.Sprintf("Response lines: %s", strings.Join(strval, ","))
+	return strings.Join(strval, ",")
+}
+
+func (f *LineFilter) ReprVerbose() string {
+	return fmt.Sprintf("Response lines: %s", f.Repr())
 }
