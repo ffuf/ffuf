@@ -3,6 +3,7 @@ package ffuf
 import (
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Response struct holds the meaningful data returned from request and is meant for passing to filters
@@ -18,6 +19,7 @@ type Response struct {
 	Request       *Request
 	Raw           string
 	ResultFile    string
+	Time          time.Duration
 }
 
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response

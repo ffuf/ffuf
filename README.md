@@ -199,6 +199,7 @@ MATCHER OPTIONS:
   -ml                 Match amount of lines in response
   -mr                 Match regexp
   -ms                 Match HTTP response size
+  -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100
   -mw                 Match amount of words in response
 
 FILTER OPTIONS:
@@ -206,6 +207,7 @@ FILTER OPTIONS:
   -fl                 Filter by amount of lines in response. Comma separated list of line counts and ranges
   -fr                 Filter regexp
   -fs                 Filter HTTP response size. Comma separated list of sizes and ranges
+  -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100
   -fw                 Filter by amount of words in response. Comma separated list of word counts and ranges
 
 INPUT OPTIONS:
