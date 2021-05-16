@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added response time logging and filtering
     - Added a CLI flag to specify TLS SNI value
     - Added full line colors
   - Changed
