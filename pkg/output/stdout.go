@@ -402,8 +402,7 @@ func (s *Stdoutput) resultQuiet(res ffuf.Result) {
 func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]", TERMINAL_CLEAR_LINE, res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds())
-	res_hdr = s.colorize(res_hdr, res.StatusCode)
+	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	reslines := ""
 	if s.config.Verbose {
 		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
@@ -428,13 +427,13 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%-23s [Status: %s, Size: %d, Words: %d, Lines: %d, Duration: %dms]", TERMINAL_CLEAR_LINE, s.prepareInputsOneLine(res), s.colorize(fmt.Sprintf("%d", res.StatusCode), res.StatusCode), res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds())
+	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 
-func (s *Stdoutput) colorize(input string, status int64) string {
+func (s *Stdoutput) colorize(status int64) string {
 	if !s.config.Colors {
-		return input
+		return ""
 	}
 	colorCode := ANSI_CLEAR
 	if status >= 200 && status < 300 {
@@ -449,7 +448,7 @@ func (s *Stdoutput) colorize(input string, status int64) string {
 	if status >= 500 && status < 600 {
 		colorCode = ANSI_RED
 	}
-	return fmt.Sprintf("%s%s%s", colorCode, input, ANSI_CLEAR)
+	return colorCode
 }
 
 func printOption(name []byte, value []byte) {
