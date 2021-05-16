@@ -9,10 +9,10 @@ import (
 )
 
 type ejsonFileOutput struct {
-	CommandLine string       `json:"commandline"`
-	Time        string       `json:"time"`
-	Results     []Result     `json:"results"`
-	Config      *ffuf.Config `json:"config"`
+	CommandLine string        `json:"commandline"`
+	Time        string        `json:"time"`
+	Results     []ffuf.Result `json:"results"`
+	Config      *ffuf.Config  `json:"config"`
 }
 
 type JsonResult struct {
@@ -36,12 +36,7 @@ type jsonFileOutput struct {
 	Config      *ffuf.Config `json:"config"`
 }
 
-func writeEJSON(config *ffuf.Config, res []Result) error {
-
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
-		return nil
-	}
-
+func writeEJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	t := time.Now()
 	outJSON := ejsonFileOutput{
 		CommandLine: config.CommandLine,
@@ -53,14 +48,14 @@ func writeEJSON(config *ffuf.Config, res []Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(config.OutputFile + ".ejson", outBytes, 0644)
+	err = ioutil.WriteFile(filename+".ejson", outBytes, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeJSON(config *ffuf.Config, res []Result) error {
+func writeJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	t := time.Now()
 	jsonRes := make([]JsonResult, 0)
 	for _, r := range res {
@@ -92,7 +87,7 @@ func writeJSON(config *ffuf.Config, res []Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(config.OutputFile + ".json", outBytes, 0644)
+	err = ioutil.WriteFile(filename+".json", outBytes, 0644)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -59,6 +58,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 				Renegotiation:      tls.RenegotiateOnceAsClient,
+				ServerName:         conf.SNI,
 			},
 		}}
 
@@ -147,7 +147,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	if respbody, err := ioutil.ReadAll(httpresp.Body); err == nil {
-		resp.ContentLength = int64(utf8.RuneCountInString(string(respbody)))
+		resp.ContentLength = int64(len(string(respbody)))
 		resp.Data = respbody
 	}
 

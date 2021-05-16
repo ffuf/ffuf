@@ -11,12 +11,7 @@ import (
 
 var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "resultfile"}
 
-func writeCSV(config *ffuf.Config, res []Result, encode bool) error {
-
-	if(config.OutputCreateEmptyFile && (len(res) == 0)){
-		return nil
-	}
-
+func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) error {
 	header := make([]string, 0)
 	extension := ".csv"
 	if encode {
@@ -60,7 +55,7 @@ func base64encode(in []byte) string {
 	return base64.StdEncoding.EncodeToString(in)
 }
 
-func toCSV(r Result) []string {
+func toCSV(r ffuf.Result) []string {
 	res := make([]string, 0)
 	for _, v := range r.Input {
 		res = append(res, string(v))
