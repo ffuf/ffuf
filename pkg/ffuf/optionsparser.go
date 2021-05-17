@@ -336,7 +336,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.OutputFile = parseOpts.Output.OutputFile
 	} else {
 		if parseOpts.Output.AutoName {
-			specialChars := regexp.MustCompile(`[:/\?\=\&]+`)
+			specialChars := regexp.MustCompile(`[^a-zA-Z0-9]+`)
 			autoName := specialChars.ReplaceAllString(conf.Url, "-")
 			parseOpts.Output.OutputFile = autoName
 			conf.OutputFile = autoName

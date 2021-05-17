@@ -13,11 +13,12 @@ var staticheaders = []string{"url", "redirectlocation", "position", "status_code
 
 func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) error {
 	header := make([]string, 0)
+
 	extension := ".csv"
 	if encode {
 		extension = ".ecsv"
 	}
-	f, err := os.Create(config.OutputFile + extension)
+	f, err := os.Create(formatFileName(config, filename, extension))
 	if err != nil {
 		return err
 	}
