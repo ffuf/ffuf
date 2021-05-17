@@ -64,6 +64,10 @@ type GeneralOptions struct {
 	StopOnErrors            bool
 	Threads                 int
 	Verbose                 bool
+	VerboseURL              bool
+	VerboseRedirect         bool
+	VerboseInput            bool
+	VerboseStatus           bool
 }
 
 type InputOptions struct {
@@ -134,6 +138,10 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOnErrors = false
 	c.General.Threads = 40
 	c.General.Verbose = false
+	c.General.VerboseURL = false
+	c.General.VerboseRedirect = false
+	c.General.VerboseInput = false
+	c.General.VerboseStatus = false
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false
 	c.HTTP.IgnoreBody = false
@@ -462,6 +470,10 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.MaxTimeJob = parseOpts.General.MaxTimeJob
 	conf.Noninteractive = parseOpts.General.Noninteractive
 	conf.Verbose = parseOpts.General.Verbose
+	conf.VerboseURL = parseOpts.General.VerboseURL
+	conf.VerboseRedirect = parseOpts.General.VerboseRedirect
+	conf.VerboseInput = parseOpts.General.VerboseInput
+	conf.VerboseStatus = parseOpts.General.VerboseStatus
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
 
