@@ -14,7 +14,7 @@ func formatFileName(config *ffuf.Config, filename string, extension string) stri
 		// Only add extension if AutoName is enabled or every format is printed
 		return filename + extension
 	} else {
-		// Do not add extension if single files are created
+		// Do not add extension if single files are created and AutoName is disabled
 		return filename
 	}
 }
