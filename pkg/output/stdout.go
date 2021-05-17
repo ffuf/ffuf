@@ -156,6 +156,8 @@ func (s *Stdoutput) SetCurrentResults(results []ffuf.Result) {
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
+	var status_ftm string
+
 	if s.config.Quiet {
 		// No progress for quiet mode
 		return
@@ -176,7 +178,12 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	if s.config.VerboseStatus {
+		status_ftm = "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::"
+	} else {
+		status_ftm = "%s:: P[%d/%d] :: J[%d/%d] :: %d r/s :: D[%d:%02d:%02d] :: E:%d ::"
+	}
+	fmt.Fprintf(os.Stderr, status_ftm, TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Info(infostring string) {
@@ -365,8 +372,7 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 		s.resultQuiet(res)
 	case s.config.Json:
 		s.resultJson(res)
-	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0:
-		// Print a multi-line result (when using multiple input keywords and wordlists)
+	case s.config.VerboseInput || len(s.config.OutputDirectory) > 0:
 		s.resultMultiline(res)
 	default:
 		s.resultNormal(res)
@@ -379,9 +385,9 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 		for k, v := range res.Input {
 			if inSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
-				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(res.Position))
+				inputs = fmt.Sprintf("%s{%s: %s}", inputs, k, strconv.Itoa(res.Position))
 			} else {
-				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, v)
+				inputs = fmt.Sprintf("%s{%s: %s}", inputs, k, v)
 			}
 		}
 	} else {
@@ -398,38 +404,67 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 }
 
 func (s *Stdoutput) resultQuiet(res ffuf.Result) {
-	fmt.Println(s.prepareInputsOneLine(res))
+	reslines := s.prepareInputsOneLine(res)
+	if s.config.VerboseRedirect {
+		reslines = reslines + " --> " + trimDomain(res.RedirectLocation, res.Url, s.config.VerboseURL)
+	}
+	fmt.Println(reslines)
 }
 
 func (s *Stdoutput) resultMultiline(res ffuf.Result) {
-	var res_hdr, res_str string
+	var res_hdr, res_str, status_ftm string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	if s.config.VerboseStatus {
+		status_ftm = "%s%s[Code: %d, Size: %d, Words: %d, Lines: %d, Time: %dms]%s"
+	} else {
+		status_ftm = "%s%s[C:%d - S:%d - W:%d - L:%d - T:%dms]%s"
+	}
+	res_hdr = fmt.Sprintf(status_ftm, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	reslines := ""
-	if s.config.Verbose {
-		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
+	res_type := ""
+	if s.config.VerboseURL {
+		res_type = "URL"
+	} else {
+		res_type = "URI"
+	}
+	reslines = fmt.Sprintf("%s%s| %s | %s\n", reslines, TERMINAL_CLEAR_LINE, res_type, trimDomain(res.Url, res.Url, s.config.VerboseURL))
+	if s.config.VerboseRedirect {
 		redirectLocation := res.RedirectLocation
 		if redirectLocation != "" {
-			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
+			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, trimDomain(redirectLocation, res.Url, s.config.VerboseURL))
 		}
 	}
 	if res.ResultFile != "" {
 		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
 	}
-	for k, v := range res.Input {
-		if inSlice(k, s.config.CommandKeywords) {
-			// If we're using external command for input, display the position instead of input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
-		} else {
-			// Wordlist input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
+	if s.config.VerboseInput {
+		for k, v := range res.Input {
+			if inSlice(k, s.config.CommandKeywords) {
+				// If we're using external command for input, display the position instead of input
+				reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
+			} else {
+				// Wordlist input
+				reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
+			}
 		}
 	}
 	fmt.Printf("%s\n%s\n", res_hdr, reslines)
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	var status_ftm string
+	if s.config.VerboseStatus {
+		status_ftm = "%s%s%-29s [Code: %d, Size: %d, Words: %d, Lines: %d, Time: %dms]%s"
+	} else {
+		status_ftm = "%s%s%-47s [C:%d - S:%d - W:%d - L:%d - T:%dms]%s"
+	}
+	resnormal := fmt.Sprintf(status_ftm, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	if s.config.VerboseRedirect {
+		redirectLocation := res.RedirectLocation
+		if redirectLocation != "" {
+			resnormal = fmt.Sprintf("%s\n%s --> %s", resnormal, TERMINAL_CLEAR_LINE, trimDomain(redirectLocation, res.Url, s.config.VerboseURL))
+		}
+	}
 	fmt.Println(resnormal)
 }
 
@@ -474,4 +509,19 @@ func inSlice(key string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func trimDomain(url string, uri_domain string, verbose_url bool) string {
+	var res_url string
+	if verbose_url {
+		res_url = url
+	} else {
+		// Extract schema://domain from schema://domain/many/paths
+		schema_domain := strings.TrimRight(strings.Join(strings.SplitAfterN(uri_domain, "/", 4)[:3], ""), "/")
+		res_url = strings.TrimLeft(strings.TrimPrefix(url, schema_domain), "/")
+		if res_url != url {
+			res_url = "/" + res_url
+		}
+	}
+	return res_url
 }
