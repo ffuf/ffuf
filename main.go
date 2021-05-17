@@ -71,7 +71,11 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&opts.General.StopOn403, "sf", opts.General.StopOn403, "Stop when > 95% of responses return 403 Forbidden")
 	flag.BoolVar(&opts.General.StopOnAll, "sa", opts.General.StopOnAll, "Stop on all error cases. Implies -sf and -se.")
 	flag.BoolVar(&opts.General.StopOnErrors, "se", opts.General.StopOnErrors, "Stop on spurious errors")
-	flag.BoolVar(&opts.General.Verbose, "v", opts.General.Verbose, "Verbose output, printing full URL and redirect location (if any) with the results.")
+	flag.BoolVar(&opts.General.Verbose, "v", opts.General.Verbose, "Verbose output. Display unabbreviated status/progress bars, wordlist/stdin input, full URL and redirect location (if any) in the results.")
+	flag.BoolVar(&opts.General.VerboseURL, "vu", opts.General.VerboseURL, "Verbose URLs. Display full URLs in the results.")
+	flag.BoolVar(&opts.General.VerboseRedirect, "vr", opts.General.VerboseRedirect, "Verbose redirects. Display redirect location (if any) in the results. Ignored if redirects are followed.")
+	flag.BoolVar(&opts.General.VerboseInput, "vi", opts.General.VerboseInput, "Verbose input. Display input content obtained from wordlists or stdin.")
+	flag.BoolVar(&opts.General.VerboseStatus, "vs", opts.General.VerboseStatus, "Verbose status. Display unabbreviated words in the response status bar and progress status bar.")
 	flag.BoolVar(&opts.HTTP.FollowRedirects, "r", opts.HTTP.FollowRedirects, "Follow redirects")
 	flag.BoolVar(&opts.HTTP.IgnoreBody, "ignore-body", opts.HTTP.IgnoreBody, "Do not fetch the response content.")
 	flag.BoolVar(&opts.HTTP.Recursion, "recursion", opts.HTTP.Recursion, "Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it.")
@@ -181,6 +185,14 @@ func main() {
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 		// Re-parse the cli options
 		opts = ParseFlags(opts)
+	}
+
+	// Set all verbose flags if Verbose option is true
+	if opts.General.Verbose {
+		opts.General.VerboseURL = true
+		opts.General.VerboseRedirect = true
+		opts.General.VerboseInput = true
+		opts.General.VerboseStatus = true
 	}
 
 	// Prepare context and set up Config struct
