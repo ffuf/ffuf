@@ -152,7 +152,7 @@ parameter.
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.3.0-dev
+Fuzz Faster U Fool - v1.3.1-dev
 
 HTTP OPTIONS:
   -H                  Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
@@ -186,7 +186,11 @@ GENERAL OPTIONS:
   -se                 Stop on spurious errors (default: false)
   -sf                 Stop when > 95% of responses return 403 Forbidden (default: false)
   -t                  Number of concurrent threads. (default: 40)
-  -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
+  -v                  Verbose output. Display unabbreviated status/progress bars, wordlist/stdin input, full URL and redirect location (if any) in the results. (default: false)
+  -vi                 Verbose input. Display input content obtained from wordlists or stdin. (default: false)
+  -vr                 Verbose redirects. Display redirect location (if any) in the results. Ignored if redirects are followed. (default: false)
+  -vs                 Verbose status. Display unabbreviated words in the response status bar and progress status bar. (default: false)
+  -vu                 Verbose URLs. Display full URLs in the results. (default: false)
 
 MATCHER OPTIONS:
   -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405,500)
