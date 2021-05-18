@@ -156,7 +156,7 @@ func (s *Stdoutput) SetCurrentResults(results []ffuf.Result) {
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
-	var status_ftm string
+	var status_fmt string
 
 	if s.config.Quiet {
 		// No progress for quiet mode
@@ -179,11 +179,11 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	secs := dur / time.Second
 
 	if s.config.VerboseStatus {
-		status_ftm = "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::"
+		status_fmt = "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::"
 	} else {
-		status_ftm = "%s:: P[%d/%d] :: J[%d/%d] :: %d r/s :: D[%d:%02d:%02d] :: E:%d ::"
+		status_fmt = "%s:: P[%d/%d] :: J[%d/%d] :: %d r/s :: D[%d:%02d:%02d] :: E:%d ::"
 	}
-	fmt.Fprintf(os.Stderr, status_ftm, TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	fmt.Fprintf(os.Stderr, status_fmt, TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Info(infostring string) {
@@ -412,32 +412,35 @@ func (s *Stdoutput) resultQuiet(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultMultiline(res ffuf.Result) {
-	var res_hdr, res_str, status_ftm string
-	res_str = "%s%s    * %s: %s\n"
+	var status_fmt string
+
 	if s.config.VerboseStatus {
-		status_ftm = "%s%s[Code: %d, Size: %d, Words: %d, Lines: %d, Time: %dms]%s"
+		status_fmt = "%s%s[Code: %d, Size: %d, Words: %d, Lines: %d, Time: %dms]%s\n"
 	} else {
-		status_ftm = "%s%s[C:%d - S:%d - W:%d - L:%d - T:%dms]%s"
+		status_fmt = "%s%s[C:%d - S:%d - W:%d - L:%d - T:%dms]%s\n"
 	}
-	res_hdr = fmt.Sprintf(status_ftm, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
-	reslines := ""
+
+	reslines := fmt.Sprintf(status_fmt, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+
 	res_type := ""
 	if s.config.VerboseURL {
 		res_type = "URL"
 	} else {
 		res_type = "URI"
 	}
+
 	reslines = fmt.Sprintf("%s%s| %s | %s\n", reslines, TERMINAL_CLEAR_LINE, res_type, trimDomain(res.Url, res.Url, s.config.VerboseURL))
-	if s.config.VerboseRedirect {
-		redirectLocation := res.RedirectLocation
-		if redirectLocation != "" {
-			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, trimDomain(redirectLocation, res.Url, s.config.VerboseURL))
-		}
+
+	if s.config.VerboseRedirect && res.RedirectLocation != "" {
+		reslines = fmt.Sprintf("%s%s%s| --> | %s%s\n", reslines, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), trimDomain(res.RedirectLocation, res.Url, s.config.VerboseURL), ANSI_CLEAR)
 	}
+
 	if res.ResultFile != "" {
 		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
 	}
+
 	if s.config.VerboseInput {
+		res_str := "%s%s    * %s: %s\n"
 		for k, v := range res.Input {
 			if inSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
@@ -448,23 +451,58 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 			}
 		}
 	}
-	fmt.Printf("%s\n%s\n", res_hdr, reslines)
+
+	fmt.Println(reslines)
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	var status_ftm string
-	if s.config.VerboseStatus {
-		status_ftm = "%s%s%-29s [Code: %d, Size: %d, Words: %d, Lines: %d, Time: %dms]%s"
-	} else {
-		status_ftm = "%s%s%-47s [C:%d - S:%d - W:%d - L:%d - T:%dms]%s"
+	var pre_status_len, pad_len int
+	var status_fmt, input_res string
+
+	redirect_str := ""
+	if s.config.VerboseRedirect && res.RedirectLocation != "" {
+		redirect_str = fmt.Sprintf(" --> %s", trimDomain(res.RedirectLocation, res.Url, s.config.VerboseURL))
 	}
-	resnormal := fmt.Sprintf(status_ftm, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
-	if s.config.VerboseRedirect {
-		redirectLocation := res.RedirectLocation
-		if redirectLocation != "" {
-			resnormal = fmt.Sprintf("%s\n%s --> %s", resnormal, TERMINAL_CLEAR_LINE, trimDomain(redirectLocation, res.Url, s.config.VerboseURL))
+
+	// TODO Make pre_status_len customizable via flag or automatic, like PR #278
+	if s.config.VerboseStatus {
+		pre_status_len = 29
+		status_fmt = "[Code: %d, Size: %d, Words: %d, Lines: %d, Time: %dms]%s"
+	} else {
+		pre_status_len = 47
+		status_fmt = "[C:%d - S:%d - W:%d - L:%d - T:%dms]%s"
+	}
+
+	input_str := s.prepareInputsOneLine(res)
+	// Add the redirection to the same line as the input if fits
+	if redirect_str != "" {
+		pad_len = pre_status_len / 3 - 1
+		if len(input_str + redirect_str) <= pre_status_len {
+			// Adapt padding if redirect_str if longer than 2/3 of the space
+			if len(redirect_str) > pre_status_len - pad_len {
+				pad_len = pre_status_len - len(redirect_str)
+			}
+			input_str = fmt.Sprintf("%-*s%s", pad_len, input_str, redirect_str)
+			redirect_str = ""
 		}
 	}
+	input_res = fmt.Sprintf("%-*s", pre_status_len, input_str)
+
+	resnormal := fmt.Sprintf("%s%s%s " + status_fmt, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), input_res, res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+
+	// Print redirect_str in a new line if it didn't fit before
+	if redirect_str != "" {
+		// TODO Make this hard-coded max width dynamic, like PR #278
+		max_width := 90
+		if len(redirect_str) + pad_len > max_width {
+			pad_len = max_width - len(redirect_str)
+			if pad_len < 0 {
+				pad_len = 0
+			}
+		}
+		resnormal = fmt.Sprintf("%s\n%s%s%*s%s%s", resnormal, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), pad_len, "", redirect_str, ANSI_CLEAR)
+	}
+
 	fmt.Println(resnormal)
 }
 
