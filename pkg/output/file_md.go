@@ -35,7 +35,7 @@ func writeMarkdown(filename string, config *ffuf.Config, res []ffuf.Result) erro
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(formatFileName(config, filename, ".md"))
+	f, err := os.Create(buildFilename(config, filename, ".md"))
 	if err != nil {
 		return err
 	}

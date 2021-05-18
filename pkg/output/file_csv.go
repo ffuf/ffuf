@@ -18,7 +18,8 @@ func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bo
 	if encode {
 		extension = ".ecsv"
 	}
-	f, err := os.Create(formatFileName(config, filename, extension))
+
+	f, err := os.Create(buildFilename(config, filename, extension))
 	if err != nil {
 		return err
 	}

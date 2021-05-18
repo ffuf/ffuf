@@ -48,7 +48,8 @@ func writeEJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(formatFileName(config, filename, ".ejson"), outBytes, 0644)
+
+	err = ioutil.WriteFile(buildFilename(config, filename, ".ejson"), outBytes, 0644)
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,8 @@ func writeJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(formatFileName(config, filename, ".json"), outBytes, 0644)
+
+	err = ioutil.WriteFile(buildFilename(config, filename, ".json"), outBytes, 0644)
 	if err != nil {
 		return err
 	}

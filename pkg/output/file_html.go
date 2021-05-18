@@ -193,7 +193,7 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(formatFileName(config, filename, ".html"))
+	f, err := os.Create(buildFilename(config, filename, ".html"))
 	if err != nil {
 		return err
 	}
