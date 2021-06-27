@@ -84,6 +84,15 @@ func (i *interactive) handleInput(in []byte) {
 				i.updateFilter("status", args[1])
 				i.Job.Output.Info("New status code filter value set")
 			}
+		case "afc":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value to append to status code filter")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"afc\"")
+			} else {
+				i.appendFilter("status", args[1])
+				i.Job.Output.Info("New status code filter value set")
+			}
 		case "fl":
 			if len(args) < 2 {
 				i.Job.Output.Error("Please define a value for line count filter, or \"none\" for removing it")
@@ -91,6 +100,15 @@ func (i *interactive) handleInput(in []byte) {
 				i.Job.Output.Error("Too many arguments for \"fl\"")
 			} else {
 				i.updateFilter("line", args[1])
+				i.Job.Output.Info("New line count filter value set")
+			}
+		case "afl":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value to append to line count filter")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"afl\"")
+			} else {
+				i.appendFilter("line", args[1])
 				i.Job.Output.Info("New line count filter value set")
 			}
 		case "fw":
@@ -102,6 +120,15 @@ func (i *interactive) handleInput(in []byte) {
 				i.updateFilter("word", args[1])
 				i.Job.Output.Info("New word count filter value set")
 			}
+		case "afw":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value to append to word count filter")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"afw\"")
+			} else {
+				i.appendFilter("word", args[1])
+				i.Job.Output.Info("New word count filter value set")
+			}
 		case "fs":
 			if len(args) < 2 {
 				i.Job.Output.Error("Please define a value for response size filter, or \"none\" for removing it")
@@ -111,6 +138,15 @@ func (i *interactive) handleInput(in []byte) {
 				i.updateFilter("size", args[1])
 				i.Job.Output.Info("New response size filter value set")
 			}
+		case "afs":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value to append to size filter")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"afs\"")
+			} else {
+				i.appendFilter("size", args[1])
+				i.Job.Output.Info("New response size filter value set")
+			}
 		case "ft":
 			if len(args) < 2 {
 				i.Job.Output.Error("Please define a value for response time filter, or \"none\" for removing it")
@@ -118,6 +154,15 @@ func (i *interactive) handleInput(in []byte) {
 				i.Job.Output.Error("Too many arguments for \"ft\"")
 			} else {
 				i.updateFilter("time", args[1])
+				i.Job.Output.Info("New response time filter value set")
+			}
+		case "aft":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value to append to response time filter")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"aft\"")
+			} else {
+				i.appendFilter("time", args[1])
 				i.Job.Output.Info("New response time filter value set")
 			}
 		case "queueshow":
@@ -173,6 +218,15 @@ func (i *interactive) updateFilter(name, value string) {
 			}
 		}
 		i.Job.Output.SetCurrentResults(results)
+	}
+}
+
+func (i *interactive) appendFilter(name, value string) {
+	if oldFc, found := i.Job.Config.Filters[name]; found {
+		oldVal := oldFc.Repr()
+		i.updateFilter(name, strings.Join([]string{oldVal, value}, ","))
+	} else {
+		i.updateFilter(name, value)
 	}
 }
 
@@ -232,11 +286,16 @@ func (i *interactive) printHelp() {
 	}
 	help := `
 available commands:
- fc [value]             - (re)configure status code filter %s
- fl [value]             - (re)configure line count filter %s
- fw [value]             - (re)configure word count filter %s
- fs [value]             - (re)configure size filter %s
- ft [value]				- (re)configure time filter %s
+ afc [value]             - append to status code filter %s
+ fc  [value]             - (re)configure status code filter %s
+ afl [value]             - append to line count filter %s
+ fl  [value]             - (re)configure line count filter %s
+ afw [value]             - append to word count filter %s
+ fw  [value]             - (re)configure word count filter %s
+ afs [value]             - append to size filter %s
+ fs  [value]             - (re)configure size filter %s
+ aft [value]             - append to time filter %s
+ ft  [value]			 - (re)configure time filter %s
  queueshow              - show recursive job queue
  queuedel [number]      - delete a recursion job in the queue
  queueskip              - advance to the next queued recursion job
@@ -246,5 +305,5 @@ available commands:
  savejson [filename]    - save current matches to a file
  help                   - you are looking at it
 `
-	i.Job.Output.Raw(fmt.Sprintf(help, fc, fl, fw, fs, ft))
+	i.Job.Output.Raw(fmt.Sprintf(help, fc, fc, fl, fl, fw, fw, fs, fs, ft, ft))
 }
