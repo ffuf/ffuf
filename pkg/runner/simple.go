@@ -69,13 +69,8 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	return &simplerunner
 }
 
-func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
-	req := ffuf.NewRequest(r.config)
-
-	req.Headers = r.config.Headers
-	req.Url = r.config.Url
-	req.Method = r.config.Method
-	req.Data = []byte(r.config.Data)
+func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (ffuf.Request, error) {
+	req := ffuf.CopyRequest(basereq)
 
 	for keyword, inputitem := range input {
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))

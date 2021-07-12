@@ -323,7 +323,8 @@ func (j *Job) isMatch(resp Response) bool {
 }
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
-	req, err := j.Runner.Prepare(input)
+	basereq := BaseRequest(j.Config)
+	req, err := j.Runner.Prepare(input, &basereq)
 	req.Position = position
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
@@ -360,7 +361,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
-			replayreq, err := j.ReplayRunner.Prepare(input)
+			replayreq, err := j.ReplayRunner.Prepare(input, &basereq)
 			replayreq.Position = position
 			if err != nil {
 				j.Output.Error(fmt.Sprintf("Encountered an error while preparing replayproxy request: %s\n", err))
@@ -417,6 +418,7 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 
 //CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
 func (j *Job) CalibrateResponses() ([]Response, error) {
+	basereq := BaseRequest(j.Config)
 	cInputs := make([]string, 0)
 	rand.Seed(time.Now().UnixNano())
 	if len(j.Config.AutoCalibrationStrings) < 1 {
@@ -435,7 +437,7 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 			inputs[v.Keyword] = []byte(input)
 		}
 
-		req, err := j.Runner.Prepare(inputs)
+		req, err := j.Runner.Prepare(inputs, &basereq)
 		if err != nil {
 			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
 			j.incError()
