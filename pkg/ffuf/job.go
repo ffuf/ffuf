@@ -42,6 +42,7 @@ type Job struct {
 type QueueJob struct {
 	Url   string
 	depth int
+	req   Request
 }
 
 func NewJob(conf *Config) *Job {
@@ -107,8 +108,10 @@ func (j *Job) Start() {
 		j.startTime = time.Now()
 	}
 
+	basereq := BaseRequest(j.Config)
+
 	// Add the default job to job queue
-	j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0})
+	j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: basereq})
 	rand.Seed(time.Now().UnixNano())
 	j.Total = j.Input.Total()
 	defer j.Stop()
@@ -323,7 +326,7 @@ func (j *Job) isMatch(resp Response) bool {
 }
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
-	basereq := BaseRequest(j.Config)
+	basereq := j.queuejobs[j.queuepos-1].req
 	req, err := j.Runner.Prepare(input, &basereq)
 	req.Position = position
 	if err != nil {
@@ -408,7 +411,7 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 	}
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1}
+		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: BaseRequest(j.Config)}
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
