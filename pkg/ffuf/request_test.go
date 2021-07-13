@@ -241,6 +241,6 @@ func TestScrubTemplates(t *testing.T) {
 	scrubTemplates(&testreq, "§")
 
 	if !reflect.DeepEqual(testreq, expectedreq) {
-		t.Errorf("scrubTemplates does not return expected values: \n %v\n%v\n", testreq, expectedreq)
+		t.Errorf("scrubTemplates does not return expected values")
 	}
 }
