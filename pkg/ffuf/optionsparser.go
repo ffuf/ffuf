@@ -183,7 +183,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	//Prepare inputproviders
 	conf.InputMode = parseOpts.Input.InputMode
 
-	validmode := true
+	validmode := false
 	for _, mode := range []string{"clusterbomb", "pitchfork", "sniper"} {
 		if conf.InputMode == mode {
 			validmode = true
