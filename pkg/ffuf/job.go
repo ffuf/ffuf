@@ -110,10 +110,22 @@ func (j *Job) Start() {
 
 	basereq := BaseRequest(j.Config)
 
-	// Add the default job to job queue
-	j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: basereq})
+	if j.Config.InputMode == "sniper" {
+		// process multiple payload locations and create a queue job for each location
+		reqs := SniperRequests(&basereq, "§")
+		fmt.Printf("got %d locations\n", len(reqs))
+		for _, r := range reqs {
+			fmt.Printf("req: %v\n", r)
+			j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: r})
+		}
+		j.Total = j.Input.Total() * len(reqs)
+	} else {
+		// Add the default job to job queue
+		j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: BaseRequest(j.Config)})
+		j.Total = j.Input.Total()
+	}
+
 	rand.Seed(time.Now().UnixNano())
-	j.Total = j.Input.Total()
 	defer j.Stop()
 
 	j.Running = true

@@ -181,6 +181,32 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	//Prepare inputproviders
+	conf.InputMode = parseOpts.Input.InputMode
+
+	validmode := true
+	for _, mode := range []string{"clusterbomb", "pitchfork", "sniper"} {
+		if conf.InputMode == mode {
+			validmode = true
+		}
+	}
+	if !validmode {
+		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
+	}
+
+	template := ""
+	// sniper mode needs some additional checking
+	if conf.InputMode == "sniper" {
+		template = "§"
+
+		if len(parseOpts.Input.Wordlists) > 1 {
+			errs.Add(fmt.Errorf("sniper mode only supports one wordlist"))
+		}
+
+		if len(parseOpts.Input.Inputcommands) > 0 {
+			errs.Add(fmt.Errorf("sniper mode does not support command inputs"))
+		}
+	}
+
 	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
 		if runtime.GOOS == "windows" {
@@ -205,20 +231,29 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			wl = strings.SplitN(v, ":", 2)
 		}
 		if len(wl) == 2 {
-			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
-				Name:    "wordlist",
-				Value:   wl[0],
-				Keyword: wl[1],
-			})
+			if conf.InputMode == "sniper" {
+				errs.Add(fmt.Errorf("sniper mode does not support wordlist keywords"))
+			} else {
+				conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+					Name:    "wordlist",
+					Value:   wl[0],
+					Keyword: wl[1],
+				})
+			}
 		} else {
 			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
-				Name:    "wordlist",
-				Value:   wl[0],
-				Keyword: "FUZZ",
+				Name:     "wordlist",
+				Value:    wl[0],
+				Keyword:  "FUZZ",
+				Template: template,
 			})
 		}
 	}
+
 	for _, v := range parseOpts.Input.Inputcommands {
+		if conf.InputMode == "sniper" {
+			errs.Add(fmt.Errorf("sniper mode does not support input commands"))
+		}
 		ic := strings.SplitN(v, ":", 2)
 		if len(ic) == 2 {
 			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
@@ -389,7 +424,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.DirSearchCompat = parseOpts.Input.DirSearchCompat
 	conf.Colors = parseOpts.General.Colors
 	conf.InputNum = parseOpts.Input.InputNum
-	conf.InputMode = parseOpts.Input.InputMode
+
 	conf.InputShell = parseOpts.Input.InputShell
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
@@ -423,9 +458,16 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.CommandLine = strings.Join(os.Args, " ")
 
 	for _, provider := range conf.InputProviders {
-		if !keywordPresent(provider.Keyword, &conf) {
-			errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-			errs.Add(fmt.Errorf(errmsg))
+		if provider.Template != "" {
+			if !templatePresent(provider.Template, &conf) {
+				errmsg := fmt.Sprintf("Template %s defined, but not found in pairs in headers, method, URL or POST data.", provider.Template)
+				errs.Add(fmt.Errorf(errmsg))
+			}
+		} else {
+			if !keywordPresent(provider.Keyword, &conf) {
+				errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
+				errs.Add(fmt.Errorf(errmsg))
+			}
 		}
 	}
 
@@ -529,6 +571,46 @@ func keywordPresent(keyword string, conf *Config) bool {
 		}
 	}
 	return false
+}
+
+func templatePresent(template string, conf *Config) bool {
+	// Search for input location identifiers, these must exist in pairs
+	sane := false
+
+	if c := strings.Count(conf.Method, template); c > 0 {
+		if c%2 != 0 {
+			return false
+		}
+		sane = true
+	}
+	if c := strings.Count(conf.Url, template); c > 0 {
+		if c%2 != 0 {
+			return false
+		}
+		sane = true
+	}
+	if c := strings.Count(conf.Data, template); c > 0 {
+		if c%2 != 0 {
+			return false
+		}
+		sane = true
+	}
+	for k, v := range conf.Headers {
+		if c := strings.Count(k, template); c > 0 {
+			if c%2 != 0 {
+				return false
+			}
+			sane = true
+		}
+		if c := strings.Count(v, template); c > 0 {
+			if c%2 != 0 {
+				return false
+			}
+			sane = true
+		}
+	}
+
+	return sane
 }
 
 func ReadConfig(configFile string) (*ConfigOptions, error) {
