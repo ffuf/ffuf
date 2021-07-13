@@ -202,8 +202,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf("sniper mode only supports one wordlist"))
 		}
 
-		if len(parseOpts.Input.Inputcommands) > 0 {
-			errs.Add(fmt.Errorf("sniper mode does not support command inputs"))
+		if len(parseOpts.Input.Inputcommands) > 1 {
+			errs.Add(fmt.Errorf("sniper mode only supports one input command"))
 		}
 	}
 
@@ -251,22 +251,24 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	for _, v := range parseOpts.Input.Inputcommands {
-		if conf.InputMode == "sniper" {
-			errs.Add(fmt.Errorf("sniper mode does not support input commands"))
-		}
 		ic := strings.SplitN(v, ":", 2)
 		if len(ic) == 2 {
-			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
-				Name:    "command",
-				Value:   ic[0],
-				Keyword: ic[1],
-			})
-			conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
+			if conf.InputMode == "sniper" {
+				errs.Add(fmt.Errorf("sniper mode does not support command keywords"))
+			} else {
+				conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+					Name:    "command",
+					Value:   ic[0],
+					Keyword: ic[1],
+				})
+				conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
+			}
 		} else {
 			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
-				Name:    "command",
-				Value:   ic[0],
-				Keyword: "FUZZ",
+				Name:     "command",
+				Value:    ic[0],
+				Keyword:  "FUZZ",
+				Template: template,
 			})
 			conf.CommandKeywords = append(conf.CommandKeywords, "FUZZ")
 		}
