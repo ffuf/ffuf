@@ -45,7 +45,7 @@ Come to hang out & to discuss about ffuf, it's usage and development!
 - If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
   
   _or_
-- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
+- `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
 
 Ffuf depends on Go 1.13 or greater.
 
