@@ -172,7 +172,8 @@ func main() {
 		// Reset the flag package state
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 		// Re-parse the cli options
-		opts = ParseFlags(opts)
+		// Why ?
+		// opts = ParseFlags(opts)
 	}
 
 	// Prepare context and set up Config struct
