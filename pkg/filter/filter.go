@@ -25,6 +25,9 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "regexp" {
 		return NewRegexpFilter(value)
 	}
+	if name == "time" {
+		return NewTimeFilter(value)
+	}
 	return nil, fmt.Errorf("Could not create filter with name %s", name)
 }
 
@@ -143,6 +146,9 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 		if f.Name == "mr" {
 			matcherSet = true
 		}
+		if f.Name == "mt" {
+			matcherSet = true
+		}
 		if f.Name == "mw" {
 			matcherSet = true
 			warningIgnoreBody = true
@@ -182,6 +188,11 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 			errs.Add(err)
 		}
 	}
+	if parseOpts.Filter.Time != "" {
+		if err := AddFilter(conf, "time", parseOpts.Filter.Time); err != nil {
+			errs.Add(err)
+		}
+	}
 	if parseOpts.Matcher.Size != "" {
 		if err := AddMatcher(conf, "size", parseOpts.Matcher.Size); err != nil {
 			errs.Add(err)
@@ -199,6 +210,11 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.Matcher.Lines != "" {
 		if err := AddMatcher(conf, "line", parseOpts.Matcher.Lines); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Time != "" {
+		if err := AddFilter(conf, "time", parseOpts.Matcher.Time); err != nil {
 			errs.Add(err)
 		}
 	}

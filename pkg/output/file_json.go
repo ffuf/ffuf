@@ -24,6 +24,7 @@ type JsonResult struct {
 	ContentLines     int64             `json:"lines"`
 	ContentType      string            `json:"content-type"`
 	RedirectLocation string            `json:"redirectlocation"`
+	Duration         time.Duration     `json:"duration"`
 	ResultFile       string            `json:"resultfile"`
 	Url              string            `json:"url"`
 	Host             string            `json:"host"`
@@ -72,6 +73,7 @@ func writeJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 			ContentLines:     r.ContentLines,
 			ContentType:      r.ContentType,
 			RedirectLocation: r.RedirectLocation,
+			Duration:         r.Duration,
 			ResultFile:       r.ResultFile,
 			Url:              r.Url,
 			Host:             r.Host,

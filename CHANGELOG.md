@@ -1,8 +1,9 @@
 ## Changelog
 - master
   - New
+    - Added response time logging and filtering
     - Added a CLI flag to specify TLS SNI value
-    - Added a flag for automatic naming of output files. The name depends on the value of the URL.
+    - Added full line colors
   - Changed
     - Fixed an issue where output file was created regardless of `-or`
     - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
