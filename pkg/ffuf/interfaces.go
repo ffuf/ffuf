@@ -1,5 +1,7 @@
 package ffuf
 
+import "time"
+
 //FilterProvider is a generic interface for both Matchers and Filters
 type FilterProvider interface {
 	Filter(response *Response) (bool, error)
@@ -62,6 +64,7 @@ type Result struct {
 	ContentType      string            `json:"content-type"`
 	RedirectLocation string            `json:"redirectlocation"`
 	Url              string            `json:"url"`
+	Duration         time.Duration     `json:"duration"`
 	ResultFile       string            `json:"resultfile"`
 	Host             string            `json:"host"`
 	HTMLColor        string            `json:"-"`
