@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -75,6 +76,7 @@ type InputOptions struct {
 }
 
 type OutputOptions struct {
+	AutoName            bool
 	DebugLog            string
 	OutputDirectory     string
 	OutputFile          string
@@ -148,6 +150,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Status = "200,204,301,302,307,401,403,405"
 	c.Matcher.Time = ""
 	c.Matcher.Words = ""
+	c.Output.AutoName = false
 	c.Output.DebugLog = ""
 	c.Output.OutputDirectory = ""
 	c.Output.OutputFile = ""
@@ -332,6 +335,18 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	//Prefer Outputfile if it was defined
+	if parseOpts.Output.OutputFile != "" {
+		conf.OutputFile = parseOpts.Output.OutputFile
+	} else {
+		if parseOpts.Output.AutoName {
+			specialChars := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+			autoName := specialChars.ReplaceAllString(conf.Url, "-")
+			parseOpts.Output.OutputFile = autoName
+			conf.OutputFile = autoName
+		}
+	}
+
 	//Check the output file format option
 	if parseOpts.Output.OutputFile != "" {
 		//No need to check / error out if output file isn't defined
@@ -391,9 +406,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.InputNum = parseOpts.Input.InputNum
 	conf.InputMode = parseOpts.Input.InputMode
 	conf.InputShell = parseOpts.Input.InputShell
-	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.OutputSkipEmptyFile = parseOpts.Output.OutputSkipEmptyFile
+	conf.AutoName = parseOpts.Output.AutoName
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
 	conf.StopOn403 = parseOpts.General.StopOn403

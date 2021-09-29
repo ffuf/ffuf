@@ -36,12 +36,12 @@ const (
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
 	/>
-	<link 
-	  rel="stylesheet" 
-	  type="text/css" 
+	<link
+	  rel="stylesheet"
+	  type="text/css"
 	  href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css"
 	/>
-  
+
   </head>
 
   <body>
@@ -195,7 +195,7 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(filename)
+	f, err := os.Create(buildFilename(config, filename, ".html"))
 	if err != nil {
 		return err
 	}

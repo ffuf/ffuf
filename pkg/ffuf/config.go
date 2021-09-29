@@ -7,6 +7,7 @@ import (
 type Config struct {
 	AutoCalibration        bool                      `json:"autocalibration"`
 	AutoCalibrationStrings []string                  `json:"autocalibration_strings"`
+	AutoName               bool                      `json:"AutoName"`
 	Cancel                 context.CancelFunc        `json:"-"`
 	Colors                 bool                      `json:"colors"`
 	CommandKeywords        []string                  `json:"-"`

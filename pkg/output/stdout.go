@@ -15,12 +15,12 @@ import (
 
 const (
 	BANNER_HEADER = `
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
 `
 	BANNER_SEP = "________________________________________________"
 )
@@ -220,42 +220,35 @@ func (s *Stdoutput) Raw(output string) {
 
 func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	var err error
-	var BaseFilename string = s.config.OutputFile
 
 	// Go through each type of write, adding
 	// the suffix to each output file.
 
-	s.config.OutputFile = BaseFilename + ".json"
 	err = writeJSON(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
-	s.config.OutputFile = BaseFilename + ".ejson"
 	err = writeEJSON(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
-	s.config.OutputFile = BaseFilename + ".html"
 	err = writeHTML(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
-	s.config.OutputFile = BaseFilename + ".md"
 	err = writeMarkdown(filename, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
-	s.config.OutputFile = BaseFilename + ".csv"
 	err = writeCSV(filename, s.config, res, false)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
-	s.config.OutputFile = BaseFilename + ".ecsv"
 	err = writeCSV(filename, s.config, res, true)
 	if err != nil {
 		s.Error(err.Error())
