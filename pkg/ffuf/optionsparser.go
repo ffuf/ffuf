@@ -80,6 +80,7 @@ type OutputOptions struct {
 	OutputFile          string
 	OutputFormat        string
 	OutputSkipEmptyFile bool
+	ShowFullURL         bool
 }
 
 type FilterOptions struct {
@@ -153,6 +154,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Output.OutputFile = ""
 	c.Output.OutputFormat = "json"
 	c.Output.OutputSkipEmptyFile = false
+	c.Output.ShowFullURL = false
 	return c
 }
 
@@ -410,6 +412,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.MaxTimeJob = parseOpts.General.MaxTimeJob
 	conf.Noninteractive = parseOpts.General.Noninteractive
 	conf.Verbose = parseOpts.General.Verbose
+	conf.ShowFullURL = parseOpts.Output.ShowFullURL
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
 	if len(conf.Data) > 0 &&
