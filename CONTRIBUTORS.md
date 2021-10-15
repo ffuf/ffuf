@@ -32,6 +32,7 @@
 * [SakiiR](https://github.com/SakiiR)
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
+* [shyft](https://github.com/ShyftXero)
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [l4yton](https://github.com/l4yton)
 * [xfgusta](https://github.com/xfgusta)
