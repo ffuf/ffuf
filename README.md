@@ -42,7 +42,7 @@ Come to hang out & to discuss about ffuf, it's usage and development!
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
   
   _or_
-- If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
+- If you have recent go compiler installed: `go install github.com/ffuf/ffuf@latest` (the same command works for updating)
   
   _or_
 - git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
