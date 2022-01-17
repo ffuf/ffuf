@@ -39,6 +39,7 @@
     stoponerrors = false
     threads = 40
     verbose = false
+    json = false
 
 [input]
     dirsearchcompat = false
