@@ -195,7 +195,7 @@ GENERAL OPTIONS:
   -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:
-  -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405)
+  -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405,500)
   -ml                 Match amount of lines in response
   -mr                 Match regexp
   -ms                 Match HTTP response size
