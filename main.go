@@ -55,6 +55,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	autocalibrationstrings = opts.General.AutoCalibrationStrings
 	headers = opts.HTTP.Headers
 	inputcommands = opts.Input.Inputcommands
+	wordlists = opts.Input.Wordlists
 
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")

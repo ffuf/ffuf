@@ -1,4 +1,7 @@
 # Contributors
+
+* [adamtlangley](https://github.com/adamtlangley)
+* [adilsoybali](https://github.com/adilsoybali)
 * [AverageSecurityGuy](https://github.com/averagesecurityguy)
 * [bp0](https://github.com/bp0lr)
 * [bjhulst](https://github.com/bjhulst)
