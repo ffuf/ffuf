@@ -45,7 +45,7 @@ Come to hang out & to discuss about ffuf, it's usage and development!
 - If you have recent go compiler installed: `go install github.com/ffuf/ffuf@latest` (the same command works for updating)
   
   _or_
-- git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
+- `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
 
 Ffuf depends on Go 1.16 or greater.
 
@@ -57,6 +57,7 @@ For more extensive documentation, with real life usage examples and tips, be sur
 "[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
 Michael Skelton ([@codingo](https://github.com/codingo)).
 
+You can also practise your ffuf scans against a live host with different lessons and use cases either locally by using the docker container https://github.com/adamtlangley/ffufme or against the live hosted version at http://ffuf.me created by Adam Langley [@adamtlangley](https://twitter.com/adamtlangley).  
 
 ### Typical directory discovery
 
@@ -195,7 +196,7 @@ GENERAL OPTIONS:
   -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:
-  -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405)
+  -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405,500)
   -ml                 Match amount of lines in response
   -mr                 Match regexp
   -ms                 Match HTTP response size
