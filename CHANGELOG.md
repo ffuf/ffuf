@@ -8,6 +8,7 @@
   - Changed
     - Fixed an issue where output file was created regardless of `-or`
     - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
+    - Fixed an issue when reading wordlist files from ffufrc
 
 - v1.3.1
   - New
