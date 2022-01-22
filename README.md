@@ -47,7 +47,7 @@ Come to hang out & to discuss about ffuf, it's usage and development!
   _or_
 - git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build 
 
-Ffuf depends on Go 1.13 or greater.
+Ffuf depends on Go 1.16 or greater.
 
 ## Example usage
 
