@@ -435,7 +435,12 @@ func (s *Stdoutput) resultNormal(res ffuf.Result) {
 
 func (s *Stdoutput) resultJson(res ffuf.Result) {
 	resBytes, err := json.Marshal(res)
-	if err != nil {s.Error(err.Error())} else {fmt.Println(string(resBytes))}
+	if err != nil {
+		s.Error(err.Error())
+	} else {
+		fmt.Fprint(os.Stderr, TERMINAL_CLEAR_LINE)
+		fmt.Println(string(resBytes))
+	}
 }
 
 func (s *Stdoutput) colorize(status int64) string {
