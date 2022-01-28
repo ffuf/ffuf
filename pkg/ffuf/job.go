@@ -216,9 +216,13 @@ func (j *Job) startExecution() {
 	wg.Add(1)
 	go j.runBackgroundTasks(&wg)
 
-	// Print the base URL when starting a new recursion queue job
+	// Print the base URL when starting a new recursion or sniper queue job
 	if j.queuepos > 1 {
-		j.Output.Info(fmt.Sprintf("Starting queued job on target: %s", j.Config.Url))
+		if j.Config.InputMode == "sniper" {
+			j.Output.Info(fmt.Sprintf("Starting queued sniper job (%d of %d) on target: %s", j.queuepos, len(j.queuejobs), j.Config.Url))
+		} else {
+			j.Output.Info(fmt.Sprintf("Starting queued job on target: %s", j.Config.Url))
+		}
 	}
 
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
