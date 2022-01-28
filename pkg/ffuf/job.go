@@ -112,7 +112,7 @@ func (j *Job) Start() {
 
 	if j.Config.InputMode == "sniper" {
 		// process multiple payload locations and create a queue job for each location
-		reqs := SniperRequests(&basereq, "§")
+		reqs := SniperRequests(&basereq, j.Config.InputProviders[0].Template)
 		for _, r := range reqs {
 			j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: r})
 		}
