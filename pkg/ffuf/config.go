@@ -51,6 +51,7 @@ type Config struct {
 	Timeout                int                       `json:"timeout"`
 	Url                    string                    `json:"url"`
 	Verbose                bool                      `json:"verbose"`
+	Http2                  bool                      `json:"http2"`
 }
 
 type InputProviderConfig struct {
@@ -96,6 +97,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Timeout = 10
 	conf.Url = ""
 	conf.Verbose = false
+	conf.Http2 = false
 	return conf
 }
 
