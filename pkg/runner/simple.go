@@ -42,12 +42,12 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			proxyURL = http.ProxyURL(pu)
 		}
 	}
-
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
+			ForceAttemptHTTP2: conf.Http2,
 			Proxy:               proxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,

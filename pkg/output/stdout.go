@@ -227,37 +227,37 @@ func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.
 	// the suffix to each output file.
 
 	s.config.OutputFile = BaseFilename + ".json"
-	err = writeJSON(filename, s.config, res)
+	err = writeJSON(s.config.OutputFile, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ejson"
-	err = writeEJSON(filename, s.config, res)
+	err = writeEJSON(s.config.OutputFile, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".html"
-	err = writeHTML(filename, s.config, res)
+	err = writeHTML(s.config.OutputFile, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".md"
-	err = writeMarkdown(filename, s.config, res)
+	err = writeMarkdown(s.config.OutputFile, s.config, res)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".csv"
-	err = writeCSV(filename, s.config, res, false)
+	err = writeCSV(s.config.OutputFile, s.config, res, false)
 	if err != nil {
 		s.Error(err.Error())
 	}
 
 	s.config.OutputFile = BaseFilename + ".ecsv"
-	err = writeCSV(filename, s.config, res, true)
+	err = writeCSV(s.config.OutputFile, s.config, res, true)
 	if err != nil {
 		s.Error(err.Error())
 	}

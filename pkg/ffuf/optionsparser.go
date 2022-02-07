@@ -40,6 +40,7 @@ type HTTPOptions struct {
 	SNI               string
 	Timeout           int
 	URL               string
+	Http2             bool
 }
 
 type GeneralOptions struct {
@@ -137,6 +138,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Timeout = 10
 	c.HTTP.SNI = ""
 	c.HTTP.URL = ""
+	c.HTTP.Http2 = false
 	c.Input.DirSearchCompat = false
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
@@ -413,6 +415,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Noninteractive = parseOpts.General.Noninteractive
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
+	conf.Http2 = parseOpts.HTTP.Http2
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
 	if len(conf.Data) > 0 &&
