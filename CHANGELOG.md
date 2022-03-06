@@ -11,6 +11,7 @@
     - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
     - Fixed an issue when reading wordlist files from ffufrc
     - Fixed an issue where `-of all` option only creates one output file (instead of all formats) 
+    - Fixed an issue where redirection to the same domain in recursive mode dropped port info from URL
     - Added HTTP2 support
 
 - v1.3.1

@@ -43,10 +43,38 @@ func (resp *Response) GetRedirectLocation(absolute bool) string {
 		if err != nil {
 			return redirectLocation
 		}
-		redirectLocation = baseUrl.ResolveReference(redirectUrl).String()
+		if redirectUrl.IsAbs() && UrlEqual(redirectUrl, baseUrl) {
+			redirectLocation = redirectUrl.Scheme + "://" +
+				baseUrl.Host + redirectUrl.Path
+		} else {
+			redirectLocation = baseUrl.ResolveReference(redirectUrl).String()
+		}
 	}
 
 	return redirectLocation
+}
+
+func UrlEqual(url1, url2 *url.URL) bool {
+	if url1.Hostname() != url2.Hostname() {
+		return false
+	}
+	if url1.Scheme != url2.Scheme {
+		return false
+	}
+	p1, p2 := getUrlPort(url1), getUrlPort(url2)
+	return p1 == p2
+}
+
+func getUrlPort(url *url.URL) string {
+	var portMap = map[string]string{
+		"http":  "80",
+		"https": "443",
+	}
+	p := url.Port()
+	if p == "" {
+		p = portMap[url.Scheme]
+	}
+	return p
 }
 
 func NewResponse(httpresp *http.Response, req *Request) Response {
