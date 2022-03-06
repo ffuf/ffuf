@@ -2,6 +2,7 @@ package output
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -359,15 +360,16 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 }
 
 func (s *Stdoutput) PrintResult(res ffuf.Result) {
-	if s.config.Quiet {
+	switch {
+	case s.config.Quiet:
 		s.resultQuiet(res)
-	} else {
-		if len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 {
-			// Print a multi-line result (when using multiple input keywords and wordlists)
-			s.resultMultiline(res)
-		} else {
-			s.resultNormal(res)
-		}
+	case s.config.Json:
+		s.resultJson(res)
+	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0:
+		// Print a multi-line result (when using multiple input keywords and wordlists)
+		s.resultMultiline(res)
+	default:
+		s.resultNormal(res)
 	}
 }
 
@@ -429,6 +431,16 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
 	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
+}
+
+func (s *Stdoutput) resultJson(res ffuf.Result) {
+	resBytes, err := json.Marshal(res)
+	if err != nil {
+		s.Error(err.Error())
+	} else {
+		fmt.Fprint(os.Stderr, TERMINAL_CLEAR_LINE)
+		fmt.Println(string(resBytes))
+	}
 }
 
 func (s *Stdoutput) colorize(status int64) string {

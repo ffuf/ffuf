@@ -49,6 +49,7 @@ type GeneralOptions struct {
 	Colors                 bool
 	ConfigFile             string `toml:"-"`
 	Delay                  string
+	Json                   bool
 	MaxTime                int
 	MaxTimeJob             int
 	Noninteractive         bool
@@ -113,6 +114,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.AutoCalibration = false
 	c.General.Colors = false
 	c.General.Delay = ""
+	c.General.Json = false
 	c.General.MaxTime = 0
 	c.General.MaxTimeJob = 0
 	c.General.Noninteractive = false
@@ -449,6 +451,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.MaxTimeJob = parseOpts.General.MaxTimeJob
 	conf.Noninteractive = parseOpts.General.Noninteractive
 	conf.Verbose = parseOpts.General.Verbose
+	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
@@ -483,6 +486,12 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf(errmsg))
 		}
 	}
+
+	// Make verbose mutually exclusive with json
+	if parseOpts.General.Verbose && parseOpts.General.Json {
+		errs.Add(fmt.Errorf("Cannot have -json and -v"))
+	}
+
 	return &conf, errs.ErrorOrNil()
 }
 

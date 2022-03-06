@@ -4,6 +4,7 @@
     - Added response time logging and filtering
     - Added a CLI flag to specify TLS SNI value
     - Added full line colors
+    - Added `-json` to emit newline delimited JSON output
     - Added 500 Internal Server Error to list of status codes matched by default
   - Changed
     - Fixed an issue where output file was created regardless of `-or`
