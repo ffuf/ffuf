@@ -20,6 +20,7 @@
 * [fang0654](https://github.com/fang0654)
 * [Hazegard](https://github.com/Hazegard)
 * [helpermika](https://github.com/helpermika)
+* [h1x](https://github.com/h1x-lnx)
 * [Ice3man543](https://github.com/Ice3man543)
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [jimen0](https://github.com/jimen0)
