@@ -42,6 +42,7 @@ type Job struct {
 type QueueJob struct {
 	Url   string
 	depth int
+	req   Request
 }
 
 func NewJob(conf *Config) *Job {
@@ -107,10 +108,22 @@ func (j *Job) Start() {
 		j.startTime = time.Now()
 	}
 
-	// Add the default job to job queue
-	j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0})
+	basereq := BaseRequest(j.Config)
+
+	if j.Config.InputMode == "sniper" {
+		// process multiple payload locations and create a queue job for each location
+		reqs := SniperRequests(&basereq, j.Config.InputProviders[0].Template)
+		for _, r := range reqs {
+			j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: r})
+		}
+		j.Total = j.Input.Total() * len(reqs)
+	} else {
+		// Add the default job to job queue
+		j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: BaseRequest(j.Config)})
+		j.Total = j.Input.Total()
+	}
+
 	rand.Seed(time.Now().UnixNano())
-	j.Total = j.Input.Total()
 	defer j.Stop()
 
 	j.Running = true
@@ -203,9 +216,13 @@ func (j *Job) startExecution() {
 	wg.Add(1)
 	go j.runBackgroundTasks(&wg)
 
-	// Print the base URL when starting a new recursion queue job
+	// Print the base URL when starting a new recursion or sniper queue job
 	if j.queuepos > 1 {
-		j.Output.Info(fmt.Sprintf("Starting queued job on target: %s", j.Config.Url))
+		if j.Config.InputMode == "sniper" {
+			j.Output.Info(fmt.Sprintf("Starting queued sniper job (%d of %d) on target: %s", j.queuepos, len(j.queuejobs), j.Config.Url))
+		} else {
+			j.Output.Info(fmt.Sprintf("Starting queued job on target: %s", j.Config.Url))
+		}
 	}
 
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
@@ -323,7 +340,8 @@ func (j *Job) isMatch(resp Response) bool {
 }
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
-	req, err := j.Runner.Prepare(input)
+	basereq := j.queuejobs[j.queuepos-1].req
+	req, err := j.Runner.Prepare(input, &basereq)
 	req.Position = position
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
@@ -360,7 +378,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
-			replayreq, err := j.ReplayRunner.Prepare(input)
+			replayreq, err := j.ReplayRunner.Prepare(input, &basereq)
 			replayreq.Position = position
 			if err != nil {
 				j.Output.Error(fmt.Sprintf("Encountered an error while preparing replayproxy request: %s\n", err))
@@ -407,7 +425,7 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 	}
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1}
+		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: BaseRequest(j.Config)}
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
@@ -417,6 +435,7 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 
 //CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
 func (j *Job) CalibrateResponses() ([]Response, error) {
+	basereq := BaseRequest(j.Config)
 	cInputs := make([]string, 0)
 	rand.Seed(time.Now().UnixNano())
 	if len(j.Config.AutoCalibrationStrings) < 1 {
@@ -435,7 +454,7 @@ func (j *Job) CalibrateResponses() ([]Response, error) {
 			inputs[v.Keyword] = []byte(input)
 		}
 
-		req, err := j.Runner.Prepare(inputs)
+		req, err := j.Runner.Prepare(inputs, &basereq)
 		if err != nil {
 			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
 			j.incError()

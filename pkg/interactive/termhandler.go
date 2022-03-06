@@ -232,7 +232,7 @@ func (i *interactive) appendFilter(name, value string) {
 
 func (i *interactive) printQueue() {
 	if len(i.Job.QueuedJobs()) > 0 {
-		i.Job.Output.Raw("Queued recursion jobs:\n")
+		i.Job.Output.Raw("Queued jobs:\n")
 		for index, job := range i.Job.QueuedJobs() {
 			postfix := ""
 			if index == 0 {
@@ -241,7 +241,7 @@ func (i *interactive) printQueue() {
 			i.Job.Output.Raw(fmt.Sprintf(" [%d] : %s%s\n", index, job.Url, postfix))
 		}
 	} else {
-		i.Job.Output.Info("Recursion job queue is empty")
+		i.Job.Output.Info("Job queue is empty")
 	}
 }
 
@@ -256,7 +256,7 @@ func (i *interactive) deleteQueue(in string) {
 			i.Job.Output.Warning("Cannot delete the currently running job. Use \"queueskip\" to advance to the next one")
 		} else {
 			i.Job.DeleteQueueItem(index)
-			i.Job.Output.Info("Recursion job successfully deleted!")
+			i.Job.Output.Info("Job successfully deleted!")
 		}
 	}
 }
@@ -296,9 +296,9 @@ available commands:
  fs  [value]             - (re)configure size filter %s
  aft [value]             - append to time filter %s
  ft  [value]			 - (re)configure time filter %s
- queueshow              - show recursive job queue
- queuedel [number]      - delete a recursion job in the queue
- queueskip              - advance to the next queued recursion job
+ queueshow              - show job queue
+ queuedel [number]      - delete a job in the queue
+ queueskip              - advance to the next queued job
  restart                - restart and resume the current ffuf job
  resume                 - resume current ffuf job (or: ENTER) 
  show                   - show results for the current job

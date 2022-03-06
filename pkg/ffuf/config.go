@@ -55,9 +55,10 @@ type Config struct {
 }
 
 type InputProviderConfig struct {
-	Name    string `json:"name"`
-	Keyword string `json:"keyword"`
-	Value   string `json:"value"`
+	Name     string `json:"name"`
+	Keyword  string `json:"keyword"`
+	Value    string `json:"value"`
+	Template string `json:"template"` // the templating string used for sniper mode (usually "§")
 }
 
 func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {

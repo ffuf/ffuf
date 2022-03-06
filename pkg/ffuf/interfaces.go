@@ -11,7 +11,7 @@ type FilterProvider interface {
 
 //RunnerProvider is an interface for request executors
 type RunnerProvider interface {
-	Prepare(input map[string][]byte) (Request, error)
+	Prepare(input map[string][]byte, basereq *Request) (Request, error)
 	Execute(req *Request) (Response, error)
 }
 

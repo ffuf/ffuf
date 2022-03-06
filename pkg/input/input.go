@@ -16,7 +16,7 @@ type MainInputProvider struct {
 func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 	validmode := false
 	errs := ffuf.NewMultierror()
-	for _, mode := range []string{"clusterbomb", "pitchfork"} {
+	for _, mode := range []string{"clusterbomb", "pitchfork", "sniper"} {
 		if conf.InputMode == mode {
 			validmode = true
 		}
@@ -68,7 +68,7 @@ func (i *MainInputProvider) Next() bool {
 //Value returns a map of inputs for keywords
 func (i *MainInputProvider) Value() map[string][]byte {
 	retval := make(map[string][]byte)
-	if i.Config.InputMode == "clusterbomb" {
+	if i.Config.InputMode == "clusterbomb" || i.Config.InputMode == "sniper" {
 		retval = i.clusterbombValue()
 	}
 	if i.Config.InputMode == "pitchfork" {
@@ -155,7 +155,7 @@ func (i *MainInputProvider) Total() int {
 			}
 		}
 	}
-	if i.Config.InputMode == "clusterbomb" {
+	if i.Config.InputMode == "clusterbomb" || i.Config.InputMode == "sniper" {
 		count = 1
 		for _, p := range i.Providers {
 			count = count * p.Total()
