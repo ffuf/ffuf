@@ -26,6 +26,7 @@ type Config struct {
 	InputNum               int                       `json:"cmd_inputnum"`
 	InputProviders         []InputProviderConfig     `json:"inputproviders"`
 	InputShell             string                    `json:"inputshell"`
+	Json                   bool                      `json:"json"`
 	Matchers               map[string]FilterProvider `json:"matchers"`
 	MaxTime                int                       `json:"maxtime"`
 	MaxTimeJob             int                       `json:"maxtime_job"`
@@ -79,6 +80,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.InputNum = 0
 	conf.InputShell = ""
 	conf.InputProviders = make([]InputProviderConfig, 0)
+	conf.Json = false
 	conf.Matchers = make(map[string]FilterProvider)
 	conf.MaxTime = 0
 	conf.MaxTimeJob = 0
