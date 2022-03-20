@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
-	"github.com/ffuf/ffuf/pkg/filter"
 )
 
 type interactive struct {
@@ -81,7 +80,7 @@ func (i *interactive) handleInput(in []byte) {
 			} else if len(args) > 2 {
 				i.Job.Output.Error("Too many arguments for \"fc\"")
 			} else {
-				i.updateFilter("status", args[1])
+				i.updateFilter("status", args[1], true)
 				i.Job.Output.Info("New status code filter value set")
 			}
 		case "afc":
@@ -99,7 +98,7 @@ func (i *interactive) handleInput(in []byte) {
 			} else if len(args) > 2 {
 				i.Job.Output.Error("Too many arguments for \"fl\"")
 			} else {
-				i.updateFilter("line", args[1])
+				i.updateFilter("line", args[1], true)
 				i.Job.Output.Info("New line count filter value set")
 			}
 		case "afl":
@@ -117,7 +116,7 @@ func (i *interactive) handleInput(in []byte) {
 			} else if len(args) > 2 {
 				i.Job.Output.Error("Too many arguments for \"fw\"")
 			} else {
-				i.updateFilter("word", args[1])
+				i.updateFilter("word", args[1], true)
 				i.Job.Output.Info("New word count filter value set")
 			}
 		case "afw":
@@ -135,7 +134,7 @@ func (i *interactive) handleInput(in []byte) {
 			} else if len(args) > 2 {
 				i.Job.Output.Error("Too many arguments for \"fs\"")
 			} else {
-				i.updateFilter("size", args[1])
+				i.updateFilter("size", args[1], true)
 				i.Job.Output.Info("New response size filter value set")
 			}
 		case "afs":
@@ -153,7 +152,7 @@ func (i *interactive) handleInput(in []byte) {
 			} else if len(args) > 2 {
 				i.Job.Output.Error("Too many arguments for \"ft\"")
 			} else {
-				i.updateFilter("time", args[1])
+				i.updateFilter("time", args[1], true)
 				i.Job.Output.Info("New response time filter value set")
 			}
 		case "aft":
@@ -192,19 +191,10 @@ func (i *interactive) handleInput(in []byte) {
 	}
 }
 
-func (i *interactive) updateFilter(name, value string) {
-	if value == "none" {
-		filter.RemoveFilter(i.Job.Config, name)
-	} else {
-		newFc, err := filter.NewFilterByName(name, value)
-		if err != nil {
-			i.Job.Output.Error(fmt.Sprintf("Error while setting new filter value: %s", err))
-			return
-		} else {
-			i.Job.Config.Filters[name] = newFc
-		}
-
-		results := make([]ffuf.Result, 0)
+func (i *interactive) refreshResults() {
+	results := make([]ffuf.Result, 0)
+	filters := i.Job.Config.MatcherManager.GetFilters()
+	for _, filter := range filters {
 		for _, res := range i.Job.Output.GetCurrentResults() {
 			fakeResp := &ffuf.Response{
 				StatusCode:    res.StatusCode,
@@ -212,22 +202,26 @@ func (i *interactive) updateFilter(name, value string) {
 				ContentWords:  res.ContentWords,
 				ContentLength: res.ContentLength,
 			}
-			filterOut, _ := newFc.Filter(fakeResp)
+			filterOut, _ := filter.Filter(fakeResp)
 			if !filterOut {
 				results = append(results, res)
 			}
 		}
-		i.Job.Output.SetCurrentResults(results)
 	}
+	i.Job.Output.SetCurrentResults(results)
+}
+
+func (i *interactive) updateFilter(name, value string, replace bool) {
+	if value == "none" {
+		i.Job.Config.MatcherManager.RemoveFilter(name)
+	} else {
+		_ = i.Job.Config.MatcherManager.AddFilter(name, value, replace)
+	}
+	i.refreshResults()
 }
 
 func (i *interactive) appendFilter(name, value string) {
-	if oldFc, found := i.Job.Config.Filters[name]; found {
-		oldVal := oldFc.Repr()
-		i.updateFilter(name, strings.Join([]string{oldVal, value}, ","))
-	} else {
-		i.updateFilter(name, value)
-	}
+	i.updateFilter(name, value, false)
 }
 
 func (i *interactive) printQueue() {
@@ -270,7 +264,7 @@ func (i *interactive) printPrompt() {
 
 func (i *interactive) printHelp() {
 	var fc, fl, fs, ft, fw string
-	for name, filter := range i.Job.Config.Filters {
+	for name, filter := range i.Job.Config.MatcherManager.GetFilters() {
 		switch name {
 		case "status":
 			fc = "(active: " + filter.Repr() + ")"
