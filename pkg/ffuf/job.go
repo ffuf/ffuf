@@ -36,6 +36,7 @@ type Job struct {
 	queuepos             int
 	skipQueue            bool
 	currentDepth         int
+	calibMutex           sync.Mutex
 	pauseWg              sync.WaitGroup
 }
 
@@ -314,7 +315,15 @@ func (j *Job) updateProgress() {
 
 func (j *Job) isMatch(resp Response) bool {
 	matched := false
-	for _, m := range j.Config.Matchers {
+	var matchers map[string]FilterProvider
+	var filters map[string]FilterProvider
+	if j.Config.AutoCalibrationPerHost {
+		filters = j.Config.MatcherManager.FiltersForDomain(resp.Request.Host)
+	} else {
+		filters = j.Config.MatcherManager.GetFilters()
+	}
+	matchers = j.Config.MatcherManager.GetMatchers()
+	for _, m := range matchers {
 		match, err := m.Filter(&resp)
 		if err != nil {
 			continue
@@ -327,7 +336,7 @@ func (j *Job) isMatch(resp Response) bool {
 	if !matched {
 		return false
 	}
-	for _, f := range j.Config.Filters {
+	for _, f := range filters {
 		fv, err := f.Filter(&resp)
 		if err != nil {
 			continue
@@ -349,6 +358,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		log.Printf("%s", err)
 		return
 	}
+
 	resp, err := j.Runner.Execute(&req)
 	if err != nil {
 		if retried {
@@ -375,6 +385,10 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 	j.pauseWg.Wait()
+
+	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
+	_ = j.CalibrateIfNeeded(req.Host, input)
+
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
@@ -407,7 +421,7 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		recUrl := resp.Request.Url + "/" + "FUZZ"
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1}
+		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: BaseRequest(j.Config)}
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
@@ -431,47 +445,6 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 	} else {
 		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
 	}
-}
-
-//CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
-func (j *Job) CalibrateResponses() ([]Response, error) {
-	basereq := BaseRequest(j.Config)
-	cInputs := make([]string, 0)
-	rand.Seed(time.Now().UnixNano())
-	if len(j.Config.AutoCalibrationStrings) < 1 {
-		cInputs = append(cInputs, "admin"+RandomString(16)+"/")
-		cInputs = append(cInputs, ".htaccess"+RandomString(16))
-		cInputs = append(cInputs, RandomString(16)+"/")
-		cInputs = append(cInputs, RandomString(16))
-	} else {
-		cInputs = append(cInputs, j.Config.AutoCalibrationStrings...)
-	}
-
-	results := make([]Response, 0)
-	for _, input := range cInputs {
-		inputs := make(map[string][]byte, len(j.Config.InputProviders))
-		for _, v := range j.Config.InputProviders {
-			inputs[v.Keyword] = []byte(input)
-		}
-
-		req, err := j.Runner.Prepare(inputs, &basereq)
-		if err != nil {
-			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
-			j.incError()
-			log.Printf("%s", err)
-			return results, err
-		}
-		resp, err := j.Runner.Execute(&req)
-		if err != nil {
-			return results, err
-		}
-
-		// Only calibrate on responses that would be matched otherwise
-		if j.isMatch(resp) {
-			results = append(results, resp)
-		}
-	}
-	return results, nil
 }
 
 // CheckStop stops the job if stopping conditions are met

@@ -6,6 +6,7 @@
     - Added full line colors
     - Added `-json` to emit newline delimited JSON output
     - Added 500 Internal Server Error to list of status codes matched by default
+    - New autocalibration options: `-ach`, `-ack` and `-acs`. Revamped the whole autocalibration process
   - Changed
     - Fixed an issue where output file was created regardless of `-or`
     - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode

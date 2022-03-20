@@ -124,11 +124,11 @@ func (s *Stdoutput) Banner() {
 	}
 
 	// Print matchers
-	for _, f := range s.config.Matchers {
+	for _, f := range s.config.MatcherManager.GetMatchers() {
 		printOption([]byte("Matcher"), []byte(f.ReprVerbose()))
 	}
 	// Print filters
-	for _, f := range s.config.Filters {
+	for _, f := range s.config.MatcherManager.GetFilters() {
 		printOption([]byte("Filter"), []byte(f.ReprVerbose()))
 	}
 	fmt.Fprintf(os.Stderr, "%s\n\n", BANNER_SEP)

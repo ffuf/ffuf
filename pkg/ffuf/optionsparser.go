@@ -44,23 +44,26 @@ type HTTPOptions struct {
 }
 
 type GeneralOptions struct {
-	AutoCalibration        bool
-	AutoCalibrationStrings []string
-	Colors                 bool
-	ConfigFile             string `toml:"-"`
-	Delay                  string
-	Json                   bool
-	MaxTime                int
-	MaxTimeJob             int
-	Noninteractive         bool
-	Quiet                  bool
-	Rate                   int
-	ShowVersion            bool `toml:"-"`
-	StopOn403              bool
-	StopOnAll              bool
-	StopOnErrors           bool
-	Threads                int
-	Verbose                bool
+	AutoCalibration         bool
+	AutoCalibrationKeyword  string
+	AutoCalibrationPerHost  bool
+	AutoCalibrationStrategy string
+	AutoCalibrationStrings  []string
+	Colors                  bool
+	ConfigFile              string `toml:"-"`
+	Delay                   string
+	Json                    bool
+	MaxTime                 int
+	MaxTimeJob              int
+	Noninteractive          bool
+	Quiet                   bool
+	Rate                    int
+	ShowVersion             bool `toml:"-"`
+	StopOn403               bool
+	StopOnAll               bool
+	StopOnErrors            bool
+	Threads                 int
+	Verbose                 bool
 }
 
 type InputOptions struct {
@@ -112,6 +115,8 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Time = ""
 	c.Filter.Words = ""
 	c.General.AutoCalibration = false
+	c.General.AutoCalibrationKeyword = "FUZZ"
+	c.General.AutoCalibrationStrategy = "basic"
 	c.General.Colors = false
 	c.General.Delay = ""
 	c.General.Json = false
@@ -445,6 +450,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
+	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
+	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
@@ -453,6 +460,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+
+	if conf.AutoCalibrationPerHost {
+		// AutoCalibrationPerHost implies AutoCalibration
+		conf.AutoCalibration = true
+	}
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
 	if len(conf.Data) > 0 &&
@@ -557,6 +569,7 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 	conf.Data = string(b)
 
 	// Remove newline (typically added by the editor) at the end of the file
+	//nolint:gosimple // we specifically want to remove just a single newline, not all of them
 	if strings.HasSuffix(conf.Data, "\r\n") {
 		conf.Data = conf.Data[:len(conf.Data)-2]
 	} else if strings.HasSuffix(conf.Data, "\n") {

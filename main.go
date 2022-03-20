@@ -4,13 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/ffuf/ffuf/pkg/filter"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
-	"github.com/ffuf/ffuf/pkg/filter"
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/interactive"
 	"github.com/ffuf/ffuf/pkg/output"
@@ -62,6 +62,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
 	flag.BoolVar(&opts.Output.OutputSkipEmptyFile, "or", opts.Output.OutputSkipEmptyFile, "Don't create the output file if we don't have results")
 	flag.BoolVar(&opts.General.AutoCalibration, "ac", opts.General.AutoCalibration, "Automatically calibrate filtering options")
+	flag.BoolVar(&opts.General.AutoCalibrationPerHost, "ach", opts.General.AutoCalibration, "Per host autocalibration")
 	flag.BoolVar(&opts.General.Colors, "c", opts.General.Colors, "Colorize output.")
 	flag.BoolVar(&opts.General.Json, "json", opts.General.Json, "JSON output, printing newline-delimited JSON records")
 	flag.BoolVar(&opts.General.Noninteractive, "noninteractive", opts.General.Noninteractive, "Disable the interactive console functionality")
@@ -84,6 +85,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.IntVar(&opts.HTTP.RecursionDepth, "recursion-depth", opts.HTTP.RecursionDepth, "Maximum recursion depth.")
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
+	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
 	flag.StringVar(&opts.Filter.Lines, "fl", opts.Filter.Lines, "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&opts.Filter.Regexp, "fr", opts.Filter.Regexp, "Filter regexp")
@@ -195,17 +198,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
-	if err := filter.SetupFilters(opts, conf); err != nil {
+	if err := SetupFilters(opts, conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := filter.CalibrateIfNeeded(job); err != nil {
-		fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
-		os.Exit(1)
-	}
 	if !conf.Noninteractive {
 		go func() {
 			err := interactive.Handle(job)
@@ -232,4 +231,105 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	// We only have stdout outputprovider right now
 	job.Output = output.NewOutputProviderByName("stdout", conf)
 	return job, errs.ErrorOrNil()
+}
+
+func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
+	errs := ffuf.NewMultierror()
+	conf.MatcherManager = filter.NewMatcherManager()
+	// If any other matcher is set, ignore -mc default value
+	matcherSet := false
+	statusSet := false
+	warningIgnoreBody := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "mc" {
+			statusSet = true
+		}
+		if f.Name == "ms" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+		if f.Name == "ml" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+		if f.Name == "mr" {
+			matcherSet = true
+		}
+		if f.Name == "mt" {
+			matcherSet = true
+		}
+		if f.Name == "mw" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+	})
+	// Only set default matchers if no
+	if statusSet || !matcherSet {
+		if err := conf.MatcherManager.AddMatcher("status", parseOpts.Matcher.Status); err != nil {
+			errs.Add(err)
+		}
+	}
+
+	if parseOpts.Filter.Status != "" {
+		if err := conf.MatcherManager.AddFilter("status", parseOpts.Filter.Status, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Size != "" {
+		warningIgnoreBody = true
+		if err := conf.MatcherManager.AddFilter("size", parseOpts.Filter.Size, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Regexp != "" {
+		if err := conf.MatcherManager.AddFilter("regexp", parseOpts.Filter.Regexp, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Words != "" {
+		warningIgnoreBody = true
+		if err := conf.MatcherManager.AddFilter("word", parseOpts.Filter.Words, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Lines != "" {
+		warningIgnoreBody = true
+		if err := conf.MatcherManager.AddFilter("line", parseOpts.Filter.Lines, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Time != "" {
+		if err := conf.MatcherManager.AddFilter("time", parseOpts.Filter.Time, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Size != "" {
+		if err := conf.MatcherManager.AddMatcher("size", parseOpts.Matcher.Size); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Regexp != "" {
+		if err := conf.MatcherManager.AddMatcher("regexp", parseOpts.Matcher.Regexp); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Words != "" {
+		if err := conf.MatcherManager.AddMatcher("word", parseOpts.Matcher.Words); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Lines != "" {
+		if err := conf.MatcherManager.AddMatcher("line", parseOpts.Matcher.Lines); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Time != "" {
+		if err := conf.MatcherManager.AddFilter("time", parseOpts.Matcher.Time, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if conf.IgnoreBody && warningIgnoreBody {
+		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
+	}
+	return errs.ErrorOrNil()
 }
