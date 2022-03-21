@@ -2,7 +2,6 @@
 
 * [adamtlangley](https://github.com/adamtlangley)
 * [adilsoybali](https://github.com/adilsoybali)
-* [penguinx3](https://github.com/penguinx3)
 * [AverageSecurityGuy](https://github.com/averagesecurityguy)
 * [bp0](https://github.com/bp0lr)
 * [bjhulst](https://github.com/bjhulst)
@@ -35,6 +34,7 @@
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
+* [penguinxoxo](https://github.com/penguinxoxo)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
 * [seblw](https://github.com/seblw)
