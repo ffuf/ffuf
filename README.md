@@ -1,4 +1,4 @@
-![ffuf mascot](_img/ffuf_mascot_600.png)
+![ffuf mascot](_img/ffuf_run_logo_600.png)
 # ffuf - Fuzz Faster U Fool
 
 A fast web fuzzer written in Go.
