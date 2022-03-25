@@ -26,9 +26,6 @@ Come to hang out & to discuss about ffuf, it's usage and development!
 
 [![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner2)](https://discord.gg/VWcdZCUsQP)
 
-
-
-
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
@@ -145,6 +142,10 @@ In this case, the `-H` values provided on the command line will be _appended_ to
 Additionally, in case you wish to use bunch of configuration files for different use cases, you can do this by defining
 the configuration file path using `-config` command line flag that takes the file path to the configuration file as its
 parameter. 
+
+<p align="center">
+  <img width="250" src="_img/ffuf_juggling_250.png">
+</p>
 
 ## Usage
 
@@ -276,6 +277,10 @@ would have been found by `ffuf`.
 As "negative" matches are not stored to memory, relaxing the filters cannot unfortunately bring back the lost matches.
 For this kind of scenario, the user is able to use the command `restart`, which resets the state and starts the current
 job from the beginning.
+
+<p align="center">
+  <img width="250" src="_img/ffuf_waving_250.png">
+</p>
 
 
 ## Sponsorware
