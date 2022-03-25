@@ -55,7 +55,7 @@ func (w *WordlistInput) Keyword() string {
 	return w.keyword
 }
 
-//Next will increment the cursor position, and return a boolean telling if there's words left in the list
+//Next will return a boolean telling if there's words left in the list
 func (w *WordlistInput) Next() bool {
 	return w.position < len(w.data)
 }

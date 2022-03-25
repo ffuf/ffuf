@@ -34,6 +34,7 @@
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
+* [penguinxoxo](https://github.com/penguinxoxo)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
 * [seblw](https://github.com/seblw)
