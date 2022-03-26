@@ -2,7 +2,7 @@ package ffuf
 
 var (
 	//VERSION holds the current version number
-	VERSION = "1.3.1"
+	VERSION = "1.4.0"
 	//VERSION_APPENDIX holds additional version definition
 	VERSION_APPENDIX = "-exclusive-dev"
 )
