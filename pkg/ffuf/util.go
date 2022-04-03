@@ -3,6 +3,7 @@ package ffuf
 import (
 	"fmt"
 	"math/rand"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -64,6 +65,15 @@ func RequestContainsKeyword(req Request, kw string) bool {
 		}
 	}
 	return false
+}
+
+//HostURLFromRequest gets a host + path without the filename or last part of the URL path
+func HostURLFromRequest(req Request) string {
+	u, _ := url.Parse(req.Url)
+	u.Host = req.Host
+	pathparts := strings.Split(u.Path, "/")
+	trimpath := strings.TrimSpace(strings.Join(pathparts[:len(pathparts)-1], "/"))
+	return u.Host + trimpath
 }
 
 //Version returns the ffuf version string

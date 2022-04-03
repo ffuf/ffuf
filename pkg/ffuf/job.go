@@ -329,7 +329,7 @@ func (j *Job) isMatch(resp Response) bool {
 	var matchers map[string]FilterProvider
 	var filters map[string]FilterProvider
 	if j.Config.AutoCalibrationPerHost {
-		filters = j.Config.MatcherManager.FiltersForDomain(resp.Request.Host)
+		filters = j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*resp.Request))
 	} else {
 		filters = j.Config.MatcherManager.GetFilters()
 	}
@@ -415,7 +415,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	j.pauseWg.Wait()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
-	_ = j.CalibrateIfNeeded(req.Host, input)
+	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
 
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed

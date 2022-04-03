@@ -55,14 +55,18 @@ func (j *Job) calibrationRequest(inputs map[string][]byte) (Response, error) {
 }
 
 //CalibrateForHost runs autocalibration for a specific host
-func (j *Job) CalibrateForHost(host string, input map[string][]byte) error {
+func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 	if j.Config.MatcherManager.CalibratedForDomain(host) {
 		return nil
 	}
-	if input[j.Config.AutoCalibrationKeyword] == nil {
+	if baseinput[j.Config.AutoCalibrationKeyword] == nil {
 		return fmt.Errorf("Autocalibration keyword \"%s\" not found in the request.", j.Config.AutoCalibrationKeyword)
 	}
 	cStrings := j.autoCalibrationStrings()
+	input := make(map[string][]byte)
+	for k, v := range baseinput {
+		input[k] = v
+	}
 	for _, v := range cStrings {
 		responses := make([]Response, 0)
 		for _, cs := range v {
@@ -136,14 +140,14 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		if sizeMatch {
 			if perHost {
 				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(responses[0].Request.Host) {
+				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
 					if match {
 						// Already filtered
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(responses[0].Request.Host, "size", strconv.FormatInt(baselineSize, 10))
+				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "size", strconv.FormatInt(baselineSize, 10))
 				return nil
 			} else {
 				// Check if already filtered
@@ -170,14 +174,14 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		if wordsMatch {
 			if perHost {
 				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(responses[0].Request.Host) {
+				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
 					if match {
 						// Already filtered
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(responses[0].Request.Host, "word", strconv.FormatInt(baselineWords, 10))
+				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "word", strconv.FormatInt(baselineWords, 10))
 				return nil
 			} else {
 				// Check if already filtered
@@ -204,14 +208,14 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		if linesMatch {
 			if perHost {
 				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(responses[0].Request.Host) {
+				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
 					if match {
 						// Already filtered
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(responses[0].Request.Host, "line", strconv.FormatInt(baselineLines, 10))
+				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "line", strconv.FormatInt(baselineLines, 10))
 				return nil
 			} else {
 				// Check if already filtered
