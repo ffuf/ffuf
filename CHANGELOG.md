@@ -1,6 +1,10 @@
 ## Changelog
 - master
   - New
+  - Changed
+  
+- v1.5.0
+  - New
     - New autocalibration options: `-ach`, `-ack` and `-acs`. Revamped the whole autocalibration process
     - Configurable modes for matchers and filters (CLI flags: `fmode` and `mmode`): "and" and "or"
   - Changed
