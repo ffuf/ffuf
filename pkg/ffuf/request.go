@@ -32,6 +32,13 @@ func BaseRequest(conf *Config) Request {
 	return req
 }
 
+// RecursionRequest returns a base request for a recursion target
+func RecursionRequest(conf *Config, path string) Request {
+	r := BaseRequest(conf)
+	r.Url = path
+	return r
+}
+
 // CopyRequest performs a deep copy of a request and returns a new struct
 func CopyRequest(basereq *Request) Request {
 	var req Request

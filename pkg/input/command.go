@@ -12,6 +12,7 @@ import (
 type CommandInput struct {
 	config  *ffuf.Config
 	count   int
+	active  bool
 	keyword string
 	command string
 	shell   string
@@ -19,6 +20,7 @@ type CommandInput struct {
 
 func NewCommandInput(keyword string, value string, conf *ffuf.Config) (*CommandInput, error) {
 	var cmd CommandInput
+	cmd.active = true
 	cmd.keyword = keyword
 	cmd.config = conf
 	cmd.count = 0
@@ -73,4 +75,16 @@ func (c *CommandInput) Value() []byte {
 //Total returns the size of wordlist
 func (c *CommandInput) Total() int {
 	return c.config.InputNum
+}
+
+func (c *CommandInput) Active() bool {
+	return c.active
+}
+
+func (c *CommandInput) Enable() {
+	c.active = true
+}
+
+func (c *CommandInput) Disable() {
+	c.active = false
 }

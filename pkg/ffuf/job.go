@@ -167,6 +167,17 @@ func (j *Job) jobsInQueue() bool {
 func (j *Job) prepareQueueJob() {
 	j.Config.Url = j.queuejobs[j.queuepos].Url
 	j.currentDepth = j.queuejobs[j.queuepos].depth
+
+	//Find all keywords present in new queued job
+	kws := j.Input.Keywords()
+	found_kws := make([]string, 0)
+	for _, k := range kws {
+		if RequestContainsKeyword(j.queuejobs[j.queuepos].req, k) {
+			found_kws = append(found_kws, k)
+		}
+	}
+	//And activate / disable inputproviders as needed
+	j.Input.ActivateKeywords(found_kws)
 	j.queuepos += 1
 }
 
@@ -407,7 +418,7 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		recUrl := resp.Request.Url + "/" + "FUZZ"
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1}
+		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
@@ -425,7 +436,7 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 	}
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: BaseRequest(j.Config)}
+		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {

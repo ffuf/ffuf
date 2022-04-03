@@ -10,6 +10,7 @@ import (
 )
 
 type WordlistInput struct {
+	active   bool
 	config   *ffuf.Config
 	data     [][]byte
 	position int
@@ -18,6 +19,7 @@ type WordlistInput struct {
 
 func NewWordlistInput(keyword string, value string, conf *ffuf.Config) (*WordlistInput, error) {
 	var wl WordlistInput
+	wl.active = true
 	wl.keyword = keyword
 	wl.config = conf
 	wl.position = 0
@@ -73,6 +75,21 @@ func (w *WordlistInput) Value() []byte {
 //Total returns the size of wordlist
 func (w *WordlistInput) Total() int {
 	return len(w.data)
+}
+
+//Active returns boolean if the inputprovider is active
+func (w *WordlistInput) Active() bool {
+	return w.active
+}
+
+//Enable sets the inputprovider as active
+func (w *WordlistInput) Enable() {
+	w.active = true
+}
+
+//Disable disables the inputprovider
+func (w *WordlistInput) Disable() {
+	w.active = false
 }
 
 //validFile checks that the wordlist file exists and can be read
