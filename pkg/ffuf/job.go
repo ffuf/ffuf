@@ -341,6 +341,10 @@ func (j *Job) isMatch(resp Response) bool {
 		}
 		if match {
 			matched = true
+		} else if j.Config.MatcherMode == "and" {
+			// we already know this isn't "and" match
+			return false
+
 		}
 	}
 	// The response was not matched, return before running filters
@@ -353,8 +357,21 @@ func (j *Job) isMatch(resp Response) bool {
 			continue
 		}
 		if fv {
-			return false
+			//	return false
+			if j.Config.FilterMode == "or" {
+				// return early, as filter matched
+				return false
+			}
+		} else {
+			if j.Config.FilterMode == "and" {
+				// return early as not all filters matched in "and" mode
+				return true
+			}
 		}
+	}
+	if len(filters) > 0 && j.Config.FilterMode == "and" {
+		// we did not return early, so all filters were matched
+		return false
 	}
 	return true
 }

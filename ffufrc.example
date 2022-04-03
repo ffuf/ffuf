@@ -69,6 +69,7 @@
     outputcreateemptyfile = false
 
 [filter]
+    mode = "or"
     lines = ""
     regexp = ""
     size = ""
@@ -77,6 +78,7 @@
     words = ""
 
 [matcher]
+    mode = "or"
     lines = ""
     regexp = ""
     size = ""

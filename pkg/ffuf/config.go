@@ -20,6 +20,7 @@ type Config struct {
 	Delay                   optRange              `json:"delay"`
 	DirSearchCompat         bool                  `json:"dirsearch_compatibility"`
 	Extensions              []string              `json:"extensions"`
+	FilterMode              string                `json:"fmode"`
 	FollowRedirects         bool                  `json:"follow_redirects"`
 	Headers                 map[string]string     `json:"headers"`
 	IgnoreBody              bool                  `json:"ignorebody"`
@@ -30,6 +31,7 @@ type Config struct {
 	InputShell              string                `json:"inputshell"`
 	Json                    bool                  `json:"json"`
 	MatcherManager          MatcherManager        `json:"matchers"`
+	MatcherMode             string                `json:"mmode"`
 	MaxTime                 int                   `json:"maxtime"`
 	MaxTimeJob              int                   `json:"maxtime_job"`
 	Method                  string                `json:"method"`
@@ -76,6 +78,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Delay = optRange{0, 0, false, false}
 	conf.DirSearchCompat = false
 	conf.Extensions = make([]string, 0)
+	conf.FilterMode = "or"
 	conf.FollowRedirects = false
 	conf.Headers = make(map[string]string)
 	conf.IgnoreWordlistComments = false
@@ -84,6 +87,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.InputShell = ""
 	conf.InputProviders = make([]InputProviderConfig, 0)
 	conf.Json = false
+	conf.MatcherMode = "or"
 	conf.MaxTime = 0
 	conf.MaxTimeJob = 0
 	conf.Method = "GET"

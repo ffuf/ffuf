@@ -88,6 +88,7 @@ type OutputOptions struct {
 }
 
 type FilterOptions struct {
+	Mode   string
 	Lines  string
 	Regexp string
 	Size   string
@@ -97,6 +98,7 @@ type FilterOptions struct {
 }
 
 type MatcherOptions struct {
+	Mode   string
 	Lines  string
 	Regexp string
 	Size   string
@@ -108,6 +110,7 @@ type MatcherOptions struct {
 //NewConfigOptions returns a newly created ConfigOptions struct with default values
 func NewConfigOptions() *ConfigOptions {
 	c := &ConfigOptions{}
+	c.Filter.Mode = "or"
 	c.Filter.Lines = ""
 	c.Filter.Regexp = ""
 	c.Filter.Size = ""
@@ -151,6 +154,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.InputNum = 100
 	c.Input.Request = ""
 	c.Input.RequestProto = "https"
+	c.Matcher.Mode = "or"
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
@@ -460,6 +464,29 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+
+	// Check that fmode and mmode have sane values
+	valid_opmodes := []string{"and", "or"}
+	fmode_found := false
+	mmode_found := false
+	for _, v := range valid_opmodes {
+		if v == parseOpts.Filter.Mode {
+			fmode_found = true
+		}
+		if v == parseOpts.Matcher.Mode {
+			mmode_found = true
+		}
+	}
+	if !fmode_found {
+		errmsg := fmt.Sprintf("Unrecognized value for parameter fmode: %s, valid values are: and, or", parseOpts.Filter.Mode)
+		errs.Add(fmt.Errorf(errmsg))
+	}
+	if !mmode_found {
+		errmsg := fmt.Sprintf("Unrecognized value for parameter mmode: %s, valid values are: and, or", parseOpts.Matcher.Mode)
+		errs.Add(fmt.Errorf(errmsg))
+	}
+	conf.FilterMode = parseOpts.Filter.Mode
+	conf.MatcherMode = parseOpts.Matcher.Mode
 
 	if conf.AutoCalibrationPerHost {
 		// AutoCalibrationPerHost implies AutoCalibration
