@@ -2,6 +2,8 @@
 - master
   - New
   - Changed
+    - Fixed a bug with recursion, introduced in the 1.4.0 release
+    - Recursion now works better with multiple wordlists, disabling unnecessary wordlists for queued jobs where needed
   
 - v1.4.0
   - New

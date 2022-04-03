@@ -17,7 +17,9 @@ type RunnerProvider interface {
 
 //InputProvider interface handles the input data for RunnerProvider
 type InputProvider interface {
+	ActivateKeywords([]string)
 	AddProvider(InputProviderConfig) error
+	Keywords() []string
 	Next() bool
 	Position() int
 	Reset()
@@ -34,6 +36,9 @@ type InternalInputProvider interface {
 	IncrementPosition()
 	Value() []byte
 	Total() int
+	Active() bool
+	Enable()
+	Disable()
 }
 
 //OutputProvider is responsible of providing output from the RunnerProvider

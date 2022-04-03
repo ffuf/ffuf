@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 )
 
 //used for random string generation in calibration function
@@ -41,6 +42,28 @@ func FileExists(path string) bool {
 	}
 
 	return !md.IsDir()
+}
+
+//RequestContainsKeyword checks if a keyword is present in any field of a request
+func RequestContainsKeyword(req Request, kw string) bool {
+	if strings.Contains(req.Host, kw) {
+		return true
+	}
+	if strings.Contains(req.Url, kw) {
+		return true
+	}
+	if strings.Contains(req.Method, kw) {
+		return true
+	}
+	if strings.Contains(string(req.Data), kw) {
+		return true
+	}
+	for k, v := range req.Headers {
+		if strings.Contains(k, kw) || strings.Contains(v, kw) {
+			return true
+		}
+	}
+	return false
 }
 
 //Version returns the ffuf version string

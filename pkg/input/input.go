@@ -51,9 +51,29 @@ func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error
 	return nil
 }
 
+// ActivateKeywords enables / disables wordlists based on list of active keywords
+func (i *MainInputProvider) ActivateKeywords(kws []string) {
+	for _, p := range i.Providers {
+		if sliceContains(kws, p.Keyword()) {
+			p.Active()
+		} else {
+			p.Disable()
+		}
+	}
+}
+
 //Position will return the current position of progress
 func (i *MainInputProvider) Position() int {
 	return i.position
+}
+
+//Keywords returns a slice of all keywords in the inputprovider
+func (i *MainInputProvider) Keywords() []string {
+	kws := make([]string, 0)
+	for _, p := range i.Providers {
+		kws = append(kws, p.Keyword())
+	}
+	return kws
 }
 
 //Next will increment the cursor position, and return a boolean telling if there's inputs left
@@ -91,6 +111,10 @@ func (i *MainInputProvider) Reset() {
 func (i *MainInputProvider) pitchforkValue() map[string][]byte {
 	values := make(map[string][]byte)
 	for _, p := range i.Providers {
+		if !p.Active() {
+			// The inputprovider is disabled
+			continue
+		}
 		if !p.Next() {
 			// Loop to beginning if the inputprovider has been exhausted
 			p.ResetPosition()
@@ -108,7 +132,11 @@ func (i *MainInputProvider) clusterbombValue() map[string][]byte {
 	// Should we signal the next InputProvider in the slice to increment
 	signalNext := false
 	first := true
-	for index, p := range i.Providers {
+	index := 0
+	for _, p := range i.Providers {
+		if !p.Active() {
+			continue
+		}
 		if signalNext {
 			p.IncrementPosition()
 			signalNext = false
@@ -130,18 +158,24 @@ func (i *MainInputProvider) clusterbombValue() map[string][]byte {
 			p.IncrementPosition()
 			first = false
 		}
+		index += 1
 	}
 	return values
 }
 
 func (i *MainInputProvider) clusterbombIteratorReset() {
-	for index, p := range i.Providers {
+	index := 0
+	for _, p := range i.Providers {
+		if !p.Active() {
+			continue
+		}
 		if index < i.msbIterator {
 			p.ResetPosition()
 		}
 		if index == i.msbIterator {
 			p.IncrementPosition()
 		}
+		index += 1
 	}
 }
 
@@ -150,6 +184,9 @@ func (i *MainInputProvider) Total() int {
 	count := 0
 	if i.Config.InputMode == "pitchfork" {
 		for _, p := range i.Providers {
+			if !p.Active() {
+				continue
+			}
 			if p.Total() > count {
 				count = p.Total()
 			}
@@ -158,8 +195,21 @@ func (i *MainInputProvider) Total() int {
 	if i.Config.InputMode == "clusterbomb" || i.Config.InputMode == "sniper" {
 		count = 1
 		for _, p := range i.Providers {
+			if !p.Active() {
+				continue
+			}
 			count = count * p.Total()
 		}
 	}
 	return count
+}
+
+//sliceContains is a helper function that returns true if a string is included in a string slice
+func sliceContains(sslice []string, str string) bool {
+	for _, v := range sslice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
