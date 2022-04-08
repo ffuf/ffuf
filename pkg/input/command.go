@@ -12,16 +12,25 @@ import (
 type CommandInput struct {
 	config  *ffuf.Config
 	count   int
+	active  bool
 	keyword string
 	command string
+	shell   string
 }
 
 func NewCommandInput(keyword string, value string, conf *ffuf.Config) (*CommandInput, error) {
 	var cmd CommandInput
+	cmd.active = true
 	cmd.keyword = keyword
 	cmd.config = conf
 	cmd.count = 0
 	cmd.command = value
+	cmd.shell = SHELL_CMD
+
+	if cmd.config.InputShell != "" {
+		cmd.shell = cmd.config.InputShell
+	}
+
 	return &cmd, nil
 }
 
@@ -54,7 +63,7 @@ func (c *CommandInput) Next() bool {
 func (c *CommandInput) Value() []byte {
 	var stdout bytes.Buffer
 	os.Setenv("FFUF_NUM", strconv.Itoa(c.count))
-	cmd := exec.Command(SHELL_CMD, SHELL_ARG, c.command)
+	cmd := exec.Command(c.shell, SHELL_ARG, c.command)
 	cmd.Stdout = &stdout
 	err := cmd.Run()
 	if err != nil {
@@ -66,4 +75,16 @@ func (c *CommandInput) Value() []byte {
 //Total returns the size of wordlist
 func (c *CommandInput) Total() int {
 	return c.config.InputNum
+}
+
+func (c *CommandInput) Active() bool {
+	return c.active
+}
+
+func (c *CommandInput) Enable() {
+	c.active = true
+}
+
+func (c *CommandInput) Disable() {
+	c.active = false
 }

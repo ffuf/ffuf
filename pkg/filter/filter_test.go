@@ -29,6 +29,11 @@ func TestNewFilterByName(t *testing.T) {
 	if _, ok := ref.(*RegexpFilter); !ok {
 		t.Errorf("Was expecting regexpfilter")
 	}
+
+	tf, _ := NewFilterByName("time", "200")
+	if _, ok := tf.(*TimeFilter); !ok {
+		t.Errorf("Was expecting timefilter")
+	}
 }
 
 func TestNewFilterByNameError(t *testing.T) {

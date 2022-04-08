@@ -9,10 +9,10 @@ import (
 )
 
 type ejsonFileOutput struct {
-	CommandLine string       `json:"commandline"`
-	Time        string       `json:"time"`
-	Results     []Result     `json:"results"`
-	Config      *ffuf.Config `json:"config"`
+	CommandLine string        `json:"commandline"`
+	Time        string        `json:"time"`
+	Results     []ffuf.Result `json:"results"`
+	Config      *ffuf.Config  `json:"config"`
 }
 
 type JsonResult struct {
@@ -22,7 +22,9 @@ type JsonResult struct {
 	ContentLength    int64             `json:"length"`
 	ContentWords     int64             `json:"words"`
 	ContentLines     int64             `json:"lines"`
+	ContentType      string            `json:"content-type"`
 	RedirectLocation string            `json:"redirectlocation"`
+	Duration         time.Duration     `json:"duration"`
 	ResultFile       string            `json:"resultfile"`
 	Url              string            `json:"url"`
 	Host             string            `json:"host"`
@@ -35,7 +37,7 @@ type jsonFileOutput struct {
 	Config      *ffuf.Config `json:"config"`
 }
 
-func writeEJSON(config *ffuf.Config, res []Result) error {
+func writeEJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	t := time.Now()
 	outJSON := ejsonFileOutput{
 		CommandLine: config.CommandLine,
@@ -47,14 +49,14 @@ func writeEJSON(config *ffuf.Config, res []Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(config.OutputFile, outBytes, 0644)
+	err = ioutil.WriteFile(filename, outBytes, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeJSON(config *ffuf.Config, res []Result) error {
+func writeJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	t := time.Now()
 	jsonRes := make([]JsonResult, 0)
 	for _, r := range res {
@@ -69,7 +71,9 @@ func writeJSON(config *ffuf.Config, res []Result) error {
 			ContentLength:    r.ContentLength,
 			ContentWords:     r.ContentWords,
 			ContentLines:     r.ContentLines,
+			ContentType:      r.ContentType,
 			RedirectLocation: r.RedirectLocation,
+			Duration:         r.Duration,
 			ResultFile:       r.ResultFile,
 			Url:              r.Url,
 			Host:             r.Host,
@@ -85,7 +89,7 @@ func writeJSON(config *ffuf.Config, res []Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(config.OutputFile, outBytes, 0644)
+	err = ioutil.WriteFile(filename, outBytes, 0644)
 	if err != nil {
 		return err
 	}

@@ -14,14 +14,13 @@ const (
   Command line : ` + "`{{.CommandLine}}`" + `
   Time: ` + "{{ .Time }}" + `
 
-  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | ResultFile |
-  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- |
-  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ResultFile }} |
+  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile |
+  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- |
+  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} |
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
-func writeMarkdown(config *ffuf.Config, res []Result) error {
-
+func writeMarkdown(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	ti := time.Now()
 
 	keywords := make([]string, 0)
@@ -36,7 +35,7 @@ func writeMarkdown(config *ffuf.Config, res []Result) error {
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(config.OutputFile)
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}

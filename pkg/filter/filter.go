@@ -25,26 +25,33 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "regexp" {
 		return NewRegexpFilter(value)
 	}
+	if name == "time" {
+		return NewTimeFilter(value)
+	}
 	return nil, fmt.Errorf("Could not create filter with name %s", name)
 }
 
 //AddFilter adds a new filter to Config
 func AddFilter(conf *ffuf.Config, name string, option string) error {
-        newf, err := NewFilterByName(name, option)
-        if err == nil {
-                // valid filter create or append
-                if conf.Filters[name] == nil {
-                        conf.Filters[name] = newf
-                } else {
-                        currentfilter := conf.Filters[name].Repr()
-                        newoption := strings.TrimSpace(strings.Split(currentfilter, ":")[1]) + "," + option
-                        newerf, err := NewFilterByName(name, newoption)
-                        if err == nil {
-                                conf.Filters[name] = newerf
-                        }
-                }
-        }
-        return err
+	newf, err := NewFilterByName(name, option)
+	if err == nil {
+		// valid filter create or append
+		if conf.Filters[name] == nil {
+			conf.Filters[name] = newf
+		} else {
+			newoption := conf.Filters[name].Repr() + "," + option
+			newerf, err := NewFilterByName(name, newoption)
+			if err == nil {
+				conf.Filters[name] = newerf
+			}
+		}
+	}
+	return err
+}
+
+//RemoveFilter removes a filter of a given type
+func RemoveFilter(conf *ffuf.Config, name string) {
+	delete(conf.Filters, name)
 }
 
 //AddMatcher adds a new matcher to Config
@@ -139,6 +146,9 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 		if f.Name == "mr" {
 			matcherSet = true
 		}
+		if f.Name == "mt" {
+			matcherSet = true
+		}
 		if f.Name == "mw" {
 			matcherSet = true
 			warningIgnoreBody = true
@@ -178,6 +188,11 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 			errs.Add(err)
 		}
 	}
+	if parseOpts.Filter.Time != "" {
+		if err := AddFilter(conf, "time", parseOpts.Filter.Time); err != nil {
+			errs.Add(err)
+		}
+	}
 	if parseOpts.Matcher.Size != "" {
 		if err := AddMatcher(conf, "size", parseOpts.Matcher.Size); err != nil {
 			errs.Add(err)
@@ -195,6 +210,11 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.Matcher.Lines != "" {
 		if err := AddMatcher(conf, "line", parseOpts.Matcher.Lines); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Time != "" {
+		if err := AddFilter(conf, "time", parseOpts.Matcher.Time); err != nil {
 			errs.Add(err)
 		}
 	}

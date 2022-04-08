@@ -3,6 +3,7 @@ package ffuf
 import (
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Response struct holds the meaningful data returned from request and is meant for passing to filters
@@ -13,10 +14,12 @@ type Response struct {
 	ContentLength int64
 	ContentWords  int64
 	ContentLines  int64
+	ContentType   string
 	Cancelled     bool
 	Request       *Request
 	Raw           string
 	ResultFile    string
+	Time          time.Duration
 }
 
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response
@@ -40,16 +43,45 @@ func (resp *Response) GetRedirectLocation(absolute bool) string {
 		if err != nil {
 			return redirectLocation
 		}
-		redirectLocation = baseUrl.ResolveReference(redirectUrl).String()
+		if redirectUrl.IsAbs() && UrlEqual(redirectUrl, baseUrl) {
+			redirectLocation = redirectUrl.Scheme + "://" +
+				baseUrl.Host + redirectUrl.Path
+		} else {
+			redirectLocation = baseUrl.ResolveReference(redirectUrl).String()
+		}
 	}
 
 	return redirectLocation
+}
+
+func UrlEqual(url1, url2 *url.URL) bool {
+	if url1.Hostname() != url2.Hostname() {
+		return false
+	}
+	if url1.Scheme != url2.Scheme {
+		return false
+	}
+	p1, p2 := getUrlPort(url1), getUrlPort(url2)
+	return p1 == p2
+}
+
+func getUrlPort(url *url.URL) string {
+	var portMap = map[string]string{
+		"http":  "80",
+		"https": "443",
+	}
+	p := url.Port()
+	if p == "" {
+		p = portMap[url.Scheme]
+	}
+	return p
 }
 
 func NewResponse(httpresp *http.Response, req *Request) Response {
 	var resp Response
 	resp.Request = req
 	resp.StatusCode = int64(httpresp.StatusCode)
+	resp.ContentType = httpresp.Header.Get("Content-Type")
 	resp.Headers = httpresp.Header
 	resp.Cancelled = false
 	resp.Raw = ""

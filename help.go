@@ -54,14 +54,14 @@ func Usage() {
 		Description:   "Options controlling the HTTP request and its parts.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"H", "X", "b", "d", "r", "u", "recursion", "recursion-depth", "replay-proxy", "timeout", "ignore-body", "x"},
+		ExpectedFlags: []string{"H", "X", "b", "d", "r", "u", "recursion", "recursion-depth", "recursion-strategy", "replay-proxy", "timeout", "ignore-body", "x", "sni", "http2"},
 	}
 	u_general := UsageSection{
 		Name:          "GENERAL OPTIONS",
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "c", "config", "maxtime", "maxtime-job", "p", "rate", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -75,28 +75,28 @@ func Usage() {
 		Description:   "Matchers for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"mc", "ml", "mr", "ms", "mw"},
+		ExpectedFlags: []string{"mc", "ml", "mr", "ms", "mt", "mw"},
 	}
 	u_filter := UsageSection{
 		Name:          "FILTER OPTIONS",
 		Description:   "Filters for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"fc", "fl", "fr", "fs", "fw"},
+		ExpectedFlags: []string{"fc", "fl", "fr", "fs", "ft", "fw"},
 	}
 	u_input := UsageSection{
 		Name:          "INPUT OPTIONS",
 		Description:   "Options for input data for fuzzing. Wordlists and input generators.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"D", "ic", "input-cmd", "input-num", "mode", "request", "request-proto", "e", "w"},
+		ExpectedFlags: []string{"D", "ic", "input-cmd", "input-num", "input-shell", "mode", "request", "request-proto", "e", "w"},
 	}
 	u_output := UsageSection{
 		Name:          "OUTPUT OPTIONS",
 		Description:   "Options for output. Output file formats, file names and debug file locations.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"debug-log", "o", "of", "od"},
+		ExpectedFlags: []string{"debug-log", "o", "of", "od", "or"},
 	}
 	sections := []UsageSection{u_http, u_general, u_compat, u_matcher, u_filter, u_input, u_output}
 
@@ -123,7 +123,7 @@ func Usage() {
 		}
 	})
 
-	fmt.Printf("Fuzz Faster U Fool - v%s\n\n", ffuf.VERSION)
+	fmt.Printf("Fuzz Faster U Fool - v%s\n\n", ffuf.Version())
 
 	// Print out the sections
 	for _, section := range sections {

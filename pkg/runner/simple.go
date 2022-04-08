@@ -7,13 +7,13 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
@@ -42,12 +42,12 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			proxyURL = http.ProxyURL(pu)
 		}
 	}
-
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
+			ForceAttemptHTTP2: conf.Http2,
 			Proxy:               proxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
@@ -59,6 +59,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 				Renegotiation:      tls.RenegotiateOnceAsClient,
+				ServerName:         conf.SNI,
 			},
 		}}
 
@@ -68,13 +69,8 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	return &simplerunner
 }
 
-func (r *SimpleRunner) Prepare(input map[string][]byte) (ffuf.Request, error) {
-	req := ffuf.NewRequest(r.config)
-
-	req.Headers = r.config.Headers
-	req.Url = r.config.Url
-	req.Method = r.config.Method
-	req.Data = []byte(r.config.Data)
+func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (ffuf.Request, error) {
+	req := ffuf.CopyRequest(basereq)
 
 	for keyword, inputitem := range input {
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
@@ -97,14 +93,28 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	var err error
 	var rawreq []byte
 	data := bytes.NewReader(req.Data)
+
+	var start time.Time
+	var firstByteTime time.Duration
+
+	trace := &httptrace.ClientTrace{
+		WroteRequest: func(wri httptrace.WroteRequestInfo) {
+			start = time.Now() // begin the timer after the request is fully written
+		},
+		GotFirstResponseByte: func() {
+			firstByteTime = time.Since(start) // record when the first byte of the response was received
+		},
+	}
+
 	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
+
 	if err != nil {
 		return ffuf.Response{}, err
 	}
 
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.VERSION)
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
 	}
 
 	// Handle Go http.Request special cases
@@ -113,7 +123,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	req.Host = httpreq.Host
-	httpreq = httpreq.WithContext(r.config.Context)
+	httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
 	}
@@ -147,7 +157,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	if respbody, err := ioutil.ReadAll(httpresp.Body); err == nil {
-		resp.ContentLength = int64(utf8.RuneCountInString(string(respbody)))
+		resp.ContentLength = int64(len(string(respbody)))
 		resp.Data = respbody
 	}
 
@@ -155,6 +165,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	linesSize := len(strings.Split(string(resp.Data), "\n"))
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
+	resp.Time = firstByteTime
 
 	return resp, nil
 }

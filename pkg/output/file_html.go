@@ -12,7 +12,7 @@ type htmlFileOutput struct {
 	CommandLine string
 	Time        string
 	Keys        []string
-	Results     []Result
+	Results     []ffuf.Result
 }
 
 const (
@@ -76,7 +76,9 @@ const (
               <th>Position</th>
               <th>Length</th>
               <th>Words</th>
-              <th>Lines</th>
+			  <th>Lines</th>
+			  <th>Type</th>
+        <th>Duration</th>
 			  <th>Resultfile</th>
           </tr>
         </thead>
@@ -84,7 +86,7 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
@@ -96,7 +98,9 @@ const (
                     <td>{{ $result.Position }}</td>
                     <td>{{ $result.ContentLength }}</td>
                     <td>{{ $result.ContentWords }}</td>
-                    <td>{{ $result.ContentLines }}</td>
+					<td>{{ $result.ContentLines }}</td>
+					<td>{{ $result.ContentType }}</td>
+          <td>{{ $result.Duration }}</td>
                     <td>{{ $result.ResultFile }}</td>
                 </tr>
             {{ end }}
@@ -143,8 +147,8 @@ const (
 )
 
 // colorizeResults returns a new slice with HTMLColor attribute
-func colorizeResults(results []Result) []Result {
-	newResults := make([]Result, 0)
+func colorizeResults(results []ffuf.Result) []ffuf.Result {
+	newResults := make([]ffuf.Result, 0)
 
 	for _, r := range results {
 		result := r
@@ -174,8 +178,7 @@ func colorizeResults(results []Result) []Result {
 	return newResults
 }
 
-func writeHTML(config *ffuf.Config, results []Result) error {
-
+func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) error {
 	results = colorizeResults(results)
 
 	ti := time.Now()
@@ -192,7 +195,7 @@ func writeHTML(config *ffuf.Config, results []Result) error {
 		Keys:        keywords,
 	}
 
-	f, err := os.Create(config.OutputFile)
+	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}

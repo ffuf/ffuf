@@ -15,7 +15,8 @@
     method = "GET"
     proxyurl = "http://127.0.0.1:8080"
     recursion = false
-    recursiondepth = 0
+    recursion_depth = 0
+    recursion_strategy = "default"
     replayproxyurl = "http://127.0.0.1:8080"
     timeout = 10
     url = "https://example.org/FUZZ"
@@ -30,6 +31,7 @@
     delay = ""
     maxtime = 0
     maxtimejob = 0
+    noninteractive = false
     quiet = false
     rate = 0
     stopon403 = false
@@ -37,6 +39,7 @@
     stoponerrors = false
     threads = 40
     verbose = false
+    json = false
 
 [input]
     dirsearchcompat = false
@@ -60,17 +63,20 @@
     outputdirectory = "/tmp/rawoutputdir"
     outputfile = "output.json"
     outputformat = "json"
+    outputcreateemptyfile = false
 
 [filter]
     lines = ""
     regexp = ""
     size = ""
     status = ""
+    time = ""
     words = ""
 
 [matcher]
     lines = ""
     regexp = ""
     size = ""
-    status = "200,204,301,302,307,401,403"
+    status = "200,204,301,302,307,401,403,405,500"
+    time = ""
     words = ""

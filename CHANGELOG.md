@@ -1,12 +1,63 @@
 ## Changelog
 - master
   - New
+    - Added a Dockerfile so @ffuf can finally scale ;-)
+  - Changed
+  
+- v1.4.1
+  - New
+  - Changed
+    - Fixed a bug with recursion, introduced in the 1.4.0 release
+    - Recursion now works better with multiple wordlists, disabling unnecessary wordlists for queued jobs where needed
+  
+- v1.4.0
+  - New
+    - Added response time logging and filtering
+    - Added a CLI flag to specify TLS SNI value
+    - Added full line colors
+    - Added `-json` to emit newline delimited JSON output
+    - Added 500 Internal Server Error to list of status codes matched by default
+  - Changed
+    - Fixed an issue where output file was created regardless of `-or`
+    - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
+    - Fixed an issue when reading wordlist files from ffufrc
+    - Fixed an issue where `-of all` option only creates one output file (instead of all formats) 
+    - Fixed an issue where redirection to the same domain in recursive mode dropped port info from URL
+    - Added HTTP2 support
+
+- v1.3.1
+  - New
+    - Added a CLI flag to disable the interactive mode
+  - Changed
+    - Do not read the last newline in the end of the raw request file when using -request
+    - Fixed an issue with storing the matches for recursion jobs
+    - Fixed the way the "size" is calculated, it should match content-length now
+    - Fixed an issue with header canonicalization when a keyword was just a part of the header name  
+    - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
+
+- v1.3.0
+  - New
+     - All output file formats now include the `Content-Type`.
+     - New CLI flag `-recursion-strategy` that allows adding new queued recursion jobs for non-redirect responses.
+     - Ability to enter interactive mode by pressing `ENTER` during  the ffuf execution. The interactive mode allows
+    user to change filters, manage recursion queue, save snapshot of matches to a file etc.
+  - Changed
+    - Fix a badchar in progress output
+  
+- v1.2.1
+  - Changed
+    - Fixed a build breaking bug in `input-shell` parameter
+    
+- v1.2.0
+  - New
+    - Added 405 Method Not Allowed to list of status codes matched by default.
     - New CLI flag `-rate` to set maximum rate of requests per second. The adjustment is dynamic.
     - New CLI flag `-config` to define a configuration file with preconfigured settings for the job.
     - Ffuf now reads a default configuration file `$HOME/.ffufrc` upon startup. Options set in this file
     are overwritten by the ones provided on CLI.
     - Change banner logging to stderr instead of stdout.
-    - Added a Dockerfile so @ffuf can finally scale ;-)
+    - New CLI flag `-or` to avoid creating result files if we didn't get any. 
+    - New CLI flag `-input-shell` to set the shell to be used by `input-cmd`
 
   - Changed
     - Pre-flight errors are now displayed also after the usage text to prevent the need to scroll through backlog.
@@ -15,6 +66,7 @@
     - Fixed the issue where the option -ac was overwriting existing filters. Now auto-calibration will add them where needed.
     - The `-w` flag now accepts comma delimited values in the form of `file1:W1,file2:W2`.
     - Links in the HTML report are now clickable
+    - Fixed panic during wordlist flag parsing in Windows systems.
 
 - v1.1.0
   - New

@@ -1,22 +1,37 @@
-```
-        /'___\  /'___\           /'___\
-       /\ \__/ /\ \__/  __  __  /\ \__/
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
-         \ \_\   \ \_\  \ \____/  \ \_\
-          \/_/    \/_/   \/___/    \/_/
-```
-
+![ffuf mascot](_img/ffuf_run_logo_600.png)
 # ffuf - Fuzz Faster U Fool
 
 A fast web fuzzer written in Go.
+
+- [Installation](https://github.com/ffuf/ffuf#installation)
+- [Example usage](https://github.com/ffuf/ffuf#example-usage)
+    - [Content discovery](https://github.com/ffuf/ffuf#typical-directory-discovery)
+    - [Vhost discovery](https://github.com/ffuf/ffuf#virtual-host-discovery-without-dns-records)
+    - [Parameter fuzzing](https://github.com/ffuf/ffuf#get-parameter-fuzzing)
+    - [POST data fuzzing](https://github.com/ffuf/ffuf#post-data-fuzzing)
+    - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
+    - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
+- [Help](https://github.com/ffuf/ffuf#usage)
+    - [Interactive mode](https://github.com/ffuf/ffuf#interactive-mode)
+- [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
+
+## Sponsors
+[![Offensive Security](_img/offsec-logo.png)](https://www.offensive-security.com/)
+
+## Official Discord Channel
+
+ffuf has a channel at Porchetta Industries Discord server alongside of channels for many other tools.
+
+Come to hang out & to discuss about ffuf, it's usage and development!
+
+[![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner2)](https://discord.gg/VWcdZCUsQP)
 
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
   
   _or_
-- If you have recent go compiler installed: `go get -u github.com/ffuf/ffuf` (the same command works for updating)
+- If you have recent go compiler installed: `go install github.com/ffuf/ffuf@latest` (the same command works for updating)
   
   _or_
 - `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
@@ -25,7 +40,7 @@ A fast web fuzzer written in Go.
 - `git clone https://github.com/ffuf/ffuf ; cd ffuf ; docker build --rm -t ffuf . ; echo "alias ffuf='docker run -i --rm -v $HOME/.ffuf:/app/.ffuf -v $HOME/wordlists:/app/wordlists'" >> ~/.bash_aliases` (**NOTE:** Please see ["A note about Docker"](#docker))
 - ~~`docker pull ffuf/ffuf`~~ Coming soon (I hope!)
 
-Ffuf depends on Go 1.13 or greater.
+Ffuf depends on Go 1.16 or greater.
 
 ## Example usage
 
@@ -35,6 +50,7 @@ For more extensive documentation, with real life usage examples and tips, be sur
 "[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
 Michael Skelton ([@codingo](https://github.com/codingo)).
 
+You can also practise your ffuf scans against a live host with different lessons and use cases either locally by using the docker container https://github.com/adamtlangley/ffufme or against the live hosted version at http://ffuf.me created by Adam Langley [@adamtlangley](https://twitter.com/adamtlangley).  
 
 ### Typical directory discovery
 
@@ -138,74 +154,85 @@ The same procedure can be applied to `-v $HOME/wordlists:/app/wordlists`. Here y
 
 If you're still unsure what the heck this flag is about see [here](https://docs.docker.com/engine/reference/commandline/run/#mount-volume--v---read-only).
 
+<p align="center">
+  <img width="250" src="_img/ffuf_juggling_250.png">
+</p>
+
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.2.0-git
+Fuzz Faster U Fool - v1.3.0-dev
 
 HTTP OPTIONS:
-  -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
-  -X               HTTP method to use (default: GET)
-  -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
-  -d               POST data
-  -ignore-body     Do not fetch the response content. (default: false)
-  -r               Follow redirects (default: false)
-  -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
-  -recursion-depth Maximum recursion depth. (default: 0)
-  -replay-proxy    Replay matched requests using this proxy.
-  -timeout         HTTP request timeout in seconds. (default: 10)
-  -u               Target URL
-  -x               HTTP Proxy URL
+  -H                  Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
+  -X                  HTTP method to use
+  -b                  Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
+  -d                  POST data
+  -ignore-body        Do not fetch the response content. (default: false)
+  -r                  Follow redirects (default: false)
+  -recursion          Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
+  -recursion-depth    Maximum recursion depth. (default: 0)
+  -recursion-strategy Recursion strategy: "default" for a redirect based, and "greedy" to recurse on all matches (default: default)
+  -replay-proxy       Replay matched requests using this proxy.
+  -sni                Target TLS SNI, does not support FUZZ keyword
+  -timeout            HTTP request timeout in seconds. (default: 10)
+  -u                  Target URL
+  -x                  Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080
 
 GENERAL OPTIONS:
-  -V               Show version information. (default: false)
-  -ac              Automatically calibrate filtering options (default: false)
-  -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
-  -c               Colorize output. (default: false)
-  -config          Load configuration from a file
-  -maxtime         Maximum running time in seconds for entire process. (default: 0)
-  -maxtime-job     Maximum running time in seconds per job. (default: 0)
-  -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
-  -rate            Rate of requests per second (default: 0)
-  -s               Do not print additional information (silent mode) (default: false)
-  -sa              Stop on all error cases. Implies -sf and -se. (default: false)
-  -se              Stop on spurious errors (default: false)
-  -sf              Stop when > 95% of responses return 403 Forbidden (default: false)
-  -t               Number of concurrent threads. (default: 40)
-  -v               Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
+  -V                  Show version information. (default: false)
+  -ac                 Automatically calibrate filtering options (default: false)
+  -acc                Custom auto-calibration string. Can be used multiple times. Implies -ac
+  -c                  Colorize output. (default: false)
+  -config             Load configuration from a file
+  -maxtime            Maximum running time in seconds for entire process. (default: 0)
+  -maxtime-job        Maximum running time in seconds per job. (default: 0)
+  -noninteractive     Disable the interactive console functionality (default: false)
+  -p                  Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
+  -rate               Rate of requests per second (default: 0)
+  -s                  Do not print additional information (silent mode) (default: false)
+  -sa                 Stop on all error cases. Implies -sf and -se. (default: false)
+  -se                 Stop on spurious errors (default: false)
+  -sf                 Stop when > 95% of responses return 403 Forbidden (default: false)
+  -t                  Number of concurrent threads. (default: 40)
+  -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:
-  -mc              Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403)
-  -ml              Match amount of lines in response
-  -mr              Match regexp
-  -ms              Match HTTP response size
-  -mw              Match amount of words in response
+  -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405,500)
+  -ml                 Match amount of lines in response
+  -mr                 Match regexp
+  -ms                 Match HTTP response size
+  -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100
+  -mw                 Match amount of words in response
 
 FILTER OPTIONS:
-  -fc              Filter HTTP status codes from response. Comma separated list of codes and ranges
-  -fl              Filter by amount of lines in response. Comma separated list of line counts and ranges
-  -fr              Filter regexp
-  -fs              Filter HTTP response size. Comma separated list of sizes and ranges
-  -fw              Filter by amount of words in response. Comma separated list of word counts and ranges
+  -fc                 Filter HTTP status codes from response. Comma separated list of codes and ranges
+  -fl                 Filter by amount of lines in response. Comma separated list of line counts and ranges
+  -fr                 Filter regexp
+  -fs                 Filter HTTP response size. Comma separated list of sizes and ranges
+  -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100
+  -fw                 Filter by amount of words in response. Comma separated list of word counts and ranges
 
 INPUT OPTIONS:
-  -D               DirSearch wordlist compatibility mode. Used in conjunction with -e flag. (default: false)
-  -e               Comma separated list of extensions. Extends FUZZ keyword.
-  -ic              Ignore wordlist comments (default: false)
-  -input-cmd       Command producing the input. --input-num is required when using this input method. Overrides -w.
-  -input-num       Number of inputs to test. Used in conjunction with --input-cmd. (default: 100)
-  -mode            Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork (default: clusterbomb)
-  -request         File containing the raw http request
-  -request-proto   Protocol to use along with raw request (default: https)
-  -w               Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'
+  -D                  DirSearch wordlist compatibility mode. Used in conjunction with -e flag. (default: false)
+  -e                  Comma separated list of extensions. Extends FUZZ keyword.
+  -ic                 Ignore wordlist comments (default: false)
+  -input-cmd          Command producing the input. --input-num is required when using this input method. Overrides -w.
+  -input-num          Number of inputs to test. Used in conjunction with --input-cmd. (default: 100)
+  -input-shell        Shell to be used for running command
+  -mode               Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper (default: clusterbomb)
+  -request            File containing the raw http request
+  -request-proto      Protocol to use along with raw request (default: https)
+  -w                  Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'
 
 OUTPUT OPTIONS:
-  -debug-log       Write all of the internal logging to the specified file.
-  -o               Write output to file
-  -od              Directory path to store matched results to.
-  -of              Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
+  -debug-log          Write all of the internal logging to the specified file.
+  -o                  Write output to file
+  -od                 Directory path to store matched results to.
+  -of                 Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats) (default: json)
+  -or                 Don't create the output file if we don't have results (default: false)
 
 EXAMPLE USAGE:
   Fuzz file paths from wordlist.txt, match all responses but filter out those with content-size 42.
@@ -225,6 +252,65 @@ EXAMPLE USAGE:
   More information and examples: https://github.com/ffuf/ffuf
 
 ```
+
+### Interactive mode
+
+By pressing `ENTER` during ffuf execution, the process is paused and user is dropped to a shell-like interactive mode:
+```
+entering interactive mode
+type "help" for a list of commands, or ENTER to resume.
+> help
+
+available commands:
+ fc [value]             - (re)configure status code filter 
+ fl [value]             - (re)configure line count filter 
+ fw [value]             - (re)configure word count filter 
+ fs [value]             - (re)configure size filter 
+ queueshow              - show recursive job queue
+ queuedel [number]      - delete a recursion job in the queue
+ queueskip              - advance to the next queued recursion job
+ restart                - restart and resume the current ffuf job
+ resume                 - resume current ffuf job (or: ENTER) 
+ show                   - show results for the current job
+ savejson [filename]    - save current matches to a file
+ help                   - you are looking at it
+> 
+```
+
+in this mode, filters can be reconfigured, queue managed and the current state saved to disk.
+
+When (re)configuring the filters, they get applied posthumously and all the false positive matches from memory that
+would have been filtered out by the newly added filters get deleted.
+
+The new state of matches can be printed out with a command `show` that will print out all the matches as like they 
+would have been found by `ffuf`.
+
+As "negative" matches are not stored to memory, relaxing the filters cannot unfortunately bring back the lost matches.
+For this kind of scenario, the user is able to use the command `restart`, which resets the state and starts the current
+job from the beginning.
+
+<p align="center">
+  <img width="250" src="_img/ffuf_waving_250.png">
+</p>
+
+
+## Sponsorware
+
+`ffuf` employs a sponsorware model. This means that all new features developed by its author are initially exclusively 
+available for their sponsors. 30 days after the exclusive release, all the new features will be released at the freely
+available open source repository at https://github.com/ffuf/ffuf . 
+
+This model enables me to provide concrete benefits for the generous individuals and companies that enable me to work on 
+`ffuf`. The different sponsorship tiers can be seen [here](https://github.com/sponsors/joohoi).
+
+All the community contributions are and will be available directly in the freely available open source repository. The
+exclusive version benefits only include new features created by [@joohoi](https://github.com/joohoi)
+
+### Access the sponsorware through code contributions
+
+People that create significant contributions to the `ffuf` project itself should and will have access to the sponsorware
+as well. If you are planning to create such a contribution, please contact [@joohoi](https://github.com/joohoi)
+first to ensure that there aren't other people working on the same feature.
 
 ## Helper scripts and advanced payloads
 

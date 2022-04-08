@@ -1,8 +1,10 @@
 package ffuf
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 )
 
 //used for random string generation in calibration function
@@ -31,11 +33,40 @@ func UniqStringSlice(inslice []string) []string {
 	return ret
 }
 
-//FileExists checks if the filepath exists and is not a directory
+//FileExists checks if the filepath exists and is not a directory.
+//Returns false in case it's not possible to describe the named file.
 func FileExists(path string) bool {
 	md, err := os.Stat(path)
-	if os.IsNotExist(err) {
+	if err != nil {
 		return false
 	}
+
 	return !md.IsDir()
+}
+
+//RequestContainsKeyword checks if a keyword is present in any field of a request
+func RequestContainsKeyword(req Request, kw string) bool {
+	if strings.Contains(req.Host, kw) {
+		return true
+	}
+	if strings.Contains(req.Url, kw) {
+		return true
+	}
+	if strings.Contains(req.Method, kw) {
+		return true
+	}
+	if strings.Contains(string(req.Data), kw) {
+		return true
+	}
+	for k, v := range req.Headers {
+		if strings.Contains(k, kw) || strings.Contains(v, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+//Version returns the ffuf version string
+func Version() string {
+	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
 }
