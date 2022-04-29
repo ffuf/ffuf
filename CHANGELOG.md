@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added install instructions for homebrew on macOS
   - Changed
   
 - v1.4.1
