@@ -87,7 +87,7 @@ ffuf -w /path/to/values.txt -u https://target/script.php?valid_name=FUZZ -fc 401
 This is a very straightforward operation, again by using the `FUZZ` keyword. This example is fuzzing only part of the POST request. We're again filtering out the 401 responses.
 
 ```
-ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" -u https://target/login.php -fc 401
+ffuf -w /path/to/postdata.txt -X POST -d "username=admin&password=FUZZ" -u https://target/login.php -fc 401
 ```
 
 ### Maximum execution time
