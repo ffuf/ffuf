@@ -18,6 +18,7 @@ type Job struct {
 	Input                InputProvider
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
+	Scraper              Scraper
 	Output               OutputProvider
 	Jobhash              string
 	Counter              int
@@ -445,6 +446,14 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				_, _ = j.ReplayRunner.Execute(&replayreq)
 			}
 		}
+		// Handle scraper actions
+		if j.Scraper != nil {
+			for _, sres := range j.Scraper.Execute(&resp) {
+				resp.ScraperData[sres.Name] = sres.Results
+				j.handleScraperResult(&resp, sres)
+			}
+		}
+
 		j.Output.Result(resp)
 
 		// Refresh the progress indicator as we printed something out
@@ -456,6 +465,15 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 
 	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && len(resp.GetRedirectLocation(false)) > 0 {
 		j.handleDefaultRecursionJob(resp)
+	}
+}
+
+func (j *Job) handleScraperResult(resp *Response, sres ScraperResult) {
+	for _, a := range sres.Action {
+		switch a {
+		case "output":
+			resp.ScraperData[sres.Name] = sres.Results
+		}
 	}
 }
 

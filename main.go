@@ -4,17 +4,18 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
+	"log"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/ffuf/ffuf/pkg/ffuf"
 	"github.com/ffuf/ffuf/pkg/filter"
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/interactive"
 	"github.com/ffuf/ffuf/pkg/output"
 	"github.com/ffuf/ffuf/pkg/runner"
-	"io"
-	"log"
-	"os"
-	"strings"
-	"time"
 )
 
 type multiStringFlag []string
@@ -88,6 +89,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
 	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
+	flag.StringVar(&opts.General.ScraperFile, "scraper", "", "Scraper configuration file path")
 	flag.StringVar(&opts.Filter.Mode, "fmode", opts.Filter.Mode, "Filter set operator. Either of: and, or")
 	flag.StringVar(&opts.Filter.Lines, "fl", opts.Filter.Lines, "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&opts.Filter.Regexp, "fr", opts.Filter.Regexp, "Filter regexp")
@@ -245,6 +247,7 @@ func main() {
 }
 
 func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
+	var err error
 	job := ffuf.NewJob(conf)
 	var errs ffuf.Multierror
 	job.Input, errs = input.NewInputProvider(conf)
@@ -256,6 +259,14 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	}
 	// We only have stdout outputprovider right now
 	job.Output = output.NewOutputProviderByName("stdout", conf)
+
+	// If scraperfile is set, initialize scraper
+	if conf.ScraperFile != "" {
+		job.Scraper, err = scraper.FromFile(conf.ScraperFile)
+		if err != nil {
+			errs.Add(err)
+		}
+	}
 	return job, errs.ErrorOrNil()
 }
 

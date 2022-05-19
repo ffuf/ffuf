@@ -330,6 +330,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ContentLines:     resp.ContentLines,
 		ContentType:      resp.ContentType,
 		RedirectLocation: resp.GetRedirectLocation(false),
+		ScraperData:      resp.ScraperData,
 		Url:              resp.Request.Url,
 		Duration:         resp.Time,
 		ResultFile:       resp.ResultFile,
@@ -371,7 +372,7 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 		s.resultJson(res)
 	case s.config.Quiet:
 		s.resultQuiet(res)
-	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0:
+	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
 		// Print a multi-line result (when using multiple input keywords and wordlists)
 		s.resultMultiline(res)
 	default:
@@ -429,6 +430,14 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 		} else {
 			// Wordlist input
 			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, res.Input[k])
+		}
+	}
+	if len(res.ScraperData) > 0 {
+		reslines = fmt.Sprintf("%s%s| SCR |\n", reslines, TERMINAL_CLEAR_LINE)
+		for k, vslice := range res.ScraperData {
+			for _, v := range vslice {
+				reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
+			}
 		}
 	}
 	fmt.Printf("%s\n%s\n", res_hdr, reslines)

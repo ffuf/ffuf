@@ -58,6 +58,7 @@ type GeneralOptions struct {
 	Noninteractive          bool     `json:"noninteractive"`
 	Quiet                   bool     `json:"quiet"`
 	Rate                    int      `json:"rate"`
+	ScraperFile             string   `json:"scraperfile"`
 	Searchhash              string   `json:"-"`
 	ShowVersion             bool     `toml:"-" json:"-"`
 	StopOn403               bool     `json:"stop_on_403"`
@@ -130,6 +131,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Quiet = false
 	c.General.Rate = 0
 	c.General.Searchhash = ""
+	c.General.ScraperFile = ""
 	c.General.ShowVersion = false
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
@@ -456,6 +458,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.OutputSkipEmptyFile = parseOpts.Output.OutputSkipEmptyFile
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
+	conf.ScraperFile = parseOpts.General.ScraperFile
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
@@ -540,7 +543,6 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.General.Verbose && parseOpts.General.Json {
 		errs.Add(fmt.Errorf("Cannot have -json and -v"))
 	}
-
 	return &conf, errs.ErrorOrNil()
 }
 
