@@ -219,7 +219,7 @@ func (s *Stdoutput) Raw(output string) {
 	fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, output)
 }
 
-func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.Result) error {
+func (s *Stdoutput) writeToAll(config *ffuf.Config, res []ffuf.Result) error {
 	var err error
 	var BaseFilename string = s.config.OutputFile
 
@@ -275,7 +275,7 @@ func (s *Stdoutput) SaveFile(filename, format string) error {
 	}
 	switch format {
 	case "all":
-		err = s.writeToAll(filename, s.config, append(s.Results, s.CurrentResults...))
+		err = s.writeToAll(s.config, append(s.Results, s.CurrentResults...))
 	case "json":
 		err = writeJSON(filename, s.config, append(s.Results, s.CurrentResults...))
 	case "ejson":
