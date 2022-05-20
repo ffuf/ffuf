@@ -32,6 +32,7 @@
 * [lc](https://github.com/lc)
 * [mprencipe](https://github.com/mprencipe)
 * [nnwakelam](https://twitter.com/nnwakelam)
+* [NomanAli181](https://twitter.com/nomanAli181)
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
 * [penguinxoxo](https://github.com/penguinxoxo)
