@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Removed unused filename parameter from writeToAll function.
   
 - v1.5.0
   - New
