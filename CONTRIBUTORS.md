@@ -8,6 +8,7 @@
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
 * [choket](https://github.com/choket)
+* [Cne3Rd](https://github.com/Cne3Rd)
 * [codingo](https://github.com/codingo)
 * [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
@@ -43,4 +44,3 @@
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [l4yton](https://github.com/l4yton)
 * [xfgusta](https://github.com/xfgusta)
-* [Cne3Rd](https://github.com/Cne3Rd)
