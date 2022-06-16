@@ -36,6 +36,9 @@ Come to hang out & to discuss about ffuf, it's usage and development!
   _or_
 - `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
 
+  _or_
+- `git clone https://github.com/ffuf/ffuf ; cd ffuf ; make`
+
 Ffuf depends on Go 1.16 or greater.
 
 ## Example usage
