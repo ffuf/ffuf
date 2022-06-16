@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added Makefile
   - Changed
   
 - v1.5.0
