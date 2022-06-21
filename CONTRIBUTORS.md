@@ -29,6 +29,7 @@
 * [justinsteven](https://github.com/justinsteven)
 * [jvesiluoma](https://github.com/jvesiluoma)
 * [Kiblyn11](https://github.com/Kiblyn11)
+* [kkaosninja](https://github.com/kkaosninja)
 * [lc](https://github.com/lc)
 * [mprencipe](https://github.com/mprencipe)
 * [nnwakelam](https://twitter.com/nnwakelam)
