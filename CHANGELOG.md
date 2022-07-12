@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Made JSON (`-json`) output format take precedence over quiet output mode, to allow JSON output without the banner etc
   
 - v1.5.0
   - New
