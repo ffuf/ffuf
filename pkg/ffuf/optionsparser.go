@@ -364,9 +364,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	// Verify proxy url format
 	if len(parseOpts.HTTP.ProxyURL) > 0 {
-		_, err := url.Parse(parseOpts.HTTP.ProxyURL)
-		if err != nil {
-			errs.Add(fmt.Errorf("Bad proxy url (-x) format: %s", err))
+		u, err := url.Parse(parseOpts.HTTP.ProxyURL)
+		if err != nil || u.Opaque != "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5") {
+			errs.Add(fmt.Errorf("Bad proxy url (-x) format. Expected http, https or socks5 url"))
 		} else {
 			conf.ProxyURL = parseOpts.HTTP.ProxyURL
 		}
@@ -374,9 +374,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	// Verify replayproxy url format
 	if len(parseOpts.HTTP.ReplayProxyURL) > 0 {
-		_, err := url.Parse(parseOpts.HTTP.ReplayProxyURL)
-		if err != nil {
-			errs.Add(fmt.Errorf("Bad replay-proxy url (-replay-proxy) format: %s", err))
+		u, err := url.Parse(parseOpts.HTTP.ReplayProxyURL)
+		if err != nil || u.Opaque != "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5") {
+			errs.Add(fmt.Errorf("Bad replay-proxy url (-replay-proxy) format. Expected http, https or socks5 url"))
 		} else {
 			conf.ReplayProxyURL = parseOpts.HTTP.ReplayProxyURL
 		}
