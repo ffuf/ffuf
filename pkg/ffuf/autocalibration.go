@@ -6,24 +6,27 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 func (j *Job) autoCalibrationStrings() map[string][]string {
 	rand.Seed(time.Now().UnixNano())
 	cInputs := make(map[string][]string)
 	if len(j.Config.AutoCalibrationStrings) < 1 {
-		cInputs["basic_admin"] = append(cInputs["basic_admin"], "admin"+RandomString(16))
-		cInputs["basic_admin"] = append(cInputs["basic_admin"], "admin"+RandomString(8))
-		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+RandomString(16))
-		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+RandomString(8))
-		cInputs["basic_random"] = append(cInputs["basic_random"], RandomString(16))
-		cInputs["basic_random"] = append(cInputs["basic_random"], RandomString(8))
+		cInputs["basic_admin"] = append(cInputs["basic_admin"], "admin"+utils.RandomString(16))
+		cInputs["basic_admin"] = append(cInputs["basic_admin"], "admin"+utils.RandomString(8))
+		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+utils.RandomString(16))
+		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+utils.RandomString(8))
+		cInputs["basic_random"] = append(cInputs["basic_random"], utils.RandomString(16))
+		cInputs["basic_random"] = append(cInputs["basic_random"], utils.RandomString(8))
 		if j.Config.AutoCalibrationStrategy == "advanced" {
 			// Add directory tests and .htaccess too
-			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+RandomString(16)+"/")
-			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+RandomString(8)+"/")
-			cInputs["random_dir"] = append(cInputs["random_dir"], RandomString(16)+"/")
-			cInputs["random_dir"] = append(cInputs["random_dir"], RandomString(8)+"/")
+			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+utils.RandomString(16)+"/")
+			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+utils.RandomString(8)+"/")
+			cInputs["random_dir"] = append(cInputs["random_dir"], utils.RandomString(16)+"/")
+			cInputs["random_dir"] = append(cInputs["random_dir"], utils.RandomString(8)+"/")
 		}
 	} else {
 		cInputs["custom"] = append(cInputs["custom"], j.Config.AutoCalibrationStrings...)
@@ -31,36 +34,36 @@ func (j *Job) autoCalibrationStrings() map[string][]string {
 	return cInputs
 }
 
-func (j *Job) calibrationRequest(inputs map[string][]byte) (Response, error) {
+func (j *Job) calibrationRequest(inputs map[string][]byte) (http.Response, error) {
 	basereq := BaseRequest(j.Config)
 	req, err := j.Runner.Prepare(inputs, &basereq)
 	if err != nil {
-		j.Output.Error(fmt.Sprintf("Encountered an error while preparing autocalibration request: %s\n", err))
+		j.Output.Error(fmt.Sprintf("encountered an error while preparing autocalibration request: %s\n", err))
 		j.incError()
 		log.Printf("%s", err)
-		return Response{}, err
+		return http.Response{}, err
 	}
 	resp, err := j.Runner.Execute(&req)
 	if err != nil {
-		j.Output.Error(fmt.Sprintf("Encountered an error while executing autocalibration request: %s\n", err))
+		j.Output.Error(fmt.Sprintf("encountered an error while executing autocalibration request: %s\n", err))
 		j.incError()
 		log.Printf("%s", err)
-		return Response{}, err
+		return http.Response{}, err
 	}
 	// Only calibrate on responses that would be matched otherwise
 	if j.isMatch(resp) {
 		return resp, nil
 	}
-	return resp, fmt.Errorf("Response wouldn't be matched")
+	return resp, fmt.Errorf("response wouldn't be matched")
 }
 
-//CalibrateForHost runs autocalibration for a specific host
+// CalibrateForHost runs autocalibration for a specific host
 func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 	if j.Config.MatcherManager.CalibratedForDomain(host) {
 		return nil
 	}
 	if baseinput[j.Config.AutoCalibrationKeyword] == nil {
-		return fmt.Errorf("Autocalibration keyword \"%s\" not found in the request.", j.Config.AutoCalibrationKeyword)
+		return fmt.Errorf("autocalibration keyword \"%s\" not found in the request", j.Config.AutoCalibrationKeyword)
 	}
 	cStrings := j.autoCalibrationStrings()
 	input := make(map[string][]byte)
@@ -68,7 +71,7 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 		input[k] = v
 	}
 	for _, v := range cStrings {
-		responses := make([]Response, 0)
+		responses := make([]http.Response, 0)
 		for _, cs := range v {
 			input[j.Config.AutoCalibrationKeyword] = []byte(cs)
 			resp, err := j.calibrationRequest(input)
@@ -86,7 +89,7 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 	return nil
 }
 
-//CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
+// CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
 func (j *Job) Calibrate(input map[string][]byte) error {
 	if j.Config.MatcherManager.Calibrated() {
 		return nil
@@ -94,7 +97,7 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 	cInputs := j.autoCalibrationStrings()
 
 	for _, v := range cInputs {
-		responses := make([]Response, 0)
+		responses := make([]http.Response, 0)
 		for _, cs := range v {
 			input[j.Config.AutoCalibrationKeyword] = []byte(cs)
 			resp, err := j.calibrationRequest(input)
@@ -112,8 +115,9 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 	return nil
 }
 
-//CalibrateIfNeeded runs a self-calibration task for filtering options (if needed) by requesting random resources and
-//  configuring the filters accordingly
+// CalibrateIfNeeded runs a self-calibration task for filtering options (if needed) by requesting random resources and
+//
+//	configuring the filters accordingly
 func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
 	j.calibMutex.Lock()
 	defer j.calibMutex.Unlock()
@@ -126,7 +130,7 @@ func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
 	return j.Calibrate(input)
 }
 
-func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
+func (j *Job) calibrateFilters(responses []http.Response, perHost bool) error {
 	// Work down from the most specific common denominator
 	if len(responses) > 0 {
 		// Content length
@@ -231,5 +235,5 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 			}
 		}
 	}
-	return fmt.Errorf("No common filtering values found")
+	return fmt.Errorf("no common filtering values found")
 }

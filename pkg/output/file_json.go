@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
 )
 
 type ejsonFileOutput struct {
-	CommandLine string        `json:"commandline"`
-	Time        string        `json:"time"`
-	Results     []ffuf.Result `json:"results"`
-	Config      *ffuf.Config  `json:"config"`
+	CommandLine string         `json:"commandline"`
+	Time        string         `json:"time"`
+	Results     []Result       `json:"results"`
+	Config      *config.Config `json:"config"`
 }
 
 type JsonResult struct {
@@ -31,13 +31,13 @@ type JsonResult struct {
 }
 
 type jsonFileOutput struct {
-	CommandLine string       `json:"commandline"`
-	Time        string       `json:"time"`
-	Results     []JsonResult `json:"results"`
-	Config      *ffuf.Config `json:"config"`
+	CommandLine string         `json:"commandline"`
+	Time        string         `json:"time"`
+	Results     []JsonResult   `json:"results"`
+	Config      *config.Config `json:"config"`
 }
 
-func writeEJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
+func writeEJSON(filename string, config *config.Config, res []Result) error {
 	t := time.Now()
 	outJSON := ejsonFileOutput{
 		CommandLine: config.CommandLine,
@@ -56,7 +56,7 @@ func writeEJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	return nil
 }
 
-func writeJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
+func writeJSON(filename string, config *config.Config, res []Result) error {
 	t := time.Now()
 	jsonRes := make([]JsonResult, 0)
 	for _, r := range res {

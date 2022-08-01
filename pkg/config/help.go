@@ -1,11 +1,11 @@
-package main
+package config
 
 import (
 	"flag"
 	"fmt"
 	"os"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 type UsageSection struct {
@@ -16,7 +16,7 @@ type UsageSection struct {
 	ExpectedFlags []string
 }
 
-//PrintSection prints out the section name, description and each of the flags
+// PrintSection prints out the section name, description and each of the flags
 func (u *UsageSection) PrintSection(max_length int, extended bool) {
 	// Do not print if extended usage not requested and section marked as hidden
 	if !extended && u.Hidden {
@@ -35,7 +35,7 @@ type UsageFlag struct {
 	Default     string
 }
 
-//PrintFlag prints out the flag name, usage string and default value
+// PrintFlag prints out the flag name, usage string and default value
 func (f *UsageFlag) PrintFlag(max_length int) {
 	// Create format string, used for padding
 	format := fmt.Sprintf("  -%%-%ds %%s", max_length)
@@ -102,7 +102,7 @@ func Usage() {
 
 	// Populate the flag sections
 	max_length := 0
-	flag.VisitAll(func(f *flag.Flag) {
+	flagset.VisitAll(func(f *flag.Flag) {
 		found := false
 		for i, section := range sections {
 			if strInSlice(f.Name, section.ExpectedFlags) {
@@ -123,7 +123,7 @@ func Usage() {
 		}
 	})
 
-	fmt.Printf("Fuzz Faster U Fool - v%s\n\n", ffuf.Version())
+	fmt.Printf("Fuzz Faster U Fool - v%s\n\n", utils.Version())
 
 	// Print out the sections
 	for _, section := range sections {

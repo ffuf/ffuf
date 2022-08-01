@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
 func TestNewWordFilter(t *testing.T) {
@@ -43,7 +43,7 @@ func TestWordFiltering(t *testing.T) {
 		for i := int64(0); i < test.input; i++ {
 			data = append(data, "A")
 		}
-		resp := ffuf.Response{Data: []byte(strings.Join(data, " "))}
+		resp := http.Response{Data: []byte(strings.Join(data, " "))}
 		filterReturn, _ := f.Filter(&resp)
 		if filterReturn != test.output {
 			t.Errorf("Filter test %d: Was expecing filter return value of %t but got %t", i, test.output, filterReturn)

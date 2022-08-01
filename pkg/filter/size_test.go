@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
 func TestNewSizeFilter(t *testing.T) {
@@ -38,7 +38,7 @@ func TestFiltering(t *testing.T) {
 		{91, false},
 		{444, true},
 	} {
-		resp := ffuf.Response{ContentLength: test.input}
+		resp := http.Response{ContentLength: test.input}
 		filterReturn, _ := f.Filter(&resp)
 		if filterReturn != test.output {
 			t.Errorf("Filter test %d: Was expecing filter return value of %t but got %t", i, test.output, filterReturn)

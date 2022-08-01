@@ -11,37 +11,39 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 const (
 	BANNER_HEADER = `
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
 `
 	BANNER_SEP = "________________________________________________"
 )
 
 type Stdoutput struct {
-	config         *ffuf.Config
-	Results        []ffuf.Result
-	CurrentResults []ffuf.Result
+	config         *config.Config
+	Results        []Result
+	CurrentResults []Result
 }
 
-func NewStdoutput(conf *ffuf.Config) *Stdoutput {
+func NewStdoutput(conf *config.Config) *Stdoutput {
 	var outp Stdoutput
 	outp.config = conf
-	outp.Results = make([]ffuf.Result, 0)
-	outp.CurrentResults = make([]ffuf.Result, 0)
+	outp.Results = make([]Result, 0)
+	outp.CurrentResults = make([]Result, 0)
 	return &outp
 }
 
 func (s *Stdoutput) Banner() {
-	version := strings.ReplaceAll(ffuf.Version(), "<3", fmt.Sprintf("%s<3%s", ANSI_RED, ANSI_CLEAR))
+	version := strings.ReplaceAll(utils.Version(), "<3", fmt.Sprintf("%s<3%s", ANSI_RED, ANSI_CLEAR))
 	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, version, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
@@ -136,7 +138,7 @@ func (s *Stdoutput) Banner() {
 
 // Reset resets the result slice
 func (s *Stdoutput) Reset() {
-	s.CurrentResults = make([]ffuf.Result, 0)
+	s.CurrentResults = make([]Result, 0)
 }
 
 // Cycle moves the CurrentResults to Results and resets the results slice
@@ -146,16 +148,16 @@ func (s *Stdoutput) Cycle() {
 }
 
 // GetResults returns the result slice
-func (s *Stdoutput) GetCurrentResults() []ffuf.Result {
+func (s *Stdoutput) GetCurrentResults() []Result {
 	return s.CurrentResults
 }
 
 // SetResults sets the result slice
-func (s *Stdoutput) SetCurrentResults(results []ffuf.Result) {
+func (s *Stdoutput) SetCurrentResults(results []Result) {
 	s.CurrentResults = results
 }
 
-func (s *Stdoutput) Progress(status ffuf.Progress) {
+func (s *Stdoutput) Progress(status Progress) {
 	if s.config.Quiet {
 		// No progress for quiet mode
 		return
@@ -219,7 +221,7 @@ func (s *Stdoutput) Raw(output string) {
 	fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, output)
 }
 
-func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.Result) error {
+func (s *Stdoutput) writeToAll(filename string, config *config.Config, res []Result) error {
 	var err error
 	var BaseFilename string = s.config.OutputFile
 
@@ -305,7 +307,7 @@ func (s *Stdoutput) Finalize() error {
 	return nil
 }
 
-func (s *Stdoutput) Result(resp ffuf.Response) {
+func (s *Stdoutput) Result(resp http.Response) {
 	// Do we want to write request and response to a file
 	if len(s.config.OutputDirectory) > 0 {
 		resp.ResultFile = s.writeResultToFile(resp)
@@ -315,7 +317,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	for k, v := range resp.Request.Input {
 		inputs[k] = v
 	}
-	sResult := ffuf.Result{
+	sResult := Result{
 		Input:            inputs,
 		Position:         resp.Request.Position,
 		StatusCode:       resp.StatusCode,
@@ -334,7 +336,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	s.PrintResult(sResult)
 }
 
-func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
+func (s *Stdoutput) writeResultToFile(resp http.Response) string {
 	var fileContent, fileName, filePath string
 	// Create directory if needed
 	if s.config.OutputDirectory != "" {
@@ -359,7 +361,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	return fileName
 }
 
-func (s *Stdoutput) PrintResult(res ffuf.Result) {
+func (s *Stdoutput) PrintResult(res Result) {
 	switch {
 	case s.config.Quiet:
 		s.resultQuiet(res)
@@ -373,7 +375,7 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 	}
 }
 
-func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
+func (s *Stdoutput) prepareInputsOneLine(res Result) string {
 	inputs := ""
 	if len(res.Input) > 1 {
 		for k, v := range res.Input {
@@ -397,11 +399,11 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	return inputs
 }
 
-func (s *Stdoutput) resultQuiet(res ffuf.Result) {
+func (s *Stdoutput) resultQuiet(res Result) {
 	fmt.Println(s.prepareInputsOneLine(res))
 }
 
-func (s *Stdoutput) resultMultiline(res ffuf.Result) {
+func (s *Stdoutput) resultMultiline(res Result) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
 	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
@@ -428,12 +430,12 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	fmt.Printf("%s\n%s\n", res_hdr, reslines)
 }
 
-func (s *Stdoutput) resultNormal(res ffuf.Result) {
+func (s *Stdoutput) resultNormal(res Result) {
 	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 
-func (s *Stdoutput) resultJson(res ffuf.Result) {
+func (s *Stdoutput) resultJson(res Result) {
 	resBytes, err := json.Marshal(res)
 	if err != nil {
 		s.Error(err.Error())

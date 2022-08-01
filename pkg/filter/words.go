@@ -6,19 +6,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 type WordFilter struct {
-	Value []ffuf.ValueRange
+	Value []utils.ValueRange
 }
 
-func NewWordFilter(value string) (ffuf.FilterProvider, error) {
-	var intranges []ffuf.ValueRange
+func NewWordFilter(value string) (FilterProvider, error) {
+	var intranges []utils.ValueRange
 	for _, sv := range strings.Split(value, ",") {
-		vr, err := ffuf.ValueRangeFromString(sv)
+		vr, err := utils.ValueRangeFromString(sv)
 		if err != nil {
-			return &WordFilter{}, fmt.Errorf("Word filter or matcher (-fw / -mw): invalid value: %s", sv)
+			return &WordFilter{}, fmt.Errorf("word filter or matcher (-fw / -mw): invalid value: %s", sv)
 		}
 		intranges = append(intranges, vr)
 	}
@@ -41,7 +42,7 @@ func (f *WordFilter) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (f *WordFilter) Filter(response *ffuf.Response) (bool, error) {
+func (f *WordFilter) Filter(response *http.Response) (bool, error) {
 	wordsSize := len(strings.Split(string(response.Data), " "))
 	for _, iv := range f.Value {
 		if iv.Min <= int64(wordsSize) && int64(wordsSize) <= iv.Max {

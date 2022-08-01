@@ -1,0 +1,35 @@
+# This is an example of a ffuf configuration file.
+# https://github.com/ffuf/ffuf
+
+[http]
+    cookies = [
+        "cookiename=cookievalue"
+    ]
+    data = "post=data&key=value"
+    followredirects = false
+    headers = [
+        "X-Header-Name: value",
+        "X-Another-Header: value"
+    ]
+    ignorebody = false
+    method = "GET"
+    proxyurl = "http://127.0.0.1:8080"
+    recursion = false
+    recursion_depth = 0
+    recursion_strategy = "default"
+    url = "https://example.org/FUZZ/HOST/CUSTOMKEYWORD"
+
+[general]
+    autocalibrationstrings = [
+        "randomtest",
+        "admin"
+    ]
+
+[input]
+    inputcommands = [
+        "seq 1 100:CUSTOMKEYWORD"
+    ]
+    wordlists = [
+        "/path/to/wordlist:FUZZ",
+        "/path/to/hostlist:HOST"
+    ]

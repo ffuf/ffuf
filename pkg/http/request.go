@@ -1,4 +1,4 @@
-package ffuf
+package http
 
 import (
 	"strings"
@@ -16,28 +16,12 @@ type Request struct {
 	Raw      string
 }
 
-func NewRequest(conf *Config) Request {
-	var req Request
-	req.Method = conf.Method
-	req.Url = conf.Url
-	req.Headers = make(map[string]string)
-	return req
-}
+// These functions couple the config and http package and create import cycles.
+// Thus they are moved into the ffuf package, where they are needed.
 
-// BaseRequest returns a base request struct populated from the main config
-func BaseRequest(conf *Config) Request {
-	req := NewRequest(conf)
-	req.Headers = conf.Headers
-	req.Data = []byte(conf.Data)
-	return req
-}
-
-// RecursionRequest returns a base request for a recursion target
-func RecursionRequest(conf *Config, path string) Request {
-	r := BaseRequest(conf)
-	r.Url = path
-	return r
-}
+// func NewRequest(conf *config.Config) Request
+// func BaseRequest(conf *config.Config) Request
+// func RecursionRequest(conf *config.Config, path string) Request
 
 // CopyRequest performs a deep copy of a request and returns a new struct
 func CopyRequest(basereq *Request) Request {

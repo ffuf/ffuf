@@ -10,6 +10,7 @@
 * [choket](https://github.com/choket)
 * [codingo](https://github.com/codingo)
 * [c_sto](https://github.com/c-sto)
+* [d4ndy](https://github.com/daniel-ts)
 * [Damian89](https://github.com/Damian89)
 * [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)

@@ -1,4 +1,4 @@
-package ffuf
+package http
 
 import (
 	"net/http"

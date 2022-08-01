@@ -1,27 +1,9 @@
-package ffuf
+package http
 
 import (
 	"reflect"
 	"testing"
 )
-
-func TestBaseRequest(t *testing.T) {
-	headers := make(map[string]string)
-	headers["foo"] = "bar"
-	headers["baz"] = "wibble"
-	headers["Content-Type"] = "application/json"
-
-	data := "{\"quote\":\"I'll still be here tomorrow to high five you yesterday, my friend. Peace.\"}"
-
-	expectedreq := Request{Method: "POST", Url: "http://example.com/aaaa", Headers: headers, Data: []byte(data)}
-	config := Config{Method: "POST", Url: "http://example.com/aaaa", Headers: headers, Data: data}
-	basereq := BaseRequest(&config)
-
-	if !reflect.DeepEqual(basereq, expectedreq) {
-		t.Errorf("BaseRequest does not return a struct with expected values")
-	}
-
-}
 
 func TestCopyRequest(t *testing.T) {
 	headers := make(map[string]string)

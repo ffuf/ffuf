@@ -15,18 +15,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	//"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
+	own_http "github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
-//Download results < 5MB
+// Download results < 5MB
 const MAX_DOWNLOAD_SIZE = 5242880
 
 type SimpleRunner struct {
-	config *ffuf.Config
+	config *config.Config
 	client *http.Client
 }
 
-func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
+func NewSimpleRunner(conf *config.Config, replay bool) RunnerProvider {
 	var simplerunner SimpleRunner
 	proxyURL := http.ProxyFromEnvironment
 	customProxy := ""
@@ -47,7 +50,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
-			ForceAttemptHTTP2: conf.Http2,
+			ForceAttemptHTTP2:   conf.Http2,
 			Proxy:               proxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
@@ -69,8 +72,8 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	return &simplerunner
 }
 
-func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (ffuf.Request, error) {
-	req := ffuf.CopyRequest(basereq)
+func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *own_http.Request) (own_http.Request, error) {
+	req := own_http.CopyRequest(basereq)
 
 	for keyword, inputitem := range input {
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
@@ -88,7 +91,7 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 	return req, nil
 }
 
-func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
+func (r *SimpleRunner) Execute(req *own_http.Request) (own_http.Response, error) {
 	var httpreq *http.Request
 	var err error
 	var rawreq []byte
@@ -109,12 +112,12 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
 
 	if err != nil {
-		return ffuf.Response{}, err
+		return own_http.Response{}, err
 	}
 
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", utils.Version())
 	}
 
 	// Handle Go http.Request special cases
@@ -134,10 +137,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	httpresp, err := r.client.Do(httpreq)
 	if err != nil {
-		return ffuf.Response{}, err
+		return own_http.Response{}, err
 	}
 
-	resp := ffuf.NewResponse(httpresp, req)
+	resp := own_http.NewResponse(httpresp, req)
 	defer httpresp.Body.Close()
 
 	// Check if we should download the resource or not

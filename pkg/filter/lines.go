@@ -6,19 +6,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 type LineFilter struct {
-	Value []ffuf.ValueRange
+	Value []utils.ValueRange
 }
 
-func NewLineFilter(value string) (ffuf.FilterProvider, error) {
-	var intranges []ffuf.ValueRange
+func NewLineFilter(value string) (FilterProvider, error) {
+	var intranges []utils.ValueRange
 	for _, sv := range strings.Split(value, ",") {
-		vr, err := ffuf.ValueRangeFromString(sv)
+		vr, err := utils.ValueRangeFromString(sv)
 		if err != nil {
-			return &LineFilter{}, fmt.Errorf("Line filter or matcher (-fl / -ml): invalid value: %s", sv)
+			return &LineFilter{}, fmt.Errorf("line filter or matcher (-fl / -ml): invalid value: %s", sv)
 		}
 		intranges = append(intranges, vr)
 	}
@@ -41,7 +42,7 @@ func (f *LineFilter) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (f *LineFilter) Filter(response *ffuf.Response) (bool, error) {
+func (f *LineFilter) Filter(response *http.Response) (bool, error) {
 	linesSize := len(strings.Split(string(response.Data), "\n"))
 	for _, iv := range f.Value {
 		if iv.Min <= int64(linesSize) && int64(linesSize) <= iv.Max {

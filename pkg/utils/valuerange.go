@@ -1,4 +1,4 @@
-package ffuf
+package utils
 
 import (
 	"fmt"
@@ -17,21 +17,21 @@ func ValueRangeFromString(instr string) (ValueRange, error) {
 		// yes
 		minval, err := strconv.ParseInt(minmax[0][1], 10, 0)
 		if err != nil {
-			return ValueRange{}, fmt.Errorf("Invalid value: %s", minmax[0][1])
+			return ValueRange{}, fmt.Errorf("invalid value: %s", minmax[0][1])
 		}
 		maxval, err := strconv.ParseInt(minmax[0][2], 10, 0)
 		if err != nil {
-			return ValueRange{}, fmt.Errorf("Invalid value: %s", minmax[0][2])
+			return ValueRange{}, fmt.Errorf("invalid value: %s", minmax[0][2])
 		}
 		if minval >= maxval {
-			return ValueRange{}, fmt.Errorf("Minimum has to be smaller than maximum")
+			return ValueRange{}, fmt.Errorf("minimum has to be smaller than maximum")
 		}
 		return ValueRange{minval, maxval}, nil
 	} else {
 		// no, a single value or something else
 		intval, err := strconv.ParseInt(instr, 10, 0)
 		if err != nil {
-			return ValueRange{}, fmt.Errorf("Invalid value: %s", instr)
+			return ValueRange{}, fmt.Errorf("invalid value: %s", instr)
 		}
 		return ValueRange{intval, intval}, nil
 	}

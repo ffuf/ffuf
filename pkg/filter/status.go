@@ -6,24 +6,25 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 const AllStatuses = 0
 
 type StatusFilter struct {
-	Value []ffuf.ValueRange
+	Value []utils.ValueRange
 }
 
-func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
-	var intranges []ffuf.ValueRange
+func NewStatusFilter(value string) (FilterProvider, error) {
+	var intranges []utils.ValueRange
 	for _, sv := range strings.Split(value, ",") {
 		if sv == "all" {
-			intranges = append(intranges, ffuf.ValueRange{Min: AllStatuses, Max: AllStatuses})
+			intranges = append(intranges, utils.ValueRange{Min: AllStatuses, Max: AllStatuses})
 		} else {
-			vr, err := ffuf.ValueRangeFromString(sv)
+			vr, err := utils.ValueRangeFromString(sv)
 			if err != nil {
-				return &StatusFilter{}, fmt.Errorf("Status filter or matcher (-fc / -mc): invalid value %s", sv)
+				return &StatusFilter{}, fmt.Errorf("status filter or matcher (-fc / -mc): invalid value %s", sv)
 			}
 			intranges = append(intranges, vr)
 		}
@@ -51,7 +52,7 @@ func (f *StatusFilter) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (f *StatusFilter) Filter(response *ffuf.Response) (bool, error) {
+func (f *StatusFilter) Filter(response *http.Response) (bool, error) {
 	for _, iv := range f.Value {
 		if iv.Min == AllStatuses && iv.Max == AllStatuses {
 			// Handle the "all" case
