@@ -215,6 +215,23 @@ func TestInjectKeyword(t *testing.T) {
 		t.Errorf("injectKeyword offset validation failed")
 	}
 
+	input = "id=§a§&sort=desc"
+	offsetTuple = templateLocations("§", input)
+	expected = "id=FUZZ&sort=desc"
+
+	result = injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
+	if result != expected {
+		t.Errorf("injectKeyword returned unexpected result: " + result)
+	}
+
+	input = "feature=aaa&thingie=bbb&array[§0§]=baz"
+	offsetTuple = templateLocations("§", input)
+	expected = "feature=aaa&thingie=bbb&array[FUZZ]=baz"
+
+	result = injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
+	if result != expected {
+		t.Errorf("injectKeyword returned unexpected result: " + result)
+	}
 }
 
 func TestScrubTemplates(t *testing.T) {
