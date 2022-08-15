@@ -70,7 +70,7 @@ ffuf -w /path/to/vhost/wordlist -u https://target -H "Host: FUZZ" -fs 4242
 
 ### GET parameter fuzzing
 
-GET parameter name fuzzing is very similar to directory discovery, and works by defining the `FUZZ` keyword as a part of the URL. This also assumes an response size of 4242 bytes for invalid GET parameter name.
+GET parameter name fuzzing is very similar to directory discovery, and works by defining the `FUZZ` keyword as a part of the URL. This also assumes a response size of 4242 bytes for invalid GET parameter name.
 
 ```
 ffuf -w /path/to/paramnames.txt -u https://target/script.php?FUZZ=test_value -fs 4242
