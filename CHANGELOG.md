@@ -1,20 +1,21 @@
 ## Changelog
 - master
   - New
-  - Changed
-  
+    - Refactored the configuration process into the config package
+    - Introduced the utils package for code that is used by several packages to avoid import cycles
+
 - v1.5.0
   - New
     - New autocalibration options: `-ach`, `-ack` and `-acs`. Revamped the whole autocalibration process
     - Configurable modes for matchers and filters (CLI flags: `fmode` and `mmode`): "and" and "or"
   - Changed
-  
+
 - v1.4.1
   - New
   - Changed
     - Fixed a bug with recursion, introduced in the 1.4.0 release
     - Recursion now works better with multiple wordlists, disabling unnecessary wordlists for queued jobs where needed
-  
+
 - v1.4.0
   - New
     - Added response time logging and filtering
@@ -26,7 +27,7 @@
     - Fixed an issue where output file was created regardless of `-or`
     - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
     - Fixed an issue when reading wordlist files from ffufrc
-    - Fixed an issue where `-of all` option only creates one output file (instead of all formats) 
+    - Fixed an issue where `-of all` option only creates one output file (instead of all formats)
     - Fixed an issue where redirection to the same domain in recursive mode dropped port info from URL
     - Added HTTP2 support
 
@@ -37,7 +38,7 @@
     - Do not read the last newline in the end of the raw request file when using -request
     - Fixed an issue with storing the matches for recursion jobs
     - Fixed the way the "size" is calculated, it should match content-length now
-    - Fixed an issue with header canonicalization when a keyword was just a part of the header name  
+    - Fixed an issue with header canonicalization when a keyword was just a part of the header name
     - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
 
 - v1.3.0
@@ -48,11 +49,11 @@
     user to change filters, manage recursion queue, save snapshot of matches to a file etc.
   - Changed
     - Fix a badchar in progress output
-  
+
 - v1.2.1
   - Changed
     - Fixed a build breaking bug in `input-shell` parameter
-    
+
 - v1.2.0
   - New
     - Added 405 Method Not Allowed to list of status codes matched by default.
@@ -61,7 +62,7 @@
     - Ffuf now reads a default configuration file `$HOME/.ffufrc` upon startup. Options set in this file
     are overwritten by the ones provided on CLI.
     - Change banner logging to stderr instead of stdout.
-    - New CLI flag `-or` to avoid creating result files if we didn't get any. 
+    - New CLI flag `-or` to avoid creating result files if we didn't get any.
     - New CLI flag `-input-shell` to set the shell to be used by `input-cmd`
 
   - Changed
