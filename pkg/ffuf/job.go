@@ -15,6 +15,7 @@ import (
 type Job struct {
 	Config               *Config
 	ErrorMutex           sync.Mutex
+	OkMutex		     sync.Mutex
 	Input                InputProvider
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
@@ -26,6 +27,7 @@ type Job struct {
 	Running              bool
 	RunningJob           bool
 	Paused               bool
+	Count200             int
 	Count403             int
 	Count429             int
 	Error                string
@@ -70,6 +72,13 @@ func (j *Job) incError() {
 	j.ErrorCounter++
 	j.SpuriousErrorCounter++
 }
+
+func (j *Job) inc200() {
+	j.OkMutex.Lock()
+	defer j.OkMutex.Unlock()
+	j.Count200++
+}
+
 
 //inc403 increments the 403 response counter
 func (j *Job) inc403() {
@@ -412,6 +421,12 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc429()
 		}
 	}
+	if j.Config.StopAfterN > 0 {
+		// Increment 200 counter if the response is OK
+		if resp.StatusCode == 200 {
+			j.inc200()
+		}
+	}
 	j.pauseWg.Wait()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
@@ -477,6 +492,14 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 
 // CheckStop stops the job if stopping conditions are met
 func (j *Job) CheckStop() {
+	if j.Config.StopAfterN > 0 {
+
+		// Check if we have N 200 Ok responses and bail
+		if j.Count200 == j.Config.StopAfterN {
+			j.Error = fmt.Sprintf("Received %d responses with status code 200 OK, exiting.", j.Config.StopAfterN) 
+			j.Stop()
+		}
+	}
 	if j.Counter > 50 {
 		// We have enough samples
 		if j.Config.StopOn403 || j.Config.StopOnAll {

@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New `-sn` flag to stop ffuf after receiving N responses with status code 200.
   - Changed
   
 - v1.5.0

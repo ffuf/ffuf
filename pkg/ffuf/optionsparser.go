@@ -60,6 +60,7 @@ type GeneralOptions struct {
 	Rate                    int
 	ShowVersion             bool `toml:"-"`
 	StopOn403               bool
+	StopAfterN              int
 	StopOnAll               bool
 	StopOnErrors            bool
 	Threads                 int
@@ -132,6 +133,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
 	c.General.StopOnErrors = false
+	c.General.StopAfterN = 0
 	c.General.Threads = 40
 	c.General.Verbose = false
 	c.HTTP.Data = ""
@@ -449,6 +451,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
+	conf.StopAfterN = parseOpts.General.StopAfterN
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
