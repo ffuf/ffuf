@@ -15,7 +15,7 @@ import (
 type Job struct {
 	Config               *Config
 	ErrorMutex           sync.Mutex
-	OkMutex		     sync.Mutex
+	MatchMutex           sync.Mutex
 	Input                InputProvider
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
@@ -27,7 +27,7 @@ type Job struct {
 	Running              bool
 	RunningJob           bool
 	Paused               bool
-	Count200             int
+	CountMatch           int
 	Count403             int
 	Count429             int
 	Error                string
@@ -73,13 +73,6 @@ func (j *Job) incError() {
 	j.SpuriousErrorCounter++
 }
 
-func (j *Job) inc200() {
-	j.OkMutex.Lock()
-	defer j.OkMutex.Unlock()
-	j.Count200++
-}
-
-
 //inc403 increments the 403 response counter
 func (j *Job) inc403() {
 	j.ErrorMutex.Lock()
@@ -92,6 +85,13 @@ func (j *Job) inc429() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.Count429++
+}
+
+// inc429 increments the 429 response counter
+func (j *Job) incMatch() {
+	j.MatchMutex.Lock()
+	defer j.MatchMutex.Unlock()
+	j.CountMatch++
 }
 
 //resetSpuriousErrors resets the spurious error counter
@@ -421,12 +421,6 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc429()
 		}
 	}
-	if j.Config.StopAfterN > 0 {
-		// Increment 200 counter if the response is OK
-		if resp.StatusCode == 200 {
-			j.inc200()
-		}
-	}
 	j.pauseWg.Wait()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
@@ -444,6 +438,11 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			} else {
 				_, _ = j.ReplayRunner.Execute(&replayreq)
 			}
+		}
+		// Increment the match count if we are supposed to stop after
+		// N matching responses
+		if j.Config.StopAfterN > 0 {
+			j.incMatch()
 		}
 		j.Output.Result(resp)
 
@@ -494,9 +493,9 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 func (j *Job) CheckStop() {
 	if j.Config.StopAfterN > 0 {
 
-		// Check if we have N 200 Ok responses and bail
-		if j.Count200 == j.Config.StopAfterN {
-			j.Error = fmt.Sprintf("Received %d responses with status code 200 OK, exiting.", j.Config.StopAfterN) 
+		// Check if we have N matching responses and bail
+		if j.CountMatch == j.Config.StopAfterN {
+			j.Error = fmt.Sprintf("Received %d matching responses, exiting.", j.Config.StopAfterN) 
 			j.Stop()
 		}
 	}
