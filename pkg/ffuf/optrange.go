@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-//optRange stores either a single float, in which case the value is stored in min and IsRange is false,
-//or a range of floats, in which case IsRange is true
+// optRange stores either a single float, in which case the value is stored in min and IsRange is false,
+// or a range of floats, in which case IsRange is true
 type optRange struct {
 	Min      float64
 	Max      float64
@@ -41,7 +41,7 @@ func (o *optRange) UnmarshalJSON(b []byte) error {
 	return o.Initialize(inc.Value)
 }
 
-//Initialize sets up the optRange from string value
+// Initialize sets up the optRange from string value
 func (o *optRange) Initialize(value string) error {
 	var err, err2 error
 	d := strings.Split(value, "-")

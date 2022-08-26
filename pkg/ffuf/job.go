@@ -7,29 +7,28 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
 
-//Job ties together Config, Runner, Input and Output
+// Job ties together Config, Runner, Input and Output
 type Job struct {
 	Config               *Config
-	ErrorMutex           sync.Mutex
-	MatchMutex           sync.Mutex
 	Input                InputProvider
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
 	Output               OutputProvider
-	Counter              int
-	ErrorCounter         int
-	SpuriousErrorCounter int
+	Counter              int64
+	ErrorCounter         int64
+	SpuriousErrorCounter int64
 	Total                int
 	Running              bool
 	RunningJob           bool
 	Paused               bool
-	CountMatch           int
-	Count403             int
-	Count429             int
+	CountMatch           int64
+	Count403             int64
+	Count429             int64
 	Error                string
 	Rate                 *RateThrottle
 	startTime            time.Time
@@ -65,54 +64,24 @@ func NewJob(conf *Config) *Job {
 	return &j
 }
 
-//incError increments the error counter
+// incError increments the error counter
 func (j *Job) incError() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.ErrorCounter++
-	j.SpuriousErrorCounter++
+	atomic.AddInt64(&j.ErrorCounter, 1)
+	atomic.AddInt64(&j.SpuriousErrorCounter, 1)
 }
 
-//inc403 increments the 403 response counter
-func (j *Job) inc403() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.Count403++
-}
-
-// inc429 increments the 429 response counter
-func (j *Job) inc429() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.Count429++
-}
-
-// inc429 increments the 429 response counter
-func (j *Job) incMatch() {
-	j.MatchMutex.Lock()
-	defer j.MatchMutex.Unlock()
-	j.CountMatch++
-}
-
-//resetSpuriousErrors resets the spurious error counter
-func (j *Job) resetSpuriousErrors() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.SpuriousErrorCounter = 0
-}
-
-//DeleteQueueItem deletes a recursion job from the queue by its index in the slice
+// DeleteQueueItem deletes a recursion job from the queue by its index in the slice
 func (j *Job) DeleteQueueItem(index int) {
 	index = j.queuepos + index - 1
 	j.queuejobs = append(j.queuejobs[:index], j.queuejobs[index+1:]...)
 }
 
-//QueuedJobs returns the slice of queued recursive jobs
+// QueuedJobs returns the slice of queued recursive jobs
 func (j *Job) QueuedJobs() []QueueJob {
 	return j.queuejobs[j.queuepos-1:]
 }
 
-//Start the execution of the Job
+// Start the execution of the Job
 func (j *Job) Start() {
 	if j.startTime.IsZero() {
 		j.startTime = time.Now()
@@ -191,7 +160,7 @@ func (j *Job) prepareQueueJob() {
 	j.queuepos += 1
 }
 
-//SkipQueue allows to skip the current job and advance to the next queued recursion job
+// SkipQueue allows to skip the current job and advance to the next queued recursion job
 func (j *Job) SkipQueue() {
 	j.skipQueue = true
 }
@@ -303,13 +272,13 @@ func (j *Job) interruptMonitor() {
 func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 	defer wg.Done()
 	totalProgress := j.Input.Total()
-	for j.Counter <= totalProgress && !j.skipQueue {
+	for int(j.Counter) <= totalProgress && !j.skipQueue {
 		j.pauseWg.Wait()
 		if !j.Running {
 			break
 		}
 		j.updateProgress()
-		if j.Counter == totalProgress {
+		if int(j.Counter) == totalProgress {
 			return
 		}
 		if !j.RunningJob {
@@ -323,12 +292,12 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 func (j *Job) updateProgress() {
 	prog := Progress{
 		StartedAt:  j.startTimeJob,
-		ReqCount:   j.Counter,
+		ReqCount:   int(j.Counter),
 		ReqTotal:   j.Input.Total(),
 		ReqSec:     j.Rate.CurrentRate(),
 		QueuePos:   j.queuepos,
 		QueueTotal: len(j.queuejobs),
-		ErrorCount: j.ErrorCounter,
+		ErrorCount: int(j.ErrorCounter),
 	}
 	j.Output.Progress(prog)
 }
@@ -407,18 +376,18 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		return
 	}
 	if j.SpuriousErrorCounter > 0 {
-		j.resetSpuriousErrors()
+		atomic.StoreInt64(&j.SpuriousErrorCounter, 0)
 	}
 	if j.Config.StopOn403 || j.Config.StopOnAll {
 		// Increment Forbidden counter if we encountered one
 		if resp.StatusCode == 403 {
-			j.inc403()
+			atomic.AddInt64(&j.Count403, 1)
 		}
 	}
 	if j.Config.StopOnAll {
 		// increment 429 counter if the response code is 429
 		if resp.StatusCode == 429 {
-			j.inc429()
+			atomic.AddInt64(&j.Count429, 1)
 		}
 	}
 	j.pauseWg.Wait()
@@ -442,7 +411,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		// Increment the match count if we are supposed to stop after
 		// N matching responses
 		if j.Config.StopAfterN > 0 {
-			j.incMatch()
+			atomic.AddInt64(&j.CountMatch, 1)
 		}
 		j.Output.Result(resp)
 
@@ -458,7 +427,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 }
 
-//handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
+// handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
 func (j *Job) handleGreedyRecursionJob(resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
@@ -471,8 +440,8 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	}
 }
 
-//handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
-//not been reached
+// handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
+// not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
 	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
@@ -494,8 +463,8 @@ func (j *Job) CheckStop() {
 	if j.Config.StopAfterN > 0 {
 
 		// Check if we have N matching responses and bail
-		if j.CountMatch == j.Config.StopAfterN {
-			j.Error = fmt.Sprintf("Received %d matching responses, exiting.", j.Config.StopAfterN) 
+		if int(j.CountMatch) == j.Config.StopAfterN {
+			j.Error = fmt.Sprintf("Received %d matching responses, exiting.", j.Config.StopAfterN)
 			j.Stop()
 		}
 	}
@@ -509,7 +478,7 @@ func (j *Job) CheckStop() {
 			}
 		}
 		if j.Config.StopOnErrors || j.Config.StopOnAll {
-			if j.SpuriousErrorCounter > j.Config.Threads*2 {
+			if int(j.SpuriousErrorCounter) > j.Config.Threads*2 {
 				// Most of the requests are erroring
 				j.Error = "Receiving spurious errors, exiting."
 				j.Stop()
@@ -545,13 +514,13 @@ func (j *Job) CheckStop() {
 	}
 }
 
-//Stop the execution of the Job
+// Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
 	j.Config.Cancel()
 }
 
-//Stop current, resume to next
+// Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
 }

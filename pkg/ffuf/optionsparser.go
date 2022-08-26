@@ -108,7 +108,7 @@ type MatcherOptions struct {
 	Words  string
 }
 
-//NewConfigOptions returns a newly created ConfigOptions struct with default values
+// NewConfigOptions returns a newly created ConfigOptions struct with default values
 func NewConfigOptions() *ConfigOptions {
 	c := &ConfigOptions{}
 	c.Filter.Mode = "or"
@@ -171,7 +171,7 @@ func NewConfigOptions() *ConfigOptions {
 	return c
 }
 
-//ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
+// ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
 func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel context.CancelFunc) (*Config, error) {
 	//TODO: refactor in a proper flag library that can handle things like required flags

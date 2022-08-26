@@ -25,7 +25,7 @@ func NewRateThrottle(conf *Config) *RateThrottle {
 	}
 }
 
-//CurrentRate calculates requests/second value from circular list of rate
+// CurrentRate calculates requests/second value from circular list of rate
 func (r *RateThrottle) CurrentRate() int64 {
 	n := r.rateCounter.Len()
 	var total int64
@@ -48,7 +48,7 @@ func (r *RateThrottle) CurrentRate() int64 {
 	return 0
 }
 
-//rateTick adds a new duration measurement tick to rate counter
+// rateTick adds a new duration measurement tick to rate counter
 func (r *RateThrottle) Tick(start, end time.Time) {
 	if start.Before(r.lastAdjustment) {
 		// We don't want to store data for threads started pre-adjustment
@@ -73,7 +73,7 @@ func (r *RateThrottle) Throttle() {
 	}
 }
 
-//Adjust changes the RateAdjustment value, which is multiplier of second to pause between requests in a thread
+// Adjust changes the RateAdjustment value, which is multiplier of second to pause between requests in a thread
 func (r *RateThrottle) Adjust() {
 	if r.RateAdjustmentPos < r.Config.Threads {
 		// Do not adjust if we don't have enough data yet

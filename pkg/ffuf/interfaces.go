@@ -2,7 +2,7 @@ package ffuf
 
 import "time"
 
-//MatcherManager provides functions for managing matchers and filters
+// MatcherManager provides functions for managing matchers and filters
 type MatcherManager interface {
 	SetCalibrated(calibrated bool)
 	SetCalibratedForHost(host string, calibrated bool)
@@ -17,20 +17,20 @@ type MatcherManager interface {
 	Calibrated() bool
 }
 
-//FilterProvider is a generic interface for both Matchers and Filters
+// FilterProvider is a generic interface for both Matchers and Filters
 type FilterProvider interface {
 	Filter(response *Response) (bool, error)
 	Repr() string
 	ReprVerbose() string
 }
 
-//RunnerProvider is an interface for request executors
+// RunnerProvider is an interface for request executors
 type RunnerProvider interface {
 	Prepare(input map[string][]byte, basereq *Request) (Request, error)
 	Execute(req *Request) (Response, error)
 }
 
-//InputProvider interface handles the input data for RunnerProvider
+// InputProvider interface handles the input data for RunnerProvider
 type InputProvider interface {
 	ActivateKeywords([]string)
 	AddProvider(InputProviderConfig) error
@@ -42,7 +42,7 @@ type InputProvider interface {
 	Total() int
 }
 
-//InternalInputProvider interface handles providing input data to InputProvider
+// InternalInputProvider interface handles providing input data to InputProvider
 type InternalInputProvider interface {
 	Keyword() string
 	Next() bool
@@ -56,7 +56,7 @@ type InternalInputProvider interface {
 	Disable()
 }
 
-//OutputProvider is responsible of providing output from the RunnerProvider
+// OutputProvider is responsible of providing output from the RunnerProvider
 type OutputProvider interface {
 	Banner()
 	Finalize() error
