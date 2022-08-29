@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Fixes issue where maxtime stops process without saving output
   
 - v1.5.0
   - New

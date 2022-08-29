@@ -14,6 +14,7 @@
 * [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
 * [denandz](https://github.com/denandz)
+* [dpanic](https://github.com/dpanic)
 * [erbbysam](https://github.com/erbbysam)
 * [eur0pa](https://github.com/eur0pa)
 * [fabiobauer](https://github.com/fabiobauer)
