@@ -507,7 +507,10 @@ func (j *Job) CheckStop() {
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTime {
 			j.Error = "Maximum running time for entire process reached, exiting."
-			j.Output.Finalize()
+			err := j.Output.Finalize()
+			if err != nil {
+				j.Output.Error(err.Error())
+			}
 			j.Stop()
 		}
 	}
