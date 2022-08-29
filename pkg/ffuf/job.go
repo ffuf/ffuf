@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//Job ties together Config, Runner, Input and Output
+// Job ties together Config, Runner, Input and Output
 type Job struct {
 	Config               *Config
 	ErrorMutex           sync.Mutex
@@ -63,7 +63,7 @@ func NewJob(conf *Config) *Job {
 	return &j
 }
 
-//incError increments the error counter
+// incError increments the error counter
 func (j *Job) incError() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
@@ -71,7 +71,7 @@ func (j *Job) incError() {
 	j.SpuriousErrorCounter++
 }
 
-//inc403 increments the 403 response counter
+// inc403 increments the 403 response counter
 func (j *Job) inc403() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
@@ -85,25 +85,25 @@ func (j *Job) inc429() {
 	j.Count429++
 }
 
-//resetSpuriousErrors resets the spurious error counter
+// resetSpuriousErrors resets the spurious error counter
 func (j *Job) resetSpuriousErrors() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.SpuriousErrorCounter = 0
 }
 
-//DeleteQueueItem deletes a recursion job from the queue by its index in the slice
+// DeleteQueueItem deletes a recursion job from the queue by its index in the slice
 func (j *Job) DeleteQueueItem(index int) {
 	index = j.queuepos + index - 1
 	j.queuejobs = append(j.queuejobs[:index], j.queuejobs[index+1:]...)
 }
 
-//QueuedJobs returns the slice of queued recursive jobs
+// QueuedJobs returns the slice of queued recursive jobs
 func (j *Job) QueuedJobs() []QueueJob {
 	return j.queuejobs[j.queuepos-1:]
 }
 
-//Start the execution of the Job
+// Start the execution of the Job
 func (j *Job) Start() {
 	if j.startTime.IsZero() {
 		j.startTime = time.Now()
@@ -182,7 +182,7 @@ func (j *Job) prepareQueueJob() {
 	j.queuepos += 1
 }
 
-//SkipQueue allows to skip the current job and advance to the next queued recursion job
+// SkipQueue allows to skip the current job and advance to the next queued recursion job
 func (j *Job) SkipQueue() {
 	j.skipQueue = true
 }
@@ -444,7 +444,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 }
 
-//handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
+// handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
 func (j *Job) handleGreedyRecursionJob(resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
@@ -457,8 +457,8 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	}
 }
 
-//handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
-//not been reached
+// handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
+// not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
 	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
@@ -507,6 +507,7 @@ func (j *Job) CheckStop() {
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTime {
 			j.Error = "Maximum running time for entire process reached, exiting."
+			j.Output.Finalize()
 			j.Stop()
 		}
 	}
@@ -523,13 +524,13 @@ func (j *Job) CheckStop() {
 	}
 }
 
-//Stop the execution of the Job
+// Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
 	j.Config.Cancel()
 }
 
-//Stop current, resume to next
+// Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
 }
