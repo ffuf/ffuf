@@ -42,4 +42,5 @@
 * [Skyehopper](https://github.com/Skyehopper)
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [l4yton](https://github.com/l4yton)
+* [xbol0](https://github.com/xbol0)
 * [xfgusta](https://github.com/xfgusta)
