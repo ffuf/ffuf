@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -17,12 +18,19 @@ func ParseRawRequest(r io.ReadCloser) (req *http.Request, err error) {
 	// because the latter produces a standards-conforming request, which might be
 	// undesirable while fuzzig.
 
+	req, err = http.NewRequest("", "", nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create empty http.Request: %s", err)
+	}
+
 	var reader *bufio.Reader = bufio.NewReader(r)
 
 	s, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("could not read request: %s", err)
 	}
+	s = strings.TrimSpace(s)
+
 	parts := strings.Split(s, " ")
 	if len(parts) < 3 {
 		return nil, fmt.Errorf("malformed request supplied")
@@ -31,7 +39,7 @@ func ParseRawRequest(r io.ReadCloser) (req *http.Request, err error) {
 	req.Method = parts[0]
 
 	var ok bool
-	req.ProtoMajor, req.ProtoMinor, ok = http.ParseHTTPVersion(parts[3])
+	req.ProtoMajor, req.ProtoMinor, ok = parseHTTPVersion(parts[2])
 	if !ok {
 		return nil, fmt.Errorf("malformed http protocol version")
 	}
@@ -66,4 +74,30 @@ func ParseRawRequest(r io.ReadCloser) (req *http.Request, err error) {
 	req.Body = r
 
 	return req, nil
+}
+
+///////////////
+// AUXILIARY //
+///////////////
+
+func parseHTTPVersion(vers string) (major int, minor int, ok bool) {
+	_, version, found := strings.Cut(vers, "/")
+	if !found {
+		return 0, 0, false
+	}
+
+	maj, min, found := strings.Cut(version, ".")
+	major, err := strconv.Atoi(maj)
+	if err != nil {
+		return 0, 0, false
+	}
+	if !found {
+		return major, 0, true
+	}
+
+	minor, err = strconv.Atoi(min)
+	if err != nil {
+		return 0, 0, false
+	}
+	return major, minor, true
 }
