@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
 func TestNewRegexpFilter(t *testing.T) {
@@ -36,9 +36,9 @@ func TestRegexpFiltering(t *testing.T) {
 		{"invalid", false},
 	} {
 		inp := make(map[string][]byte)
-		resp := ffuf.Response{
+		resp := http.Response{
 			Data: []byte(test.input),
-			Request: &ffuf.Request{
+			Request: &http.Request{
 				Input: inp,
 			},
 		}

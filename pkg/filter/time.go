@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
 type TimeFilter struct {
@@ -16,7 +16,7 @@ type TimeFilter struct {
 	valueRaw string
 }
 
-func NewTimeFilter(value string) (ffuf.FilterProvider, error) {
+func NewTimeFilter(value string) (FilterProvider, error) {
 	var milliseconds int64
 	gt, lt := false, false
 
@@ -24,12 +24,12 @@ func NewTimeFilter(value string) (ffuf.FilterProvider, error) {
 	lt = strings.HasPrefix(value, "<")
 
 	if (!lt && !gt) || (lt && gt) {
-		return &TimeFilter{}, fmt.Errorf("Time filter or matcher (-ft / -mt): invalid value: %s", value)
+		return &TimeFilter{}, fmt.Errorf("time filter or matcher (-ft / -mt): invalid value: %s", value)
 	}
 
 	milliseconds, err := strconv.ParseInt(value[1:], 10, 64)
 	if err != nil {
-		return &TimeFilter{}, fmt.Errorf("Time filter or matcher (-ft / -mt): invalid value: %s", value)
+		return &TimeFilter{}, fmt.Errorf("time filter or matcher (-ft / -mt): invalid value: %s", value)
 	}
 	return &TimeFilter{ms: milliseconds, gt: gt, lt: lt, valueRaw: value}, nil
 }
@@ -42,7 +42,7 @@ func (f *TimeFilter) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (f *TimeFilter) Filter(response *ffuf.Response) (bool, error) {
+func (f *TimeFilter) Filter(response *http.Response) (bool, error) {
 	if f.gt {
 		if response.Time.Milliseconds() > f.ms {
 			return true, nil

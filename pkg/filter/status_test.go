@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
 func TestNewStatusFilter(t *testing.T) {
@@ -39,7 +39,7 @@ func TestStatusFiltering(t *testing.T) {
 		{499, false},
 		{302, false},
 	} {
-		resp := ffuf.Response{StatusCode: test.input}
+		resp := http.Response{StatusCode: test.input}
 		filterReturn, _ := f.Filter(&resp)
 		if filterReturn != test.output {
 			t.Errorf("Filter test %d: Was expecing filter return value of %t but got %t", i, test.output, filterReturn)

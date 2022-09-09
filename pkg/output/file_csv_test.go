@@ -4,12 +4,10 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
 func TestToCSV(t *testing.T) {
-	result := ffuf.Result{
+	result := Result{
 		Input:            map[string][]byte{"x": {66}},
 		Position:         1,
 		StatusCode:       200,

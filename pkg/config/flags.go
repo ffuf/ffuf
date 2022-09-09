@@ -1,0 +1,90 @@
+// commandline flags are defined here
+
+package config
+
+import (
+	"flag"
+)
+
+// defineCmdlineOptions is the place where commandline arguments are defined.
+// flagset is a reference to a flag.FlagSet (usually the package wide FlagSet).
+// opts_buf is a reference to a preallocated ConfigOptions struct which is set as
+// the reveiver of the commandline options.
+func defineCmdlineOptions(flagset *flag.FlagSet, opts_buf *ConfigOptions) {
+
+	var ignored bool
+
+	flagset.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
+	flagset.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
+	flagset.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
+	flagset.BoolVar(&opts_buf.Output.OutputSkipEmptyFile, "or", opts_buf.Output.OutputSkipEmptyFile, "Don't create the output file if we don't have results")
+	flagset.BoolVar(&opts_buf.General.AutoCalibration, "ac", opts_buf.General.AutoCalibration, "Automatically calibrate filtering options")
+	flagset.BoolVar(&opts_buf.General.AutoCalibrationPerHost, "ach", opts_buf.General.AutoCalibration, "Per host autocalibration")
+	flagset.BoolVar(&opts_buf.General.Colors, "c", opts_buf.General.Colors, "Colorize output.")
+	flagset.BoolVar(&opts_buf.General.Json, "json", opts_buf.General.Json, "JSON output, printing newline-delimited JSON records")
+	flagset.BoolVar(&opts_buf.General.Noninteractive, "noninteractive", opts_buf.General.Noninteractive, "Disable the interactive console functionality")
+	flagset.BoolVar(&opts_buf.General.Quiet, "s", opts_buf.General.Quiet, "Do not print additional information (silent mode)")
+	flagset.BoolVar(&opts_buf.General.ShowVersion, "V", opts_buf.General.ShowVersion, "Show version information.")
+	flagset.BoolVar(&opts_buf.General.StopOn403, "sf", opts_buf.General.StopOn403, "Stop when > 95% of responses return 403 Forbidden")
+	flagset.BoolVar(&opts_buf.General.StopOnAll, "sa", opts_buf.General.StopOnAll, "Stop on all error cases. Implies -sf and -se.")
+	flagset.BoolVar(&opts_buf.General.StopOnErrors, "se", opts_buf.General.StopOnErrors, "Stop on spurious errors")
+	flagset.BoolVar(&opts_buf.General.Verbose, "v", opts_buf.General.Verbose, "Verbose output, printing full URL and redirect location (if any) with the results.")
+	flagset.BoolVar(&opts_buf.HTTP.FollowRedirects, "r", opts_buf.HTTP.FollowRedirects, "Follow redirects")
+	flagset.BoolVar(&opts_buf.HTTP.IgnoreBody, "ignore-body", opts_buf.HTTP.IgnoreBody, "Do not fetch the response content.")
+	flagset.BoolVar(&opts_buf.HTTP.Recursion, "recursion", opts_buf.HTTP.Recursion, "Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it.")
+	flagset.BoolVar(&opts_buf.HTTP.Http2, "http2", opts_buf.HTTP.Http2, "Use HTTP2 protocol")
+	flagset.BoolVar(&opts_buf.Input.DirSearchCompat, "D", opts_buf.Input.DirSearchCompat, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
+	flagset.BoolVar(&opts_buf.Input.IgnoreWordlistComments, "ic", opts_buf.Input.IgnoreWordlistComments, "Ignore wordlist comments")
+	flagset.IntVar(&opts_buf.General.MaxTime, "maxtime", opts_buf.General.MaxTime, "Maximum running time in seconds for entire process.")
+	flagset.IntVar(&opts_buf.General.MaxTimeJob, "maxtime-job", opts_buf.General.MaxTimeJob, "Maximum running time in seconds per job.")
+	flagset.IntVar(&opts_buf.General.Rate, "rate", opts_buf.General.Rate, "Rate of requests per second")
+	flagset.IntVar(&opts_buf.General.Threads, "t", opts_buf.General.Threads, "Number of concurrent threads.")
+	flagset.IntVar(&opts_buf.HTTP.RecursionDepth, "recursion-depth", opts_buf.HTTP.RecursionDepth, "Maximum recursion depth.")
+	flagset.IntVar(&opts_buf.HTTP.Timeout, "timeout", opts_buf.HTTP.Timeout, "HTTP request timeout in seconds.")
+	flagset.IntVar(&opts_buf.Input.InputNum, "input-num", opts_buf.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flagset.StringVar(&opts_buf.General.AutoCalibrationKeyword, "ack", opts_buf.General.AutoCalibrationKeyword, "Autocalibration keyword")
+	flagset.StringVar(&opts_buf.General.AutoCalibrationStrategy, "acs", opts_buf.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
+	flagset.StringVar(&opts_buf.General.ConfigFile, "config", "", "Load configuration from a file")
+	flagset.StringVar(&opts_buf.Filter.Mode, "fmode", opts_buf.Filter.Mode, "Filter set operator. Either of: and, or")
+	flagset.StringVar(&opts_buf.Filter.Lines, "fl", opts_buf.Filter.Lines, "Filter by amount of lines in response. Comma separated list of line counts and ranges")
+	flagset.StringVar(&opts_buf.Filter.Regexp, "fr", opts_buf.Filter.Regexp, "Filter regexp")
+	flagset.StringVar(&opts_buf.Filter.Size, "fs", opts_buf.Filter.Size, "Filter HTTP response size. Comma separated list of sizes and ranges")
+	flagset.StringVar(&opts_buf.Filter.Status, "fc", opts_buf.Filter.Status, "Filter HTTP status codes from response. Comma separated list of codes and ranges")
+	flagset.StringVar(&opts_buf.Filter.Time, "ft", opts_buf.Filter.Time, "Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
+	flagset.StringVar(&opts_buf.Filter.Words, "fw", opts_buf.Filter.Words, "Filter by amount of words in response. Comma separated list of word counts and ranges")
+	flagset.StringVar(&opts_buf.General.Delay, "p", opts_buf.General.Delay, "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
+	flagset.StringVar(&opts_buf.HTTP.Data, "d", opts_buf.HTTP.Data, "POST data")
+	flagset.StringVar(&opts_buf.HTTP.Data, "data", opts_buf.HTTP.Data, "POST data (alias of -d)")
+	flagset.StringVar(&opts_buf.HTTP.Data, "data-ascii", opts_buf.HTTP.Data, "POST data (alias of -d)")
+	flagset.StringVar(&opts_buf.HTTP.Data, "data-binary", opts_buf.HTTP.Data, "POST data (alias of -d)")
+	flagset.StringVar(&opts_buf.HTTP.Method, "X", opts_buf.HTTP.Method, "HTTP method to use")
+	flagset.StringVar(&opts_buf.HTTP.ProxyURL, "x", opts_buf.HTTP.ProxyURL, "Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080")
+	flagset.StringVar(&opts_buf.HTTP.ReplayProxyURL, "replay-proxy", opts_buf.HTTP.ReplayProxyURL, "Replay matched requests using this proxy.")
+	flagset.StringVar(&opts_buf.HTTP.RecursionStrategy, "recursion-strategy", opts_buf.HTTP.RecursionStrategy, "Recursion strategy: \"default\" for a redirect based, and \"greedy\" to recurse on all matches")
+	flagset.StringVar(&opts_buf.HTTP.URL, "u", opts_buf.HTTP.URL, "Target URL")
+	flagset.StringVar(&opts_buf.HTTP.SNI, "sni", opts_buf.HTTP.SNI, "Target TLS SNI, does not support FUZZ keyword")
+	flagset.StringVar(&opts_buf.Input.Extensions, "e", opts_buf.Input.Extensions, "Comma separated list of extensions. Extends FUZZ keyword.")
+	flagset.StringVar(&opts_buf.Input.InputMode, "mode", opts_buf.Input.InputMode, "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper")
+	flagset.StringVar(&opts_buf.Input.InputShell, "input-shell", opts_buf.Input.InputShell, "Shell to be used for running command")
+	flagset.StringVar(&opts_buf.Input.Request, "request", opts_buf.Input.Request, "File containing the raw http request")
+	flagset.StringVar(&opts_buf.Input.RequestProto, "request-proto", opts_buf.Input.RequestProto, "Protocol to use along with raw request")
+	flagset.StringVar(&opts_buf.Matcher.Mode, "mmode", opts_buf.Matcher.Mode, "Matcher set operator. Either of: and, or")
+	flagset.StringVar(&opts_buf.Matcher.Lines, "ml", opts_buf.Matcher.Lines, "Match amount of lines in response")
+	flagset.StringVar(&opts_buf.Matcher.Regexp, "mr", opts_buf.Matcher.Regexp, "Match regexp")
+	flagset.StringVar(&opts_buf.Matcher.Size, "ms", opts_buf.Matcher.Size, "Match HTTP response size")
+	flagset.StringVar(&opts_buf.Matcher.Status, "mc", opts_buf.Matcher.Status, "Match HTTP status codes, or \"all\" for everything.")
+	flagset.StringVar(&opts_buf.Matcher.Time, "mt", opts_buf.Matcher.Time, "Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
+	flagset.StringVar(&opts_buf.Matcher.Words, "mw", opts_buf.Matcher.Words, "Match amount of words in response")
+	flagset.StringVar(&opts_buf.Output.DebugLog, "debug-log", opts_buf.Output.DebugLog, "Write all of the internal logging to the specified file.")
+	flagset.StringVar(&opts_buf.Output.OutputDirectory, "od", opts_buf.Output.OutputDirectory, "Directory path to store matched results to.")
+	flagset.StringVar(&opts_buf.Output.OutputFile, "o", opts_buf.Output.OutputFile, "Write output to file")
+	flagset.StringVar(&opts_buf.Output.OutputFormat, "of", opts_buf.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
+	flagset.Var(&opts_buf.General.AutoCalibrationStrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
+	flagset.Var(&opts_buf.HTTP.Cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
+	flagset.Var(&opts_buf.HTTP.Cookies, "cookie", "Cookie data (alias of -b)")
+	flagset.Var(&opts_buf.HTTP.Headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
+	flagset.Var(&opts_buf.Input.Inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
+	flagset.Var(&opts_buf.Input.Wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
+	flagset.Usage = func() {} // deactivate printing of usage. Print manually if errors.Is(err, flag.ErrHelp)
+
+}

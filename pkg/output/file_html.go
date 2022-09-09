@@ -5,14 +5,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
 )
 
 type htmlFileOutput struct {
 	CommandLine string
 	Time        string
 	Keys        []string
-	Results     []ffuf.Result
+	Results     []Result
 }
 
 const (
@@ -36,12 +36,12 @@ const (
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
 	/>
-	<link 
-	  rel="stylesheet" 
-	  type="text/css" 
+	<link
+	  rel="stylesheet"
+	  type="text/css"
 	  href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css"
 	/>
-  
+
   </head>
 
   <body>
@@ -147,8 +147,8 @@ const (
 )
 
 // colorizeResults returns a new slice with HTMLColor attribute
-func colorizeResults(results []ffuf.Result) []ffuf.Result {
-	newResults := make([]ffuf.Result, 0)
+func colorizeResults(results []Result) []Result {
+	newResults := make([]Result, 0)
 
 	for _, r := range results {
 		result := r
@@ -178,7 +178,7 @@ func colorizeResults(results []ffuf.Result) []ffuf.Result {
 	return newResults
 }
 
-func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) error {
+func writeHTML(filename string, config *config.Config, results []Result) error {
 	results = colorizeResults(results)
 
 	ti := time.Now()

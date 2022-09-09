@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/output"
 )
 
 type interactive struct {
@@ -192,11 +194,11 @@ func (i *interactive) handleInput(in []byte) {
 }
 
 func (i *interactive) refreshResults() {
-	results := make([]ffuf.Result, 0)
+	results := make([]output.Result, 0)
 	filters := i.Job.Config.MatcherManager.GetFilters()
 	for _, filter := range filters {
 		for _, res := range i.Job.Output.GetCurrentResults() {
-			fakeResp := &ffuf.Response{
+			fakeResp := &http.Response{
 				StatusCode:    res.StatusCode,
 				ContentLines:  res.ContentLength,
 				ContentWords:  res.ContentWords,
@@ -294,7 +296,7 @@ available commands:
  queuedel [number]      - delete a job in the queue
  queueskip              - advance to the next queued job
  restart                - restart and resume the current ffuf job
- resume                 - resume current ffuf job (or: ENTER) 
+ resume                 - resume current ffuf job (or: ENTER)
  show                   - show results for the current job
  savejson [filename]    - save current matches to a file
  help                   - you are looking at it

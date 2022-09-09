@@ -9,16 +9,23 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/ffuf/ffuf/pkg/config"
+	"github.com/ffuf/ffuf/pkg/filter"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/input"
+	"github.com/ffuf/ffuf/pkg/output"
+	"github.com/ffuf/ffuf/pkg/runner"
 )
 
-//Job ties together Config, Runner, Input and Output
+// Job ties together Config, Runner, Input and Output
 type Job struct {
-	Config               *Config
+	Config               *config.Config
 	ErrorMutex           sync.Mutex
-	Input                InputProvider
-	Runner               RunnerProvider
-	ReplayRunner         RunnerProvider
-	Output               OutputProvider
+	Input                input.InputProvider
+	Runner               runner.RunnerProvider
+	ReplayRunner         runner.RunnerProvider
+	Output               output.OutputProvider
 	Counter              int
 	ErrorCounter         int
 	SpuriousErrorCounter int
@@ -43,10 +50,10 @@ type Job struct {
 type QueueJob struct {
 	Url   string
 	depth int
-	req   Request
+	req   http.Request
 }
 
-func NewJob(conf *Config) *Job {
+func NewJob(conf *config.Config) *Job {
 	var j Job
 	j.Config = conf
 	j.Counter = 0
@@ -63,7 +70,7 @@ func NewJob(conf *Config) *Job {
 	return &j
 }
 
-//incError increments the error counter
+// incError increments the error counter
 func (j *Job) incError() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
@@ -71,7 +78,7 @@ func (j *Job) incError() {
 	j.SpuriousErrorCounter++
 }
 
-//inc403 increments the 403 response counter
+// inc403 increments the 403 response counter
 func (j *Job) inc403() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
@@ -85,25 +92,25 @@ func (j *Job) inc429() {
 	j.Count429++
 }
 
-//resetSpuriousErrors resets the spurious error counter
+// resetSpuriousErrors resets the spurious error counter
 func (j *Job) resetSpuriousErrors() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.SpuriousErrorCounter = 0
 }
 
-//DeleteQueueItem deletes a recursion job from the queue by its index in the slice
+// DeleteQueueItem deletes a recursion job from the queue by its index in the slice
 func (j *Job) DeleteQueueItem(index int) {
 	index = j.queuepos + index - 1
 	j.queuejobs = append(j.queuejobs[:index], j.queuejobs[index+1:]...)
 }
 
-//QueuedJobs returns the slice of queued recursive jobs
+// QueuedJobs returns the slice of queued recursive jobs
 func (j *Job) QueuedJobs() []QueueJob {
 	return j.queuejobs[j.queuepos-1:]
 }
 
-//Start the execution of the Job
+// Start the execution of the Job
 func (j *Job) Start() {
 	if j.startTime.IsZero() {
 		j.startTime = time.Now()
@@ -113,7 +120,7 @@ func (j *Job) Start() {
 
 	if j.Config.InputMode == "sniper" {
 		// process multiple payload locations and create a queue job for each location
-		reqs := SniperRequests(&basereq, j.Config.InputProviders[0].Template)
+		reqs := http.SniperRequests(&basereq, j.Config.InputProviders[0].Template)
 		for _, r := range reqs {
 			j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: r})
 		}
@@ -182,7 +189,7 @@ func (j *Job) prepareQueueJob() {
 	j.queuepos += 1
 }
 
-//SkipQueue allows to skip the current job and advance to the next queued recursion job
+// SkipQueue allows to skip the current job and advance to the next queued recursion job
 func (j *Job) SkipQueue() {
 	j.skipQueue = true
 }
@@ -312,7 +319,7 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 }
 
 func (j *Job) updateProgress() {
-	prog := Progress{
+	prog := output.Progress{
 		StartedAt:  j.startTimeJob,
 		ReqCount:   j.Counter,
 		ReqTotal:   j.Input.Total(),
@@ -324,10 +331,10 @@ func (j *Job) updateProgress() {
 	j.Output.Progress(prog)
 }
 
-func (j *Job) isMatch(resp Response) bool {
+func (j *Job) isMatch(resp http.Response) bool {
 	matched := false
-	var matchers map[string]FilterProvider
-	var filters map[string]FilterProvider
+	var matchers map[string]filter.FilterProvider
+	var filters map[string]filter.FilterProvider
 	if j.Config.AutoCalibrationPerHost {
 		filters = j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*resp.Request))
 	} else {
@@ -444,8 +451,8 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 }
 
-//handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
-func (j *Job) handleGreedyRecursionJob(resp Response) {
+// handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
+func (j *Job) handleGreedyRecursionJob(resp http.Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		recUrl := resp.Request.Url + "/" + "FUZZ"
@@ -457,9 +464,9 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	}
 }
 
-//handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
-//not been reached
-func (j *Job) handleDefaultRecursionJob(resp Response) {
+// handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
+// not been reached
+func (j *Job) handleDefaultRecursionJob(resp http.Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
 	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
 		// Not a directory, return early
@@ -523,13 +530,13 @@ func (j *Job) CheckStop() {
 	}
 }
 
-//Stop the execution of the Job
+// Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
 	j.Config.Cancel()
 }
 
-//Stop current, resume to next
+// Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
 }

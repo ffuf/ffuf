@@ -6,12 +6,12 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
 )
 
 var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "duration", "resultfile"}
 
-func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) error {
+func writeCSV(filename string, config *config.Config, res []Result, encode bool) error {
 	header := make([]string, 0)
 	f, err := os.Create(filename)
 	if err != nil {
@@ -51,7 +51,7 @@ func base64encode(in []byte) string {
 	return base64.StdEncoding.EncodeToString(in)
 }
 
-func toCSV(r ffuf.Result) []string {
+func toCSV(r Result) []string {
 	res := make([]string, 0)
 	for _, v := range r.Input {
 		res = append(res, string(v))

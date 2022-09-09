@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
-func writeMarkdown(filename string, config *ffuf.Config, res []ffuf.Result) error {
+func writeMarkdown(filename string, config *config.Config, res []Result) error {
 	ti := time.Now()
 
 	keywords := make([]string, 0)

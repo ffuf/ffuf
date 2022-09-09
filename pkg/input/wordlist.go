@@ -6,18 +6,18 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/config"
 )
 
 type WordlistInput struct {
 	active   bool
-	config   *ffuf.Config
+	config   *config.Config
 	data     [][]byte
 	position int
 	keyword  string
 }
 
-func NewWordlistInput(keyword string, value string, conf *ffuf.Config) (*WordlistInput, error) {
+func NewWordlistInput(keyword string, value string, conf *config.Config) (*WordlistInput, error) {
 	var wl WordlistInput
 	wl.active = true
 	wl.keyword = keyword
@@ -42,57 +42,57 @@ func NewWordlistInput(keyword string, value string, conf *ffuf.Config) (*Wordlis
 	return &wl, err
 }
 
-//Position will return the current position in the input list
+// Position will return the current position in the input list
 func (w *WordlistInput) Position() int {
 	return w.position
 }
 
-//ResetPosition resets the position back to beginning of the wordlist.
+// ResetPosition resets the position back to beginning of the wordlist.
 func (w *WordlistInput) ResetPosition() {
 	w.position = 0
 }
 
-//Keyword returns the keyword assigned to this InternalInputProvider
+// Keyword returns the keyword assigned to this InternalInputProvider
 func (w *WordlistInput) Keyword() string {
 	return w.keyword
 }
 
-//Next will return a boolean telling if there's words left in the list
+// Next will return a boolean telling if there's words left in the list
 func (w *WordlistInput) Next() bool {
 	return w.position < len(w.data)
 }
 
-//IncrementPosition will increment the current position in the inputprovider data slice
+// IncrementPosition will increment the current position in the inputprovider data slice
 func (w *WordlistInput) IncrementPosition() {
 	w.position += 1
 }
 
-//Value returns the value from wordlist at current cursor position
+// Value returns the value from wordlist at current cursor position
 func (w *WordlistInput) Value() []byte {
 	return w.data[w.position]
 }
 
-//Total returns the size of wordlist
+// Total returns the size of wordlist
 func (w *WordlistInput) Total() int {
 	return len(w.data)
 }
 
-//Active returns boolean if the inputprovider is active
+// Active returns boolean if the inputprovider is active
 func (w *WordlistInput) Active() bool {
 	return w.active
 }
 
-//Enable sets the inputprovider as active
+// Enable sets the inputprovider as active
 func (w *WordlistInput) Enable() {
 	w.active = true
 }
 
-//Disable disables the inputprovider
+// Disable disables the inputprovider
 func (w *WordlistInput) Disable() {
 	w.active = false
 }
 
-//validFile checks that the wordlist file exists and can be read
+// validFile checks that the wordlist file exists and can be read
 func (w *WordlistInput) validFile(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err != nil {
@@ -106,7 +106,7 @@ func (w *WordlistInput) validFile(path string) (bool, error) {
 	return true, nil
 }
 
-//readFile reads the file line by line to a byte slice
+// readFile reads the file line by line to a byte slice
 func (w *WordlistInput) readFile(path string) error {
 	var file *os.File
 	var err error

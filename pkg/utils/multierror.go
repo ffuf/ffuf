@@ -1,4 +1,4 @@
-package ffuf
+package utils
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ type Multierror struct {
 	errors []error
 }
 
-//NewMultierror returns a new Multierror
+// NewMultierror returns a new Multierror
 func NewMultierror() Multierror {
 	return Multierror{}
 }

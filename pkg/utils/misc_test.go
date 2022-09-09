@@ -1,4 +1,4 @@
-package ffuf
+package utils
 
 import (
 	"math/rand"

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
 func TestNewTimeFilter(t *testing.T) {
@@ -42,7 +42,7 @@ func TestTimeFiltering(t *testing.T) {
 		{99, false},
 		{2, false},
 	} {
-		resp := ffuf.Response{
+		resp := http.Response{
 			Data: []byte("dahhhhhtaaaaa"),
 			Time: time.Duration(test.input * int64(time.Millisecond)),
 		}

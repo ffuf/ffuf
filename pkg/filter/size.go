@@ -6,19 +6,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/http"
+	"github.com/ffuf/ffuf/pkg/utils"
 )
 
 type SizeFilter struct {
-	Value []ffuf.ValueRange
+	Value []utils.ValueRange
 }
 
-func NewSizeFilter(value string) (ffuf.FilterProvider, error) {
-	var intranges []ffuf.ValueRange
+func NewSizeFilter(value string) (FilterProvider, error) {
+	var intranges []utils.ValueRange
 	for _, sv := range strings.Split(value, ",") {
-		vr, err := ffuf.ValueRangeFromString(sv)
+		vr, err := utils.ValueRangeFromString(sv)
 		if err != nil {
-			return &SizeFilter{}, fmt.Errorf("Size filter or matcher (-fs / -ms): invalid value: %s", sv)
+			return &SizeFilter{}, fmt.Errorf("size filter or matcher (-fs / -ms): invalid value: %s", sv)
 		}
 
 		intranges = append(intranges, vr)
@@ -42,7 +43,7 @@ func (f *SizeFilter) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (f *SizeFilter) Filter(response *ffuf.Response) (bool, error) {
+func (f *SizeFilter) Filter(response *http.Response) (bool, error) {
 	for _, iv := range f.Value {
 		if iv.Min <= response.ContentLength && response.ContentLength <= iv.Max {
 			return true, nil

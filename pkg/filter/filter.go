@@ -2,7 +2,6 @@ package filter
 
 import (
 	"fmt"
-	"github.com/ffuf/ffuf/pkg/ffuf"
 	"sync"
 )
 
@@ -10,17 +9,17 @@ import (
 type MatcherManager struct {
 	IsCalibrated     bool
 	Mutex            sync.Mutex
-	Matchers         map[string]ffuf.FilterProvider
-	Filters          map[string]ffuf.FilterProvider
+	Matchers         map[string]FilterProvider
+	Filters          map[string]FilterProvider
 	PerDomainFilters map[string]*PerDomainFilter
 }
 
 type PerDomainFilter struct {
 	IsCalibrated bool
-	Filters      map[string]ffuf.FilterProvider
+	Filters      map[string]FilterProvider
 }
 
-func NewPerDomainFilter(globfilters map[string]ffuf.FilterProvider) *PerDomainFilter {
+func NewPerDomainFilter(globfilters map[string]FilterProvider) *PerDomainFilter {
 	return &PerDomainFilter{IsCalibrated: false, Filters: globfilters}
 }
 
@@ -28,11 +27,11 @@ func (p *PerDomainFilter) SetCalibrated(value bool) {
 	p.IsCalibrated = value
 }
 
-func NewMatcherManager() ffuf.MatcherManager {
+func NewMatcherManager() MatcherManagerIface {
 	return &MatcherManager{
 		IsCalibrated:     false,
-		Matchers:         make(map[string]ffuf.FilterProvider),
-		Filters:          make(map[string]ffuf.FilterProvider),
+		Matchers:         make(map[string]FilterProvider),
+		Filters:          make(map[string]FilterProvider),
 		PerDomainFilters: make(map[string]*PerDomainFilter),
 	}
 }
@@ -51,7 +50,7 @@ func (f *MatcherManager) SetCalibratedForHost(host string, value bool) {
 	}
 }
 
-func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
+func NewFilterByName(name string, value string) (FilterProvider, error) {
 	if name == "status" {
 		return NewStatusFilter(value)
 	}
@@ -70,10 +69,10 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "time" {
 		return NewTimeFilter(value)
 	}
-	return nil, fmt.Errorf("Could not create filter with name %s", name)
+	return nil, fmt.Errorf("could not create filter with name %s", name)
 }
 
-//AddFilter adds a new filter to MatcherManager
+// AddFilter adds a new filter to MatcherManager
 func (f *MatcherManager) AddFilter(name string, option string, replace bool) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -93,7 +92,7 @@ func (f *MatcherManager) AddFilter(name string, option string, replace bool) err
 	return err
 }
 
-//AddPerDomainFilter adds a new filter to PerDomainFilter configuration
+// AddPerDomainFilter adds a new filter to PerDomainFilter configuration
 func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option string) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -120,14 +119,14 @@ func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option s
 	return err
 }
 
-//RemoveFilter removes a filter of a given type
+// RemoveFilter removes a filter of a given type
 func (f *MatcherManager) RemoveFilter(name string) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
 	delete(f.Filters, name)
 }
 
-//AddMatcher adds a new matcher to Config
+// AddMatcher adds a new matcher to Config
 func (f *MatcherManager) AddMatcher(name string, option string) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -147,15 +146,15 @@ func (f *MatcherManager) AddMatcher(name string, option string) error {
 	return err
 }
 
-func (f *MatcherManager) GetFilters() map[string]ffuf.FilterProvider {
+func (f *MatcherManager) GetFilters() map[string]FilterProvider {
 	return f.Filters
 }
 
-func (f *MatcherManager) GetMatchers() map[string]ffuf.FilterProvider {
+func (f *MatcherManager) GetMatchers() map[string]FilterProvider {
 	return f.Matchers
 }
 
-func (f *MatcherManager) FiltersForDomain(domain string) map[string]ffuf.FilterProvider {
+func (f *MatcherManager) FiltersForDomain(domain string) map[string]FilterProvider {
 	if f.PerDomainFilters[domain] == nil {
 		return f.Filters
 	}

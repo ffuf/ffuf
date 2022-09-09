@@ -1,52 +1,15 @@
 package ffuf
 
 import (
-	"fmt"
-	"math/rand"
 	"net/url"
-	"os"
 	"strings"
+
+	"github.com/ffuf/ffuf/pkg/config"
+	"github.com/ffuf/ffuf/pkg/http"
 )
 
-//used for random string generation in calibration function
-var chars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-//RandomString returns a random string of length of parameter n
-func RandomString(n int) string {
-	s := make([]rune, n)
-	for i := range s {
-		s[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(s)
-}
-
-//UniqStringSlice returns an unordered slice of unique strings. The duplicates are dropped
-func UniqStringSlice(inslice []string) []string {
-	found := map[string]bool{}
-
-	for _, v := range inslice {
-		found[v] = true
-	}
-	ret := []string{}
-	for k := range found {
-		ret = append(ret, k)
-	}
-	return ret
-}
-
-//FileExists checks if the filepath exists and is not a directory.
-//Returns false in case it's not possible to describe the named file.
-func FileExists(path string) bool {
-	md, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return !md.IsDir()
-}
-
-//RequestContainsKeyword checks if a keyword is present in any field of a request
-func RequestContainsKeyword(req Request, kw string) bool {
+// RequestContainsKeyword checks if a keyword is present in any field of a request
+func RequestContainsKeyword(req http.Request, kw string) bool {
 	if strings.Contains(req.Host, kw) {
 		return true
 	}
@@ -67,8 +30,8 @@ func RequestContainsKeyword(req Request, kw string) bool {
 	return false
 }
 
-//HostURLFromRequest gets a host + path without the filename or last part of the URL path
-func HostURLFromRequest(req Request) string {
+// HostURLFromRequest gets a host + path without the filename or last part of the URL path
+func HostURLFromRequest(req http.Request) string {
 	u, _ := url.Parse(req.Url)
 	u.Host = req.Host
 	pathparts := strings.Split(u.Path, "/")
@@ -76,7 +39,25 @@ func HostURLFromRequest(req Request) string {
 	return u.Host + trimpath
 }
 
-//Version returns the ffuf version string
-func Version() string {
-	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
+func NewRequest(conf *config.Config) http.Request {
+	var req http.Request
+	req.Method = conf.Method
+	req.Url = conf.Url
+	req.Headers = make(map[string]string)
+	return req
+}
+
+// BaseRequest returns a base request struct populated from the main config
+func BaseRequest(conf *config.Config) http.Request {
+	req := NewRequest(conf)
+	req.Headers = conf.Headers
+	req.Data = []byte(conf.Data)
+	return req
+}
+
+// RecursionRequest returns a base request for a recursion target
+func RecursionRequest(conf *config.Config, path string) http.Request {
+	r := BaseRequest(conf)
+	r.Url = path
+	return r
 }
