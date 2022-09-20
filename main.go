@@ -4,13 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/ffuf/ffuf/pkg/filter"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/filter"
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/interactive"
 	"github.com/ffuf/ffuf/pkg/output"
@@ -45,7 +45,7 @@ func (m *wordlistFlag) Set(value string) error {
 	return nil
 }
 
-//ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
+// ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
@@ -104,6 +104,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.HTTP.ProxyURL, "x", opts.HTTP.ProxyURL, "Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080")
 	flag.StringVar(&opts.HTTP.ReplayProxyURL, "replay-proxy", opts.HTTP.ReplayProxyURL, "Replay matched requests using this proxy.")
 	flag.StringVar(&opts.HTTP.RecursionStrategy, "recursion-strategy", opts.HTTP.RecursionStrategy, "Recursion strategy: \"default\" for a redirect based, and \"greedy\" to recurse on all matches")
+	flag.StringVar(&opts.HTTP.HeaderFile, "header-file", opts.HTTP.HeaderFile, "Read headers from file")
 	flag.StringVar(&opts.HTTP.URL, "u", opts.HTTP.URL, "Target URL")
 	flag.StringVar(&opts.HTTP.SNI, "sni", opts.HTTP.SNI, "Target TLS SNI, does not support FUZZ keyword")
 	flag.StringVar(&opts.Input.Extensions, "e", opts.Input.Extensions, "Comma separated list of extensions. Extends FUZZ keyword.")

@@ -1,6 +1,7 @@
 package ffuf
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
 	"net/url"
@@ -79,4 +80,13 @@ func HostURLFromRequest(req Request) string {
 //Version returns the ffuf version string
 func Version() string {
 	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
+}
+
+func ReadFileLines(path string) ([][]byte, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	lines := bytes.Split(b, []byte("\n"))
+	return lines, nil
 }
