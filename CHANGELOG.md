@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added `-header-file` flag to read headers from file
   - Changed
   
 - v1.5.0
