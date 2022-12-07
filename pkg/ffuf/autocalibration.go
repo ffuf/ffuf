@@ -102,11 +102,8 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 				continue
 			}
 			responses = append(responses, resp)
-			err = j.calibrateFilters(responses, false)
-			if err != nil {
-				j.Output.Error(fmt.Sprintf("%s", err))
-			}
 		}
+		_ = j.calibrateFilters(responses, false)
 	}
 	j.Config.MatcherManager.SetCalibrated(true)
 	return nil
