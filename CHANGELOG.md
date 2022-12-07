@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Fixed issue with autocalibration of line & words filter
   
 - v1.5.0
   - New

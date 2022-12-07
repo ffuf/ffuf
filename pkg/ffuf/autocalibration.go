@@ -54,7 +54,7 @@ func (j *Job) calibrationRequest(inputs map[string][]byte) (Response, error) {
 	return resp, fmt.Errorf("Response wouldn't be matched")
 }
 
-//CalibrateForHost runs autocalibration for a specific host
+// CalibrateForHost runs autocalibration for a specific host
 func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 	if j.Config.MatcherManager.CalibratedForDomain(host) {
 		return nil
@@ -86,7 +86,7 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 	return nil
 }
 
-//CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
+// CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
 func (j *Job) Calibrate(input map[string][]byte) error {
 	if j.Config.MatcherManager.Calibrated() {
 		return nil
@@ -112,8 +112,9 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 	return nil
 }
 
-//CalibrateIfNeeded runs a self-calibration task for filtering options (if needed) by requesting random resources and
-//  configuring the filters accordingly
+// CalibrateIfNeeded runs a self-calibration task for filtering options (if needed) by requesting random resources and
+//
+//	configuring the filters accordingly
 func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
 	j.calibMutex.Lock()
 	defer j.calibMutex.Unlock()
@@ -192,7 +193,7 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddFilter("word", strconv.FormatInt(baselineSize, 10), false)
+				_ = j.Config.MatcherManager.AddFilter("word", strconv.FormatInt(baselineWords, 10), false)
 				return nil
 			}
 		}
@@ -226,7 +227,7 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddFilter("line", strconv.FormatInt(baselineSize, 10), false)
+				_ = j.Config.MatcherManager.AddFilter("line", strconv.FormatInt(baselineLines, 10), false)
 				return nil
 			}
 		}
