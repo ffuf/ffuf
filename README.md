@@ -211,7 +211,7 @@ INPUT OPTIONS:
   -input-cmd          Command producing the input. --input-num is required when using this input method. Overrides -w.
   -input-num          Number of inputs to test. Used in conjunction with --input-cmd. (default: 100)
   -input-shell        Shell to be used for running command
-  -mode               Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper (default: clusterbomb)
+  -mode               Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper, merge (default: clusterbomb)
   -request            File containing the raw http request
   -request-proto      Protocol to use along with raw request (default: https)
   -w                  Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'
