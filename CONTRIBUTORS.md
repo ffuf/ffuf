@@ -22,6 +22,7 @@
 * [helpermika](https://github.com/helpermika)
 * [h1x](https://github.com/h1x-lnx)
 * [Ice3man543](https://github.com/Ice3man543)
+* [iiusky](https://github.com/iiiusky)
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [jimen0](https://github.com/jimen0)
 * [joohoi](https://github.com/joohoi)
@@ -43,4 +44,3 @@
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [l4yton](https://github.com/l4yton)
 * [xfgusta](https://github.com/xfgusta)
-* [iiusky](https://github.com/iiiusky)

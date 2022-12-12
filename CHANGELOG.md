@@ -3,6 +3,7 @@
   - New
   - Changed
     - Fixed issue with autocalibration of line & words filter
+    - Add the merge mode to merge multiple Wordlists
   
 - v1.5.0
   - New
