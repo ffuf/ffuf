@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added a Dockerfile so @ffuf can finally scale ;-)
   - Changed
     - Fixed issue with autocalibration of line & words filter
   

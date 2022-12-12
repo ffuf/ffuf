@@ -43,3 +43,4 @@
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [l4yton](https://github.com/l4yton)
 * [xfgusta](https://github.com/xfgusta)
+* [0x5ECF4ULT](https://github.com/0x5ECF4ULT)

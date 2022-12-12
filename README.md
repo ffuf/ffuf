@@ -36,6 +36,10 @@ Come to hang out & to discuss about ffuf, it's usage and development!
   _or_
 - `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
 
+  _or_
+- `git clone https://github.com/ffuf/ffuf ; cd ffuf ; docker build --rm -t ffuf . ; echo "alias ffuf='docker run -i --rm -v $HOME/.ffuf:/app/.ffuf -v $HOME/wordlists:/app/wordlists'" >> ~/.bash_aliases` (**NOTE:** Please see ["A note about Docker"](#docker))
+- ~~`docker pull ffuf/ffuf`~~ Coming soon (I hope!)
+
 Ffuf depends on Go 1.16 or greater.
 
 ## Example usage
@@ -142,6 +146,13 @@ In this case, the `-H` values provided on the command line will be _appended_ to
 Additionally, in case you wish to use bunch of configuration files for different use cases, you can do this by defining
 the configuration file path using `-config` command line flag that takes the file path to the configuration file as its
 parameter. 
+
+## <a name="docker"></a>A note about Docker
+The technique to install Docker stated above relies on the assumption that your `.ffuf` directory. If it's not please replace the flag `-v $HOME/.ffuf:/app/.ffuf` with `-v /path/to/your/config/DIRECTORY:/app/.ffuf`. Do **not** change the path after the colon! You do not have to instruct ffuf to user another config directory.
+
+The same procedure can be applied to `-v $HOME/wordlists:/app/wordlists`. Here you may also change the path after the colon. Since `/app` is the PWD inside the container make sure you pass the right path (eg instead of `ffuf -w wordlists/...`, you can use `ffuf -w /whatever/you/changed/the/internal/path/to`).
+
+If you're still unsure what the heck this flag is about see [here](https://docs.docker.com/engine/reference/commandline/run/#mount-volume--v---read-only).
 
 <p align="center">
   <img width="250" src="_img/ffuf_juggling_250.png">
