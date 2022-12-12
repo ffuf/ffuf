@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added `-ss` flag to stop at first successful response
   - Changed
     - Fixed issue with autocalibration of line & words filter
   

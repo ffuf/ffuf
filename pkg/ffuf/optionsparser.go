@@ -62,6 +62,7 @@ type GeneralOptions struct {
 	StopOn403               bool
 	StopOnAll               bool
 	StopOnErrors            bool
+	StopOnSuccess           bool
 	Threads                 int
 	Verbose                 bool
 }
@@ -107,7 +108,7 @@ type MatcherOptions struct {
 	Words  string
 }
 
-//NewConfigOptions returns a newly created ConfigOptions struct with default values
+// NewConfigOptions returns a newly created ConfigOptions struct with default values
 func NewConfigOptions() *ConfigOptions {
 	c := &ConfigOptions{}
 	c.Filter.Mode = "or"
@@ -132,6 +133,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
 	c.General.StopOnErrors = false
+	c.General.StopOnSuccess = false
 	c.General.Threads = 40
 	c.General.Verbose = false
 	c.HTTP.Data = ""
@@ -169,7 +171,7 @@ func NewConfigOptions() *ConfigOptions {
 	return c
 }
 
-//ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
+// ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
 func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel context.CancelFunc) (*Config, error) {
 	//TODO: refactor in a proper flag library that can handle things like required flags
@@ -446,9 +448,22 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.OutputSkipEmptyFile = parseOpts.Output.OutputSkipEmptyFile
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
-	conf.StopOn403 = parseOpts.General.StopOn403
-	conf.StopOnAll = parseOpts.General.StopOnAll
-	conf.StopOnErrors = parseOpts.General.StopOnErrors
+
+	// StopOnSuccess flag is conflict to others
+	if !parseOpts.General.StopOnSuccess {
+		conf.StopOn403 = parseOpts.General.StopOn403
+		conf.StopOnAll = parseOpts.General.StopOnAll
+		conf.StopOnErrors = parseOpts.General.StopOnErrors
+	} else {
+		if parseOpts.General.StopOn403 ||
+			parseOpts.General.StopOnAll ||
+			parseOpts.General.StopOnErrors {
+			errmsg := fmt.Sprintf("The -ss flag is conflict to others(-sa, -se, -sf).")
+			errs.Add(fmt.Errorf(errmsg))
+		}
+
+		conf.StopOnSuccess = parseOpts.General.StopOnSuccess
+	}
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
