@@ -33,6 +33,15 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 			errs.Add(err)
 		}
 	}
+	if conf.InputMode == "merge" {
+		for i, provider := range mainip.Providers {
+			if i == 0 {
+				provider.Active()
+			} else {
+				provider.Disable()
+			}
+		}
+	}
 	return &mainip, errs
 }
 
@@ -91,8 +100,11 @@ func (i *MainInputProvider) Value() map[string][]byte {
 	if i.Config.InputMode == "clusterbomb" || i.Config.InputMode == "sniper" {
 		retval = i.clusterbombValue()
 	}
-	if i.Config.InputMode == "pitchfork" || i.Config.InputMode == "merge" {
+	if i.Config.InputMode == "pitchfork" {
 		retval = i.pitchforkValue()
+	}
+	if i.Config.InputMode == "merge" {
+		retval = i.mergeValue()
 	}
 	return retval
 }
@@ -194,9 +206,6 @@ func (i *MainInputProvider) Total() int {
 	}
 	if i.Config.InputMode == "merge" {
 		for _, p := range i.Providers {
-			if !p.Active() {
-				continue
-			}
 			if p.Total() > count {
 				count = count + p.Total()
 			}
@@ -212,6 +221,30 @@ func (i *MainInputProvider) Total() int {
 		}
 	}
 	return count
+}
+
+// mergeValue returns a map of keyword:value pairs including all inputs.
+// This pattern merges the traversal list of words.
+func (i *MainInputProvider) mergeValue() map[string][]byte {
+	values := make(map[string][]byte)
+	for c, p := range i.Providers {
+		if !p.Active() {
+			// The inputprovider is disabled
+			continue
+		}
+		if !p.Next() {
+			// If the current inputprovider is used up, disable it. Check whether another inputprovider exists. If so, enable it and replace p with the latest inputprovider
+			p.ResetPosition()
+			p.Disable()
+			if c+1 <= len(i.Providers) {
+				i.Providers[c+1].Enable()
+				p = i.Providers[c+1]
+			}
+		}
+		values[p.Keyword()] = p.Value()
+		p.IncrementPosition()
+	}
+	return values
 }
 
 // sliceContains is a helper function that returns true if a string is included in a string slice
