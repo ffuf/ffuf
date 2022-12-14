@@ -236,7 +236,7 @@ func (i *MainInputProvider) mergeValue() map[string][]byte {
 			// If the current inputprovider is used up, disable it. Check whether another inputprovider exists. If so, enable it and replace p with the latest inputprovider
 			p.ResetPosition()
 			p.Disable()
-			if c+1 <= len(i.Providers) {
+			if c+1 < len(i.Providers) {
 				i.Providers[c+1].Enable()
 				p = i.Providers[c+1]
 			}
