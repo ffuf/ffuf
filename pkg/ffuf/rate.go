@@ -10,7 +10,7 @@ type RateThrottle struct {
 	rateCounter    *ring.Ring
 	Config         *Config
 	RateMutex      sync.Mutex
-	RateLimiter    <-chan time.Time
+	RateLimiter    *time.Ticker
 	lastAdjustment time.Time
 }
 
@@ -26,10 +26,10 @@ func NewRateThrottle(conf *Config) *RateThrottle {
 	}
 	if conf.Rate > 0 {
 		ratemicros := 1000000 / conf.Rate
-		r.RateLimiter = time.Tick(time.Microsecond * time.Duration(ratemicros))
+		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	} else {
 		//Million rps is probably a decent hardcoded upper speedlimit
-		r.RateLimiter = time.Tick(time.Microsecond * 1)
+		r.RateLimiter = time.NewTicker(time.Microsecond * 1)
 	}
 	return r
 }
@@ -66,7 +66,8 @@ func (r *RateThrottle) CurrentRate() int64 {
 
 func (r *RateThrottle) ChangeRate(rate int) {
 	ratemicros := 1000000 / rate
-	r.RateLimiter = time.Tick(time.Microsecond * time.Duration(ratemicros))
+	r.RateLimiter.Stop()
+	r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	r.Config.Rate = int64(rate)
 	// reset the rate counter
 	r.rateCounter = ring.New(rate * 5)

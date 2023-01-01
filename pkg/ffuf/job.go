@@ -252,7 +252,7 @@ func (j *Job) startExecution() {
 		// Handle the rate & thread limiting
 		threadlimiter <- true
 		// Ratelimiter handles the rate ticker
-		<-j.Rate.RateLimiter
+		<-j.Rate.RateLimiter.C
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
 
