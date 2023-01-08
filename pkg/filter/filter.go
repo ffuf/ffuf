@@ -1,6 +1,8 @@
 package filter
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ffuf/ffuf/pkg/ffuf"
 	"sync"
@@ -8,11 +10,11 @@ import (
 
 // MatcherManager handles both filters and matchers.
 type MatcherManager struct {
-	IsCalibrated     bool
-	Mutex            sync.Mutex
-	Matchers         map[string]ffuf.FilterProvider
-	Filters          map[string]ffuf.FilterProvider
-	PerDomainFilters map[string]*PerDomainFilter
+	IsCalibrated     bool                           `json:"-"`
+	Mutex            sync.Mutex                     `json:"-"`
+	Matchers         map[string]ffuf.FilterProvider `json:"matchers"`
+	Filters          map[string]ffuf.FilterProvider `json:"filters"`
+	PerDomainFilters map[string]*PerDomainFilter    `json:"-"`
 }
 
 type PerDomainFilter struct {
@@ -35,6 +37,62 @@ func NewMatcherManager() ffuf.MatcherManager {
 		Filters:          make(map[string]ffuf.FilterProvider),
 		PerDomainFilters: make(map[string]*PerDomainFilter),
 	}
+}
+
+func (f *MatcherManager) UnmarshalJSON(b []byte) error {
+	f.IsCalibrated = false
+	f.Matchers = make(map[string]ffuf.FilterProvider)
+	f.Filters = make(map[string]ffuf.FilterProvider)
+	f.PerDomainFilters = make(map[string]*PerDomainFilter)
+	var objMap map[string]*json.RawMessage
+	err := json.Unmarshal(b, &objMap)
+	if err != nil {
+		return err
+	}
+	var rawMatchers, rawFilters []*json.RawMessage
+	err = json.Unmarshal(*objMap["matchers"], &rawMatchers)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(*objMap["filters"], &rawFilters)
+	if err != nil {
+		return err
+	}
+	var filterMap, matcherMap map[string]string
+	matcherMap, err = f.parseFilterProvidersJSON(rawMatchers)
+	if err != nil {
+		return err
+	}
+	filterMap, err = f.parseFilterProvidersJSON(rawFilters)
+	if err != nil {
+		return err
+	}
+	for name, value := range matcherMap {
+		f.AddMatcher(name, value)
+	}
+	for name, value := range filterMap {
+		f.AddFilter(name, value, true)
+	}
+	return nil
+}
+
+func (f *MatcherManager) parseFilterProvidersJSON(rawMessages []*json.RawMessage) (map[string]string, error) {
+	var err error
+	var tmpRes, res map[string]string
+	for _, rMsg := range rawMessages {
+		err = json.Unmarshal(*rMsg, &tmpRes)
+		if err != nil {
+			return res, err
+		}
+		if _, ok := tmpRes["type"]; !ok {
+			return res, errors.New("key \"type\" missing")
+		}
+		if _, ok := tmpRes["value"]; !ok {
+			return res, errors.New("key \"value\" missing")
+		}
+		res[tmpRes["type"]] = tmpRes["value"]
+	}
+	return res, nil
 }
 
 func (f *MatcherManager) SetCalibrated(value bool) {
@@ -73,7 +131,7 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	return nil, fmt.Errorf("Could not create filter with name %s", name)
 }
 
-//AddFilter adds a new filter to MatcherManager
+// AddFilter adds a new filter to MatcherManager
 func (f *MatcherManager) AddFilter(name string, option string, replace bool) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -93,7 +151,7 @@ func (f *MatcherManager) AddFilter(name string, option string, replace bool) err
 	return err
 }
 
-//AddPerDomainFilter adds a new filter to PerDomainFilter configuration
+// AddPerDomainFilter adds a new filter to PerDomainFilter configuration
 func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option string) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -120,14 +178,14 @@ func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option s
 	return err
 }
 
-//RemoveFilter removes a filter of a given type
+// RemoveFilter removes a filter of a given type
 func (f *MatcherManager) RemoveFilter(name string) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
 	delete(f.Filters, name)
 }
 
-//AddMatcher adds a new matcher to Config
+// AddMatcher adds a new matcher to Config
 func (f *MatcherManager) AddMatcher(name string, option string) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()

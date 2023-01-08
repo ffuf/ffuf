@@ -45,8 +45,10 @@ func (f *StatusFilter) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(&struct {
+		Type  string `json:"type"`
 		Value string `json:"value"`
 	}{
+		Type:  "status",
 		Value: strings.Join(value, ","),
 	})
 }
