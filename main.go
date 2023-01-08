@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ffuf/ffuf/pkg/filter"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -45,7 +45,7 @@ func (m *wordlistFlag) Set(value string) error {
 	return nil
 }
 
-//ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
+// ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
@@ -157,13 +157,13 @@ func main() {
 		f, err := os.OpenFile(opts.Output.DebugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Disabling logging, encountered error(s): %s\n", err)
-			log.SetOutput(ioutil.Discard)
+			log.SetOutput(io.Discard)
 		} else {
 			log.SetOutput(f)
 			defer f.Close()
 		}
 	} else {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	if optserr != nil {
 		log.Printf("Error while opening default config file: %s", optserr)

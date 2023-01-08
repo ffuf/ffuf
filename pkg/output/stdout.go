@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -352,7 +351,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	fileName = fmt.Sprintf("%x", md5.Sum([]byte(fileContent)))
 
 	filePath = path.Join(s.config.OutputDirectory, fileName)
-	err := ioutil.WriteFile(filePath, []byte(fileContent), 0640)
+	err := os.WriteFile(filePath, []byte(fileContent), 0640)
 	if err != nil {
 		s.Error(err.Error())
 	}

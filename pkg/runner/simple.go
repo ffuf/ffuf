@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -18,7 +18,7 @@ import (
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
-//Download results < 5MB
+// Download results < 5MB
 const MAX_DOWNLOAD_SIZE = 5242880
 
 type SimpleRunner struct {
@@ -47,7 +47,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
-			ForceAttemptHTTP2: conf.Http2,
+			ForceAttemptHTTP2:   conf.Http2,
 			Proxy:               proxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
@@ -156,7 +156,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		resp.Raw = string(rawresp)
 	}
 
-	if respbody, err := ioutil.ReadAll(httpresp.Body); err == nil {
+	if respbody, err := io.ReadAll(httpresp.Body); err == nil {
 		resp.ContentLength = int64(len(string(respbody)))
 		resp.Data = respbody
 	}
