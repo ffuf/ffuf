@@ -36,10 +36,8 @@ func (f *SizeFilter) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(&struct {
-		Type  string `json:"type"`
 		Value string `json:"value"`
 	}{
-		Type:  "size",
 		Value: strings.Join(value, ","),
 	})
 }

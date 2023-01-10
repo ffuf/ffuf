@@ -35,10 +35,8 @@ func (f *LineFilter) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(&struct {
-		Type  string `json:"type"`
 		Value string `json:"value"`
 	}{
-		Type:  "line",
 		Value: strings.Join(value, ","),
 	})
 }

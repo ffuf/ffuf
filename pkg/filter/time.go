@@ -36,10 +36,8 @@ func NewTimeFilter(value string) (ffuf.FilterProvider, error) {
 
 func (f *TimeFilter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Type  string `json:"type"`
 		Value string `json:"value"`
 	}{
-		Type:  "time",
 		Value: f.valueRaw,
 	})
 }

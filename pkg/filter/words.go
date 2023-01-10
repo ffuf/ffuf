@@ -35,10 +35,8 @@ func (f *WordFilter) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(&struct {
-		Type  string `json:"type"`
 		Value string `json:"value"`
 	}{
-		Type:  "word",
 		Value: strings.Join(value, ","),
 	})
 }

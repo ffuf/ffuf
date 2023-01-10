@@ -24,10 +24,8 @@ func NewRegexpFilter(value string) (ffuf.FilterProvider, error) {
 
 func (f *RegexpFilter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Type  string `json:"type"`
 		Value string `json:"value"`
 	}{
-		Type:  "regexp",
 		Value: f.valueRaw,
 	})
 }
