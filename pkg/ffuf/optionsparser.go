@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -30,6 +31,7 @@ type HTTPOptions struct {
 	Data              string
 	FollowRedirects   bool
 	Headers           []string
+	HeaderFile        string
 	IgnoreBody        bool
 	Method            string
 	ProxyURL          string
@@ -139,6 +141,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
+	c.HTTP.HeaderFile = ""
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
@@ -186,6 +189,20 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.Input.Extensions != "" {
 		extensions := strings.Split(parseOpts.Input.Extensions, ",")
 		conf.Extensions = extensions
+	}
+
+	if len(parseOpts.HTTP.HeaderFile) > 0 {
+		lines, err := ReadFileLines(parseOpts.HTTP.HeaderFile)
+		if err != nil {
+			errs.Add(err)
+		}
+		for _, line := range lines {
+			if !bytes.Contains(line, []byte(":")) {
+				errs.Add(fmt.Errorf("Invalid header format"))
+			}
+
+			parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, string(bytes.TrimSpace(line)))
+		}
 	}
 
 	// Convert cookies to a header

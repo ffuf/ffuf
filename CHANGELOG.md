@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added `-header-file` flag to read headers from file
   - Changed
     - Fixed issue with autocalibration of line & words filter
   
