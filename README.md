@@ -197,10 +197,10 @@ MATCHER OPTIONS:
   -mw                 Match amount of words in response
 
 FILTER OPTIONS:
-  -fc                 Filter HTTP status codes from response. Comma separated list of codes and ranges
+  -fc                 Filter HTTP status codes from response. Comma separated list of codes and ranges. Example: [401,503]
   -fl                 Filter by amount of lines in response. Comma separated list of line counts and ranges
-  -fr                 Filter regexp
-  -fs                 Filter HTTP response size. Comma separated list of sizes and ranges
+  -fr                 Filter regexp. Example: -fr "error|error message"
+  -fs                 Filter HTTP response size. Comma separated list of sizes and ranges. Example: [612,613]
   -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100
   -fw                 Filter by amount of words in response. Comma separated list of word counts and ranges
 
@@ -233,7 +233,7 @@ EXAMPLE USAGE:
 
   Fuzz POST JSON data. Match all responses not containing text "error".
     ffuf -w entries.txt -u https://example.org/ -X POST -H "Content-Type: application/json" \
-      -d '{"name": "FUZZ", "anotherkey": "anothervalue"}' -fr "error"
+      -d '{"name": "FUZZ", "anotherkey": "anothervalue"}'  -fr "error"
 
   Fuzz multiple locations. Match only responses reflecting the value of "VAL" keyword. Colored.
     ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr "VAL" -c
