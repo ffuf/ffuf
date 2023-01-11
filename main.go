@@ -335,3 +335,8 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 	}
 	return errs.ErrorOrNil()
 }
+
+
+func Usage() {
+    //
+}
