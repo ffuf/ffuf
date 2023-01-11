@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added Makefile
   - Changed
     - Fixed issue with autocalibration of line & words filter
   
