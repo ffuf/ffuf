@@ -56,6 +56,10 @@ type Config struct {
 	Timeout                 int                   `json:"timeout"`
 	Url                     string                `json:"url"`
 	Verbose                 bool                  `json:"verbose"`
+	VerboseURL              bool                  `json:"verbose_url"`
+	VerboseRedirect         bool                  `json:"verbose_redirect"`
+	VerboseInput            bool                  `json:"verbose_input"`
+	VerboseStatus           bool                  `json:"verbose_status"`
 	Http2                   bool                  `json:"http2"`
 }
 
@@ -106,6 +110,10 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Timeout = 10
 	conf.Url = ""
 	conf.Verbose = false
+	conf.VerboseURL = false
+	conf.VerboseRedirect = false
+	conf.VerboseInput = false
+	conf.VerboseStatus = false
 	conf.Http2 = false
 	return conf
 }

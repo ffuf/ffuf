@@ -6,6 +6,7 @@
 * [bp0](https://github.com/bp0lr)
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
+* [caribpa](https://github.com/caribpa)
 * [ccsplit](https://github.com/ccsplit)
 * [choket](https://github.com/choket)
 * [codingo](https://github.com/codingo)
