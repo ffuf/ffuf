@@ -17,6 +17,7 @@ type ScraperRule struct {
 	Target       string `json:"target"`
 	compiledRule *regexp.Regexp
 	Type         string   `json:"type"`
+	OnlyMatched  bool     `json:"onlymatched"`
 	Action       []string `json:"action"`
 }
 
@@ -45,9 +46,13 @@ func FromFile(path string) (ffuf.Scraper, error) {
 func (s *Scraper) Active() bool {
 	return s.active
 }
-func (s *Scraper) Execute(resp *ffuf.Response) []ffuf.ScraperResult {
+func (s *Scraper) Execute(resp *ffuf.Response, matched bool) []ffuf.ScraperResult {
 	res := make([]ffuf.ScraperResult, 0)
 	for _, rule := range s.Rules {
+		if !matched && rule.OnlyMatched {
+			// pass this rule as there was no match
+			continue
+		}
 		sourceData := ""
 		if rule.Target == "body" {
 			sourceData = string(resp.Data)

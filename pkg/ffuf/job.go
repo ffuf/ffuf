@@ -433,6 +433,14 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
 	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
 
+	// Handle scraper actions
+	if j.Scraper != nil {
+		for _, sres := range j.Scraper.Execute(&resp, j.isMatch(resp)) {
+			resp.ScraperData[sres.Name] = sres.Results
+			j.handleScraperResult(&resp, sres)
+		}
+	}
+
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
@@ -446,20 +454,17 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				_, _ = j.ReplayRunner.Execute(&replayreq)
 			}
 		}
-		// Handle scraper actions
-		if j.Scraper != nil {
-			for _, sres := range j.Scraper.Execute(&resp) {
-				resp.ScraperData[sres.Name] = sres.Results
-				j.handleScraperResult(&resp, sres)
-			}
-		}
-
 		j.Output.Result(resp)
 
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
 			j.handleGreedyRecursionJob(resp)
+		}
+	} else {
+		if len(resp.ScraperData) > 0 {
+			// print the result anyway, as scraper found something
+			j.Output.Result(resp)
 		}
 	}
 

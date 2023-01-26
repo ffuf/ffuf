@@ -81,7 +81,7 @@ type OutputProvider interface {
 
 type Scraper interface {
 	Active() bool
-	Execute(resp *Response) []ScraperResult
+	Execute(resp *Response, matched bool) []ScraperResult
 }
 
 type ScraperResult struct {
