@@ -361,10 +361,10 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 
 func (s *Stdoutput) PrintResult(res ffuf.Result) {
 	switch {
-	case s.config.Quiet:
-		s.resultQuiet(res)
 	case s.config.Json:
 		s.resultJson(res)
+	case s.config.Quiet:
+		s.resultQuiet(res)
 	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0:
 		// Print a multi-line result (when using multiple input keywords and wordlists)
 		s.resultMultiline(res)

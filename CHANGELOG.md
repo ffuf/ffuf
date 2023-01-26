@@ -3,6 +3,7 @@
   - New
   - Changed
     - Fixed issue with autocalibration of line & words filter
+    - Fixed issue with `-json` when used in conjunction with silent mode
   
 - v1.5.0
   - New
