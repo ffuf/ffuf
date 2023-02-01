@@ -62,12 +62,21 @@ func (i *MainInputProvider) ActivateKeywords(kws []string) {
 	}
 }
 
-//Position will return the current position of progress
+// Position will return the current position of progress
 func (i *MainInputProvider) Position() int {
 	return i.position
 }
 
-//Keywords returns a slice of all keywords in the inputprovider
+// SetPosition will reset the MainInputProvider to a specific position
+func (i *MainInputProvider) SetPosition(pos int) {
+	if i.Config.InputMode == "clusterbomb" || i.Config.InputMode == "sniper" {
+		i.setclusterbombPosition(pos)
+	} else {
+		i.setpitchforkPosition(pos)
+	}
+}
+
+// Keywords returns a slice of all keywords in the inputprovider
 func (i *MainInputProvider) Keywords() []string {
 	kws := make([]string, 0)
 	for _, p := range i.Providers {
@@ -76,7 +85,7 @@ func (i *MainInputProvider) Keywords() []string {
 	return kws
 }
 
-//Next will increment the cursor position, and return a boolean telling if there's inputs left
+// Next will increment the cursor position, and return a boolean telling if there's inputs left
 func (i *MainInputProvider) Next() bool {
 	if i.position >= i.Total() {
 		return false
@@ -85,7 +94,7 @@ func (i *MainInputProvider) Next() bool {
 	return true
 }
 
-//Value returns a map of inputs for keywords
+// Value returns a map of inputs for keywords
 func (i *MainInputProvider) Value() map[string][]byte {
 	retval := make(map[string][]byte)
 	if i.Config.InputMode == "clusterbomb" || i.Config.InputMode == "sniper" {
@@ -97,7 +106,7 @@ func (i *MainInputProvider) Value() map[string][]byte {
 	return retval
 }
 
-//Reset resets all the inputproviders and counters
+// Reset resets all the inputproviders and counters
 func (i *MainInputProvider) Reset() {
 	for _, p := range i.Providers {
 		p.ResetPosition()
@@ -106,8 +115,8 @@ func (i *MainInputProvider) Reset() {
 	i.msbIterator = 0
 }
 
-//pitchforkValue returns a map of keyword:value pairs including all inputs.
-//This mode will iterate through wordlists in lockstep.
+// pitchforkValue returns a map of keyword:value pairs including all inputs.
+// This mode will iterate through wordlists in lockstep.
 func (i *MainInputProvider) pitchforkValue() map[string][]byte {
 	values := make(map[string][]byte)
 	for _, p := range i.Providers {
@@ -125,8 +134,14 @@ func (i *MainInputProvider) pitchforkValue() map[string][]byte {
 	return values
 }
 
-//clusterbombValue returns map of keyword:value pairs including all inputs.
-//this mode will iterate through all possible combinations.
+func (i *MainInputProvider) setpitchforkPosition(pos int) {
+	for _, p := range i.Providers {
+		p.SetPosition(pos)
+	}
+}
+
+// clusterbombValue returns map of keyword:value pairs including all inputs.
+// this mode will iterate through all possible combinations.
 func (i *MainInputProvider) clusterbombValue() map[string][]byte {
 	values := make(map[string][]byte)
 	// Should we signal the next InputProvider in the slice to increment
@@ -163,6 +178,17 @@ func (i *MainInputProvider) clusterbombValue() map[string][]byte {
 	return values
 }
 
+func (i *MainInputProvider) setclusterbombPosition(pos int) {
+	i.Reset()
+	if pos > i.Total() {
+		// noop
+		return
+	}
+	for i.position < pos {
+		i.Next()
+	}
+}
+
 func (i *MainInputProvider) clusterbombIteratorReset() {
 	index := 0
 	for _, p := range i.Providers {
@@ -179,7 +205,7 @@ func (i *MainInputProvider) clusterbombIteratorReset() {
 	}
 }
 
-//Total returns the amount of input combinations available
+// Total returns the amount of input combinations available
 func (i *MainInputProvider) Total() int {
 	count := 0
 	if i.Config.InputMode == "pitchfork" {
@@ -204,7 +230,7 @@ func (i *MainInputProvider) Total() int {
 	return count
 }
 
-//sliceContains is a helper function that returns true if a string is included in a string slice
+// sliceContains is a helper function that returns true if a string is included in a string slice
 func sliceContains(sslice []string, str string) bool {
 	for _, v := range sslice {
 		if v == str {

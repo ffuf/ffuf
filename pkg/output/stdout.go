@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ const (
 
 type Stdoutput struct {
 	config         *ffuf.Config
+	fuzzkeywords   []string
 	Results        []ffuf.Result
 	CurrentResults []ffuf.Result
 }
@@ -36,6 +38,11 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	outp.config = conf
 	outp.Results = make([]ffuf.Result, 0)
 	outp.CurrentResults = make([]ffuf.Result, 0)
+	outp.fuzzkeywords = make([]string, 0)
+	for _, ip := range conf.InputProviders {
+		outp.fuzzkeywords = append(outp.fuzzkeywords, ip.Keyword)
+	}
+	sort.Strings(outp.fuzzkeywords)
 	return &outp
 }
 
@@ -415,13 +422,13 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	if res.ResultFile != "" {
 		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
 	}
-	for k, v := range res.Input {
+	for _, k := range s.fuzzkeywords {
 		if inSlice(k, s.config.CommandKeywords) {
 			// If we're using external command for input, display the position instead of input
 			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
 		} else {
 			// Wordlist input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
+			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, res.Input[k])
 		}
 	}
 	fmt.Printf("%s\n%s\n", res_hdr, reslines)

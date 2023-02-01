@@ -217,7 +217,6 @@ func main() {
 	}
 
 	// Job handles waiting for goroutines to complete itself
-	_, _ = ffuf.WriteHistoryEntry(conf)
 	job.Start()
 }
 

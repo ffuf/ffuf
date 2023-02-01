@@ -39,6 +39,7 @@ type InputProvider interface {
 	Keywords() []string
 	Next() bool
 	Position() int
+	SetPosition(int)
 	Reset()
 	Value() map[string][]byte
 	Total() int
@@ -49,6 +50,7 @@ type InternalInputProvider interface {
 	Keyword() string
 	Next() bool
 	Position() int
+	SetPosition(int)
 	ResetPosition()
 	IncrementPosition()
 	Value() []byte
