@@ -11,4 +11,5 @@ var (
 	//VERSION_APPENDIX holds additional version definition
 	VERSION_APPENDIX = "-dev"
 	CONFIGDIR        = filepath.Join(xdg.ConfigHome, "ffuf")
+	HISTORYDIR       = filepath.Join(CONFIGDIR, "history")
 )

@@ -4,17 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/ffuf/ffuf/pkg/filter"
-	"io"
-	"log"
-	"os"
-	"strings"
-
 	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/pkg/filter"
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/interactive"
 	"github.com/ffuf/ffuf/pkg/output"
 	"github.com/ffuf/ffuf/pkg/runner"
+	"io"
+	"log"
+	"os"
+	"strings"
 )
 
 type multiStringFlag []string
@@ -193,6 +192,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
+
 	job, err := prepareJob(conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
@@ -217,6 +217,7 @@ func main() {
 	}
 
 	// Job handles waiting for goroutines to complete itself
+	_, _ = ffuf.WriteHistoryEntry(conf)
 	job.Start()
 }
 

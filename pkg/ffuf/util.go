@@ -1,6 +1,7 @@
 package ffuf
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/url"
@@ -8,10 +9,10 @@ import (
 	"strings"
 )
 
-//used for random string generation in calibration function
+// used for random string generation in calibration function
 var chars = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-//RandomString returns a random string of length of parameter n
+// RandomString returns a random string of length of parameter n
 func RandomString(n int) string {
 	s := make([]rune, n)
 	for i := range s {
@@ -20,7 +21,7 @@ func RandomString(n int) string {
 	return string(s)
 }
 
-//UniqStringSlice returns an unordered slice of unique strings. The duplicates are dropped
+// UniqStringSlice returns an unordered slice of unique strings. The duplicates are dropped
 func UniqStringSlice(inslice []string) []string {
 	found := map[string]bool{}
 
@@ -34,8 +35,8 @@ func UniqStringSlice(inslice []string) []string {
 	return ret
 }
 
-//FileExists checks if the filepath exists and is not a directory.
-//Returns false in case it's not possible to describe the named file.
+// FileExists checks if the filepath exists and is not a directory.
+// Returns false in case it's not possible to describe the named file.
 func FileExists(path string) bool {
 	md, err := os.Stat(path)
 	if err != nil {
@@ -45,7 +46,7 @@ func FileExists(path string) bool {
 	return !md.IsDir()
 }
 
-//RequestContainsKeyword checks if a keyword is present in any field of a request
+// RequestContainsKeyword checks if a keyword is present in any field of a request
 func RequestContainsKeyword(req Request, kw string) bool {
 	if strings.Contains(req.Host, kw) {
 		return true
@@ -67,7 +68,7 @@ func RequestContainsKeyword(req Request, kw string) bool {
 	return false
 }
 
-//HostURLFromRequest gets a host + path without the filename or last part of the URL path
+// HostURLFromRequest gets a host + path without the filename or last part of the URL path
 func HostURLFromRequest(req Request) string {
 	u, _ := url.Parse(req.Url)
 	u.Host = req.Host
@@ -76,7 +77,29 @@ func HostURLFromRequest(req Request) string {
 	return u.Host + trimpath
 }
 
-//Version returns the ffuf version string
+// Version returns the ffuf version string
 func Version() string {
 	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
+}
+
+func CheckOrCreateConfigDir() error {
+	var err error
+	err = createConfigDir(CONFIGDIR)
+	if err != nil {
+		return err
+	}
+	err = createConfigDir(HISTORYDIR)
+	return err
+}
+
+func createConfigDir(path string) error {
+	_, err := os.Stat(path)
+	if err != nil {
+		var pError *os.PathError
+		if errors.As(err, &pError) {
+			return os.MkdirAll(path, 0750)
+		}
+		return err
+	}
+	return nil
 }
