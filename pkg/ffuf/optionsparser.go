@@ -58,6 +58,7 @@ type GeneralOptions struct {
 	Noninteractive          bool     `json:"noninteractive"`
 	Quiet                   bool     `json:"quiet"`
 	Rate                    int      `json:"rate"`
+	Searchhash              string   `json:"-"`
 	ShowVersion             bool     `toml:"-" json:"-"`
 	StopOn403               bool     `json:"stop_on_403"`
 	StopOnAll               bool     `json:"stop_on_all"`
@@ -128,6 +129,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Noninteractive = false
 	c.General.Quiet = false
 	c.General.Rate = 0
+	c.General.Searchhash = ""
 	c.General.ShowVersion = false
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
@@ -194,7 +196,6 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	//Prepare inputproviders
-	conf.Wordlists = parseOpts.Input.Wordlists
 	conf.InputMode = parseOpts.Input.InputMode
 
 	validmode := false
@@ -221,6 +222,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	tmpWordlists := make([]string, 0)
 	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
 		if runtime.GOOS == "windows" {
@@ -244,6 +246,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		} else {
 			wl = strings.SplitN(v, ":", 2)
 		}
+		// Try to use absolute paths for wordlists
+		fullpath, err := filepath.Abs(wl[0])
+		if err == nil {
+			wl[0] = fullpath
+		}
 		if len(wl) == 2 {
 			if conf.InputMode == "sniper" {
 				errs.Add(fmt.Errorf("sniper mode does not support wordlist keywords"))
@@ -262,7 +269,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				Template: template,
 			})
 		}
+		tmpWordlists = append(tmpWordlists, strings.Join(wl, ":"))
 	}
+	conf.Wordlists = tmpWordlists
 
 	for _, v := range parseOpts.Input.Inputcommands {
 		ic := strings.SplitN(v, ":", 2)

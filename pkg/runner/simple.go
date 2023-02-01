@@ -131,7 +131,6 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if len(r.config.OutputDirectory) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
 	}
-
 	httpresp, err := r.client.Do(httpreq)
 	if err != nil {
 		return ffuf.Response{}, err
@@ -168,4 +167,30 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	resp.Time = firstByteTime
 
 	return resp, nil
+}
+
+func (r *SimpleRunner) Dump(req *ffuf.Request) ([]byte, error) {
+	var httpreq *http.Request
+	var err error
+	data := bytes.NewReader(req.Data)
+	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	// set default User-Agent header if not present
+	if _, ok := req.Headers["User-Agent"]; !ok {
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
+	}
+
+	// Handle Go http.Request special cases
+	if _, ok := req.Headers["Host"]; ok {
+		httpreq.Host = req.Headers["Host"]
+	}
+
+	req.Host = httpreq.Host
+	for k, v := range req.Headers {
+		httpreq.Header.Set(k, v)
+	}
+	return httputil.DumpRequestOut(httpreq, true)
 }

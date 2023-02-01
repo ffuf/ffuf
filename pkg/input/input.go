@@ -184,8 +184,9 @@ func (i *MainInputProvider) setclusterbombPosition(pos int) {
 		// noop
 		return
 	}
-	for i.position < pos {
+	for i.position < pos-1 {
 		i.Next()
+		i.Value()
 	}
 }
 

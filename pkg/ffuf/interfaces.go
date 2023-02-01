@@ -30,6 +30,7 @@ type FilterProvider interface {
 type RunnerProvider interface {
 	Prepare(input map[string][]byte, basereq *Request) (Request, error)
 	Execute(req *Request) (Response, error)
+	Dump(req *Request) ([]byte, error)
 }
 
 // InputProvider interface handles the input data for RunnerProvider

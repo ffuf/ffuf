@@ -1,7 +1,11 @@
 ## Changelog
 - master
   - New
+    - Added a new, dynamic keyword `FFUFHASH` that generates hash from job configuration and wordlist position to map blind payloads back to the initial request.
+    - New command line parameter for searching a hash: `-search FFUFHASH`
   - Changed
+    - Multiline output prints out alphabetically sorted by keyword
+    - Default configuration directories now follow `XDG_CONFIG_HOME` variable (less spam in your home directory)
     - Fixed issue with autocalibration of line & words filter
   
 - v1.5.0
