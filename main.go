@@ -350,7 +350,7 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 		}
 	}
 	if parseOpts.Matcher.Time != "" {
-		if err := conf.MatcherManager.AddFilter("time", parseOpts.Matcher.Time, false); err != nil {
+		if err := conf.MatcherManager.AddMatcher("time", parseOpts.Matcher.Time); err != nil {
 			errs.Add(err)
 		}
 	}
