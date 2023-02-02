@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -17,94 +17,101 @@ import (
 )
 
 type ConfigOptions struct {
-	Filter  FilterOptions
-	General GeneralOptions
-	HTTP    HTTPOptions
-	Input   InputOptions
-	Matcher MatcherOptions
-	Output  OutputOptions
+	Filter  FilterOptions  `json:"filters"`
+	General GeneralOptions `json:"general"`
+	HTTP    HTTPOptions    `json:"http"`
+	Input   InputOptions   `json:"input"`
+	Matcher MatcherOptions `json:"matchers"`
+	Output  OutputOptions  `json:"output"`
 }
 
 type HTTPOptions struct {
-	Cookies           []string
-	Data              string
-	FollowRedirects   bool
-	Headers           []string
-	IgnoreBody        bool
-	Method            string
-	ProxyURL          string
-	Recursion         bool
-	RecursionDepth    int
-	RecursionStrategy string
-	ReplayProxyURL    string
-	SNI               string
-	Timeout           int
-	URL               string
-	Http2             bool
+	Cookies           []string `json:"-"` // this is appended in headers
+	Data              string   `json:"data"`
+	FollowRedirects   bool     `json:"follow_redirects"`
+	Headers           []string `json:"headers"`
+	IgnoreBody        bool     `json:"ignore_body"`
+	Method            string   `json:"method"`
+	ProxyURL          string   `json:"proxy_url"`
+	Recursion         bool     `json:"recursion"`
+	RecursionDepth    int      `json:"recursion_depth"`
+	RecursionStrategy string   `json:"recursion_strategy"`
+	ReplayProxyURL    string   `json:"replay_proxy_url"`
+	SNI               string   `json:"sni"`
+	Timeout           int      `json:"timeout"`
+	URL               string   `json:"url"`
+	Http2             bool     `json:"http2"`
 }
 
 type GeneralOptions struct {
-	AutoCalibration        bool
-	AutoCalibrationStrings []string
-	Colors                 bool
-	ConfigFile             string `toml:"-"`
-	Delay                  string
-	Json                   bool
-	MaxTime                int
-	MaxTimeJob             int
-	Noninteractive         bool
-	Quiet                  bool
-	Rate                   int
-	ShowVersion            bool `toml:"-"`
-	StopOn403              bool
-	StopOnAll              bool
-	StopOnErrors           bool
-	Threads                int
-	Verbose                bool
+	AutoCalibration         bool     `json:"autocalibration"`
+	AutoCalibrationKeyword  string   `json:"autocalibration_keyword"`
+	AutoCalibrationPerHost  bool     `json:"autocalibration_per_host"`
+	AutoCalibrationStrategy string   `json:"autocalibration_strategy"`
+	AutoCalibrationStrings  []string `json:"autocalibration_strings"`
+	Colors                  bool     `json:"colors"`
+	ConfigFile              string   `toml:"-" json:"config_file"`
+	Delay                   string   `json:"delay"`
+	Json                    bool     `json:"json"`
+	MaxTime                 int      `json:"maxtime"`
+	MaxTimeJob              int      `json:"maxtime_job"`
+	Noninteractive          bool     `json:"noninteractive"`
+	Quiet                   bool     `json:"quiet"`
+	Rate                    int      `json:"rate"`
+	Searchhash              string   `json:"-"`
+	ShowVersion             bool     `toml:"-" json:"-"`
+	StopOn403               bool     `json:"stop_on_403"`
+	StopOnAll               bool     `json:"stop_on_all"`
+	StopOnErrors            bool     `json:"stop_on_errors"`
+	Threads                 int      `json:"threads"`
+	Verbose                 bool     `json:"verbose"`
 }
 
 type InputOptions struct {
-	DirSearchCompat        bool
-	Extensions             string
-	IgnoreWordlistComments bool
-	InputMode              string
-	InputNum               int
-	InputShell             string
-	Inputcommands          []string
-	Request                string
-	RequestProto           string
-	Wordlists              []string
+	DirSearchCompat        bool     `json:"dirsearch_compat"`
+	Extensions             string   `json:"extensions"`
+	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments"`
+	InputMode              string   `json:"input_mode"`
+	InputNum               int      `json:"input_num"`
+	InputShell             string   `json:"input_shell"`
+	Inputcommands          []string `json:"input_commands"`
+	Request                string   `json:"request_file"`
+	RequestProto           string   `json:"request_proto"`
+	Wordlists              []string `json:"wordlists"`
 }
 
 type OutputOptions struct {
-	DebugLog            string
-	OutputDirectory     string
-	OutputFile          string
-	OutputFormat        string
-	OutputSkipEmptyFile bool
+	DebugLog            string `json:"debug_log"`
+	OutputDirectory     string `json:"output_directory"`
+	OutputFile          string `json:"output_file"`
+	OutputFormat        string `json:"output_format"`
+	OutputSkipEmptyFile bool   `json:"output_skip_empty"`
 }
 
 type FilterOptions struct {
-	Lines  string
-	Regexp string
-	Size   string
-	Status string
-	Time   string
-	Words  string
+	Mode   string `json:"mode"`
+	Lines  string `json:"lines"`
+	Regexp string `json:"regexp"`
+	Size   string `json:"size"`
+	Status string `json:"status"`
+	Time   string `json:"time"`
+	Words  string `json:"words"`
 }
 
 type MatcherOptions struct {
-	Lines  string
-	Regexp string
-	Size   string
-	Status string
-	Time   string
-	Words  string
+	Mode   string `json:"mode"`
+	Lines  string `json:"lines"`
+	Regexp string `json:"regexp"`
+	Size   string `json:"size"`
+	Status string `json:"status"`
+	Time   string `json:"time"`
+	Words  string `json:"words"`
 }
 
-//NewConfigOptions returns a newly created ConfigOptions struct with default values
+// NewConfigOptions returns a newly created ConfigOptions struct with default values
 func NewConfigOptions() *ConfigOptions {
 	c := &ConfigOptions{}
+	c.Filter.Mode = "or"
 	c.Filter.Lines = ""
 	c.Filter.Regexp = ""
 	c.Filter.Size = ""
@@ -112,6 +119,8 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Time = ""
 	c.Filter.Words = ""
 	c.General.AutoCalibration = false
+	c.General.AutoCalibrationKeyword = "FUZZ"
+	c.General.AutoCalibrationStrategy = "basic"
 	c.General.Colors = false
 	c.General.Delay = ""
 	c.General.Json = false
@@ -120,6 +129,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Noninteractive = false
 	c.General.Quiet = false
 	c.General.Rate = 0
+	c.General.Searchhash = ""
 	c.General.ShowVersion = false
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
@@ -146,6 +156,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.InputNum = 100
 	c.Input.Request = ""
 	c.Input.RequestProto = "https"
+	c.Matcher.Mode = "or"
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
@@ -160,7 +171,7 @@ func NewConfigOptions() *ConfigOptions {
 	return c
 }
 
-//ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
+// ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
 func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel context.CancelFunc) (*Config, error) {
 	//TODO: refactor in a proper flag library that can handle things like required flags
@@ -211,6 +222,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	tmpWordlists := make([]string, 0)
 	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
 		if runtime.GOOS == "windows" {
@@ -234,6 +246,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		} else {
 			wl = strings.SplitN(v, ":", 2)
 		}
+		// Try to use absolute paths for wordlists
+		fullpath, err := filepath.Abs(wl[0])
+		if err == nil {
+			wl[0] = fullpath
+		}
 		if len(wl) == 2 {
 			if conf.InputMode == "sniper" {
 				errs.Add(fmt.Errorf("sniper mode does not support wordlist keywords"))
@@ -252,7 +269,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				Template: template,
 			})
 		}
+		tmpWordlists = append(tmpWordlists, strings.Join(wl, ":"))
 	}
+	conf.Wordlists = tmpWordlists
 
 	for _, v := range parseOpts.Input.Inputcommands {
 		ic := strings.SplitN(v, ":", 2)
@@ -445,6 +464,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
+	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
+	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
@@ -453,6 +474,34 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+
+	// Check that fmode and mmode have sane values
+	valid_opmodes := []string{"and", "or"}
+	fmode_found := false
+	mmode_found := false
+	for _, v := range valid_opmodes {
+		if v == parseOpts.Filter.Mode {
+			fmode_found = true
+		}
+		if v == parseOpts.Matcher.Mode {
+			mmode_found = true
+		}
+	}
+	if !fmode_found {
+		errmsg := fmt.Sprintf("Unrecognized value for parameter fmode: %s, valid values are: and, or", parseOpts.Filter.Mode)
+		errs.Add(fmt.Errorf(errmsg))
+	}
+	if !mmode_found {
+		errmsg := fmt.Sprintf("Unrecognized value for parameter mmode: %s, valid values are: and, or", parseOpts.Matcher.Mode)
+		errs.Add(fmt.Errorf(errmsg))
+	}
+	conf.FilterMode = parseOpts.Filter.Mode
+	conf.MatcherMode = parseOpts.Matcher.Mode
+
+	if conf.AutoCalibrationPerHost {
+		// AutoCalibrationPerHost implies AutoCalibration
+		conf.AutoCalibration = true
+	}
 
 	// Handle copy as curl situation where POST method is implied by --data flag. If method is set to anything but GET, NOOP
 	if len(conf.Data) > 0 &&
@@ -496,6 +545,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 }
 
 func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
+	conf.RequestFile = parseOpts.Input.Request
+	conf.RequestProto = parseOpts.Input.RequestProto
 	file, err := os.Open(parseOpts.Input.Request)
 	if err != nil {
 		return fmt.Errorf("could not open request file: %s", err)
@@ -550,13 +601,14 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 	}
 
 	// Set the request body
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("could not read request body: %s", err)
 	}
 	conf.Data = string(b)
 
 	// Remove newline (typically added by the editor) at the end of the file
+	//nolint:gosimple // we specifically want to remove just a single newline, not all of them
 	if strings.HasSuffix(conf.Data, "\r\n") {
 		conf.Data = conf.Data[:len(conf.Data)-2]
 	} else if strings.HasSuffix(conf.Data, "\n") {
@@ -629,7 +681,7 @@ func templatePresent(template string, conf *Config) bool {
 
 func ReadConfig(configFile string) (*ConfigOptions, error) {
 	conf := NewConfigOptions()
-	configData, err := ioutil.ReadFile(configFile)
+	configData, err := os.ReadFile(configFile)
 	if err == nil {
 		err = toml.Unmarshal(configData, conf)
 	}
@@ -637,10 +689,14 @@ func ReadConfig(configFile string) (*ConfigOptions, error) {
 }
 
 func ReadDefaultConfig() (*ConfigOptions, error) {
-	userhome, err := os.UserHomeDir()
-	if err != nil {
-		return NewConfigOptions(), err
+	// Try to create configuration directory, ignore the potential error
+	_ = CheckOrCreateConfigDir()
+	conffile := filepath.Join(CONFIGDIR, ".ffufrc")
+	if !FileExists(conffile) {
+		userhome, err := os.UserHomeDir()
+		if err == nil {
+			conffile = filepath.Join(userhome, ".ffufrc")
+		}
 	}
-	defaultconf := filepath.Join(userhome, ".ffufrc")
-	return ReadConfig(defaultconf)
+	return ReadConfig(conffile)
 }

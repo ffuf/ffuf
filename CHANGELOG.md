@@ -1,7 +1,18 @@
 ## Changelog
 - master
   - New
-    - Added install instructions for homebrew on macOS
+    - Added a new, dynamic keyword `FFUFHASH` that generates hash from job configuration and wordlist position to map blind payloads back to the initial request.
+    - New command line parameter for searching a hash: `-search FFUFHASH`
+  - Changed
+    - Multiline output prints out alphabetically sorted by keyword
+    - Default configuration directories now follow `XDG_CONFIG_HOME` variable (less spam in your home directory)
+    - Fixed issue with autocalibration of line & words filter
+    - Fixed issue with `-json` when used in conjunction with silent mode
+  
+- v1.5.0
+  - New
+    - New autocalibration options: `-ach`, `-ack` and `-acs`. Revamped the whole autocalibration process
+    - Configurable modes for matchers and filters (CLI flags: `fmode` and `mmode`): "and" and "or"
   - Changed
   
 - v1.4.1

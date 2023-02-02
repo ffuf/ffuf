@@ -16,7 +16,7 @@ type UsageSection struct {
 	ExpectedFlags []string
 }
 
-//PrintSection prints out the section name, description and each of the flags
+// PrintSection prints out the section name, description and each of the flags
 func (u *UsageSection) PrintSection(max_length int, extended bool) {
 	// Do not print if extended usage not requested and section marked as hidden
 	if !extended && u.Hidden {
@@ -35,7 +35,7 @@ type UsageFlag struct {
 	Default     string
 }
 
-//PrintFlag prints out the flag name, usage string and default value
+// PrintFlag prints out the flag name, usage string and default value
 func (f *UsageFlag) PrintFlag(max_length int) {
 	// Create format string, used for padding
 	format := fmt.Sprintf("  -%%-%ds %%s", max_length)
@@ -61,7 +61,7 @@ func Usage() {
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "search", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -75,14 +75,14 @@ func Usage() {
 		Description:   "Matchers for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"mc", "ml", "mr", "ms", "mt", "mw"},
+		ExpectedFlags: []string{"mmode", "mc", "ml", "mr", "ms", "mt", "mw"},
 	}
 	u_filter := UsageSection{
 		Name:          "FILTER OPTIONS",
 		Description:   "Filters for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"fc", "fl", "fr", "fs", "ft", "fw"},
+		ExpectedFlags: []string{"fmode", "fc", "fl", "fr", "fs", "ft", "fw"},
 	}
 	u_input := UsageSection{
 		Name:          "INPUT OPTIONS",

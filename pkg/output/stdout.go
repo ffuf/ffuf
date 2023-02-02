@@ -4,9 +4,9 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +28,7 @@ const (
 
 type Stdoutput struct {
 	config         *ffuf.Config
+	fuzzkeywords   []string
 	Results        []ffuf.Result
 	CurrentResults []ffuf.Result
 }
@@ -37,6 +38,11 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	outp.config = conf
 	outp.Results = make([]ffuf.Result, 0)
 	outp.CurrentResults = make([]ffuf.Result, 0)
+	outp.fuzzkeywords = make([]string, 0)
+	for _, ip := range conf.InputProviders {
+		outp.fuzzkeywords = append(outp.fuzzkeywords, ip.Keyword)
+	}
+	sort.Strings(outp.fuzzkeywords)
 	return &outp
 }
 
@@ -124,11 +130,11 @@ func (s *Stdoutput) Banner() {
 	}
 
 	// Print matchers
-	for _, f := range s.config.Matchers {
+	for _, f := range s.config.MatcherManager.GetMatchers() {
 		printOption([]byte("Matcher"), []byte(f.ReprVerbose()))
 	}
 	// Print filters
-	for _, f := range s.config.Filters {
+	for _, f := range s.config.MatcherManager.GetFilters() {
 		printOption([]byte("Filter"), []byte(f.ReprVerbose()))
 	}
 	fmt.Fprintf(os.Stderr, "%s\n\n", BANNER_SEP)
@@ -352,7 +358,7 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	fileName = fmt.Sprintf("%x", md5.Sum([]byte(fileContent)))
 
 	filePath = path.Join(s.config.OutputDirectory, fileName)
-	err := ioutil.WriteFile(filePath, []byte(fileContent), 0640)
+	err := os.WriteFile(filePath, []byte(fileContent), 0640)
 	if err != nil {
 		s.Error(err.Error())
 	}
@@ -361,10 +367,10 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 
 func (s *Stdoutput) PrintResult(res ffuf.Result) {
 	switch {
-	case s.config.Quiet:
-		s.resultQuiet(res)
 	case s.config.Json:
 		s.resultJson(res)
+	case s.config.Quiet:
+		s.resultQuiet(res)
 	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0:
 		// Print a multi-line result (when using multiple input keywords and wordlists)
 		s.resultMultiline(res)
@@ -416,13 +422,13 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	if res.ResultFile != "" {
 		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
 	}
-	for k, v := range res.Input {
+	for _, k := range s.fuzzkeywords {
 		if inSlice(k, s.config.CommandKeywords) {
 			// If we're using external command for input, display the position instead of input
 			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
 		} else {
 			// Wordlist input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
+			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, res.Input[k])
 		}
 	}
 	fmt.Printf("%s\n%s\n", res_hdr, reslines)

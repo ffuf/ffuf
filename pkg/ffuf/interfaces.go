@@ -1,37 +1,57 @@
 package ffuf
 
-import "time"
+import (
+	"time"
+)
 
-//FilterProvider is a generic interface for both Matchers and Filters
+// MatcherManager provides functions for managing matchers and filters
+type MatcherManager interface {
+	SetCalibrated(calibrated bool)
+	SetCalibratedForHost(host string, calibrated bool)
+	AddFilter(name string, option string, replace bool) error
+	AddPerDomainFilter(domain string, name string, option string) error
+	RemoveFilter(name string)
+	AddMatcher(name string, option string) error
+	GetFilters() map[string]FilterProvider
+	GetMatchers() map[string]FilterProvider
+	FiltersForDomain(domain string) map[string]FilterProvider
+	CalibratedForDomain(domain string) bool
+	Calibrated() bool
+}
+
+// FilterProvider is a generic interface for both Matchers and Filters
 type FilterProvider interface {
 	Filter(response *Response) (bool, error)
 	Repr() string
 	ReprVerbose() string
 }
 
-//RunnerProvider is an interface for request executors
+// RunnerProvider is an interface for request executors
 type RunnerProvider interface {
 	Prepare(input map[string][]byte, basereq *Request) (Request, error)
 	Execute(req *Request) (Response, error)
+	Dump(req *Request) ([]byte, error)
 }
 
-//InputProvider interface handles the input data for RunnerProvider
+// InputProvider interface handles the input data for RunnerProvider
 type InputProvider interface {
 	ActivateKeywords([]string)
 	AddProvider(InputProviderConfig) error
 	Keywords() []string
 	Next() bool
 	Position() int
+	SetPosition(int)
 	Reset()
 	Value() map[string][]byte
 	Total() int
 }
 
-//InternalInputProvider interface handles providing input data to InputProvider
+// InternalInputProvider interface handles providing input data to InputProvider
 type InternalInputProvider interface {
 	Keyword() string
 	Next() bool
 	Position() int
+	SetPosition(int)
 	ResetPosition()
 	IncrementPosition()
 	Value() []byte
@@ -41,7 +61,7 @@ type InternalInputProvider interface {
 	Disable()
 }
 
-//OutputProvider is responsible of providing output from the RunnerProvider
+// OutputProvider is responsible of providing output from the RunnerProvider
 type OutputProvider interface {
 	Banner()
 	Finalize() error

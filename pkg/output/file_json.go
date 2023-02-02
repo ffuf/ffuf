@@ -2,7 +2,7 @@ package output
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/ffuf/ffuf/pkg/ffuf"
@@ -49,7 +49,7 @@ func writeEJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filename, outBytes, 0644)
+	err = os.WriteFile(filename, outBytes, 0644)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func writeJSON(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filename, outBytes, 0644)
+	err = os.WriteFile(filename, outBytes, 0644)
 	if err != nil {
 		return err
 	}

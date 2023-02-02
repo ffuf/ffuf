@@ -4,17 +4,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
-	"strings"
-
 	"github.com/ffuf/ffuf/pkg/ffuf"
 	"github.com/ffuf/ffuf/pkg/filter"
 	"github.com/ffuf/ffuf/pkg/input"
 	"github.com/ffuf/ffuf/pkg/interactive"
 	"github.com/ffuf/ffuf/pkg/output"
 	"github.com/ffuf/ffuf/pkg/runner"
+	"io"
+	"log"
+	"os"
+	"strings"
+	"time"
 )
 
 type multiStringFlag []string
@@ -45,7 +45,7 @@ func (m *wordlistFlag) Set(value string) error {
 	return nil
 }
 
-//ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
+// ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
@@ -62,6 +62,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&ignored, "k", false, "Dummy flag for backwards compatibility")
 	flag.BoolVar(&opts.Output.OutputSkipEmptyFile, "or", opts.Output.OutputSkipEmptyFile, "Don't create the output file if we don't have results")
 	flag.BoolVar(&opts.General.AutoCalibration, "ac", opts.General.AutoCalibration, "Automatically calibrate filtering options")
+	flag.BoolVar(&opts.General.AutoCalibrationPerHost, "ach", opts.General.AutoCalibration, "Per host autocalibration")
 	flag.BoolVar(&opts.General.Colors, "c", opts.General.Colors, "Colorize output.")
 	flag.BoolVar(&opts.General.Json, "json", opts.General.Json, "JSON output, printing newline-delimited JSON records")
 	flag.BoolVar(&opts.General.Noninteractive, "noninteractive", opts.General.Noninteractive, "Disable the interactive console functionality")
@@ -84,7 +85,10 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.IntVar(&opts.HTTP.RecursionDepth, "recursion-depth", opts.HTTP.RecursionDepth, "Maximum recursion depth.")
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
+	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
+	flag.StringVar(&opts.Filter.Mode, "fmode", opts.Filter.Mode, "Filter set operator. Either of: and, or")
 	flag.StringVar(&opts.Filter.Lines, "fl", opts.Filter.Lines, "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&opts.Filter.Regexp, "fr", opts.Filter.Regexp, "Filter regexp")
 	flag.StringVar(&opts.Filter.Size, "fs", opts.Filter.Size, "Filter HTTP response size. Comma separated list of sizes and ranges")
@@ -92,6 +96,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Filter.Time, "ft", opts.Filter.Time, "Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
 	flag.StringVar(&opts.Filter.Words, "fw", opts.Filter.Words, "Filter by amount of words in response. Comma separated list of word counts and ranges")
 	flag.StringVar(&opts.General.Delay, "p", opts.General.Delay, "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
+	flag.StringVar(&opts.General.Searchhash, "search", opts.General.Searchhash, "Search for a FFUFHASH payload from ffuf history")
 	flag.StringVar(&opts.HTTP.Data, "d", opts.HTTP.Data, "POST data")
 	flag.StringVar(&opts.HTTP.Data, "data", opts.HTTP.Data, "POST data (alias of -d)")
 	flag.StringVar(&opts.HTTP.Data, "data-ascii", opts.HTTP.Data, "POST data (alias of -d)")
@@ -107,6 +112,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Input.InputShell, "input-shell", opts.Input.InputShell, "Shell to be used for running command")
 	flag.StringVar(&opts.Input.Request, "request", opts.Input.Request, "File containing the raw http request")
 	flag.StringVar(&opts.Input.RequestProto, "request-proto", opts.Input.RequestProto, "Protocol to use along with raw request")
+	flag.StringVar(&opts.Matcher.Mode, "mmode", opts.Matcher.Mode, "Matcher set operator. Either of: and, or")
 	flag.StringVar(&opts.Matcher.Lines, "ml", opts.Matcher.Lines, "Match amount of lines in response")
 	flag.StringVar(&opts.Matcher.Regexp, "mr", opts.Matcher.Regexp, "Match regexp")
 	flag.StringVar(&opts.Matcher.Size, "ms", opts.Matcher.Size, "Match HTTP response size")
@@ -137,12 +143,36 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 func main() {
 
 	var err, optserr error
-
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	// prepare the default config options from default config file
 	var opts *ffuf.ConfigOptions
 	opts, optserr = ffuf.ReadDefaultConfig()
 
 	opts = ParseFlags(opts)
+
+	// Handle searchhash functionality and exit
+	if opts.General.Searchhash != "" {
+		coptions, pos, err := ffuf.SearchHash(opts.General.Searchhash)
+		if err != nil {
+			fmt.Printf("[ERR] %s\n", err)
+			os.Exit(1)
+		}
+		if len(coptions) > 0 {
+			fmt.Printf("Request candidate(s) for hash %s\n", opts.General.Searchhash)
+		}
+		for _, copt := range coptions {
+			conf, err := ffuf.ConfigFromOptions(&copt.ConfigOptions, ctx, cancel)
+			if err != nil {
+				continue
+			}
+			printSearchResults(conf, pos, copt.Time, opts.General.Searchhash)
+		}
+		if err != nil {
+			fmt.Printf("[ERR] %s\n", err)
+		}
+		os.Exit(0)
+	}
 
 	if opts.General.ShowVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.Version())
@@ -152,13 +182,13 @@ func main() {
 		f, err := os.OpenFile(opts.Output.DebugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Disabling logging, encountered error(s): %s\n", err)
-			log.SetOutput(ioutil.Discard)
+			log.SetOutput(io.Discard)
 		} else {
 			log.SetOutput(f)
 			defer f.Close()
 		}
 	} else {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 	if optserr != nil {
 		log.Printf("Error while opening default config file: %s", optserr)
@@ -178,9 +208,7 @@ func main() {
 		opts = ParseFlags(opts)
 	}
 
-	// Prepare context and set up Config struct
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// Set up Config struct
 	conf, err := ffuf.ConfigFromOptions(opts, ctx, cancel)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
@@ -188,6 +216,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
+
 	job, err := prepareJob(conf)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
@@ -195,17 +224,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
-	if err := filter.SetupFilters(opts, conf); err != nil {
+	if err := SetupFilters(opts, conf); err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		os.Exit(1)
 	}
 
-	if err := filter.CalibrateIfNeeded(job); err != nil {
-		fmt.Fprintf(os.Stderr, "Error in autocalibration, exiting: %s\n", err)
-		os.Exit(1)
-	}
 	if !conf.Noninteractive {
 		go func() {
 			err := interactive.Handle(job)
@@ -232,4 +257,125 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	// We only have stdout outputprovider right now
 	job.Output = output.NewOutputProviderByName("stdout", conf)
 	return job, errs.ErrorOrNil()
+}
+
+func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
+	errs := ffuf.NewMultierror()
+	conf.MatcherManager = filter.NewMatcherManager()
+	// If any other matcher is set, ignore -mc default value
+	matcherSet := false
+	statusSet := false
+	warningIgnoreBody := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "mc" {
+			statusSet = true
+		}
+		if f.Name == "ms" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+		if f.Name == "ml" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+		if f.Name == "mr" {
+			matcherSet = true
+		}
+		if f.Name == "mt" {
+			matcherSet = true
+		}
+		if f.Name == "mw" {
+			matcherSet = true
+			warningIgnoreBody = true
+		}
+	})
+	// Only set default matchers if no
+	if statusSet || !matcherSet {
+		if err := conf.MatcherManager.AddMatcher("status", parseOpts.Matcher.Status); err != nil {
+			errs.Add(err)
+		}
+	}
+
+	if parseOpts.Filter.Status != "" {
+		if err := conf.MatcherManager.AddFilter("status", parseOpts.Filter.Status, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Size != "" {
+		warningIgnoreBody = true
+		if err := conf.MatcherManager.AddFilter("size", parseOpts.Filter.Size, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Regexp != "" {
+		if err := conf.MatcherManager.AddFilter("regexp", parseOpts.Filter.Regexp, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Words != "" {
+		warningIgnoreBody = true
+		if err := conf.MatcherManager.AddFilter("word", parseOpts.Filter.Words, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Lines != "" {
+		warningIgnoreBody = true
+		if err := conf.MatcherManager.AddFilter("line", parseOpts.Filter.Lines, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Filter.Time != "" {
+		if err := conf.MatcherManager.AddFilter("time", parseOpts.Filter.Time, false); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Size != "" {
+		if err := conf.MatcherManager.AddMatcher("size", parseOpts.Matcher.Size); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Regexp != "" {
+		if err := conf.MatcherManager.AddMatcher("regexp", parseOpts.Matcher.Regexp); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Words != "" {
+		if err := conf.MatcherManager.AddMatcher("word", parseOpts.Matcher.Words); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Lines != "" {
+		if err := conf.MatcherManager.AddMatcher("line", parseOpts.Matcher.Lines); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.Time != "" {
+		if err := conf.MatcherManager.AddMatcher("time", parseOpts.Matcher.Time); err != nil {
+			errs.Add(err)
+		}
+	}
+	if conf.IgnoreBody && warningIgnoreBody {
+		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
+	}
+	return errs.ErrorOrNil()
+}
+
+func printSearchResults(conf *ffuf.Config, pos int, exectime time.Time, hash string) {
+	inp, err := input.NewInputProvider(conf)
+	if err.ErrorOrNil() != nil {
+		fmt.Printf("-------------------------------------------\n")
+		fmt.Println("Encountered error that prevents reproduction of the request:")
+		fmt.Println(err.ErrorOrNil())
+		return
+	}
+	inp.SetPosition(pos)
+	inputdata := inp.Value()
+	inputdata["FFUFHASH"] = []byte(hash)
+	basereq := ffuf.BaseRequest(conf)
+	dummyrunner := runner.NewRunnerByName("simple", conf, false)
+	ffufreq, _ := dummyrunner.Prepare(inputdata, &basereq)
+	rawreq, _ := dummyrunner.Dump(&ffufreq)
+	fmt.Printf("-------------------------------------------\n")
+	fmt.Printf("ffuf job started at: %s\n\n", exectime.Format(time.RFC3339))
+	fmt.Printf("%s\n", string(rawreq))
 }

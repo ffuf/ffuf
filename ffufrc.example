@@ -27,6 +27,9 @@
         "randomtest",
         "admin"
     ]
+    autocalibration_strategy = "basic"
+    autocalibration_keyword = "FUZZ"
+    autocalibration_perhost = false
     colors = false
     delay = ""
     maxtime = 0
@@ -66,6 +69,7 @@
     outputcreateemptyfile = false
 
 [filter]
+    mode = "or"
     lines = ""
     regexp = ""
     size = ""
@@ -74,6 +78,7 @@
     words = ""
 
 [matcher]
+    mode = "or"
     lines = ""
     regexp = ""
     size = ""

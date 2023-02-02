@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//Job ties together Config, Runner, Input and Output
+// Job ties together Config, Runner, Input and Output
 type Job struct {
 	Config               *Config
 	ErrorMutex           sync.Mutex
@@ -19,6 +19,7 @@ type Job struct {
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
 	Output               OutputProvider
+	Jobhash              string
 	Counter              int
 	ErrorCounter         int
 	SpuriousErrorCounter int
@@ -36,6 +37,7 @@ type Job struct {
 	queuepos             int
 	skipQueue            bool
 	currentDepth         int
+	calibMutex           sync.Mutex
 	pauseWg              sync.WaitGroup
 }
 
@@ -62,7 +64,7 @@ func NewJob(conf *Config) *Job {
 	return &j
 }
 
-//incError increments the error counter
+// incError increments the error counter
 func (j *Job) incError() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
@@ -70,7 +72,7 @@ func (j *Job) incError() {
 	j.SpuriousErrorCounter++
 }
 
-//inc403 increments the 403 response counter
+// inc403 increments the 403 response counter
 func (j *Job) inc403() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
@@ -84,25 +86,25 @@ func (j *Job) inc429() {
 	j.Count429++
 }
 
-//resetSpuriousErrors resets the spurious error counter
+// resetSpuriousErrors resets the spurious error counter
 func (j *Job) resetSpuriousErrors() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.SpuriousErrorCounter = 0
 }
 
-//DeleteQueueItem deletes a recursion job from the queue by its index in the slice
+// DeleteQueueItem deletes a recursion job from the queue by its index in the slice
 func (j *Job) DeleteQueueItem(index int) {
 	index = j.queuepos + index - 1
 	j.queuejobs = append(j.queuejobs[:index], j.queuejobs[index+1:]...)
 }
 
-//QueuedJobs returns the slice of queued recursive jobs
+// QueuedJobs returns the slice of queued recursive jobs
 func (j *Job) QueuedJobs() []QueueJob {
 	return j.queuejobs[j.queuepos-1:]
 }
 
-//Start the execution of the Job
+// Start the execution of the Job
 func (j *Job) Start() {
 	if j.startTime.IsZero() {
 		j.startTime = time.Now()
@@ -179,9 +181,10 @@ func (j *Job) prepareQueueJob() {
 	//And activate / disable inputproviders as needed
 	j.Input.ActivateKeywords(found_kws)
 	j.queuepos += 1
+	j.Jobhash, _ = WriteHistoryEntry(j.Config)
 }
 
-//SkipQueue allows to skip the current job and advance to the next queued recursion job
+// SkipQueue allows to skip the current job and advance to the next queued recursion job
 func (j *Job) SkipQueue() {
 	j.skipQueue = true
 }
@@ -237,7 +240,7 @@ func (j *Job) startExecution() {
 	}
 
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
-	limiter := make(chan bool, j.Config.Threads)
+	threadlimiter := make(chan bool, j.Config.Threads)
 
 	for j.Input.Next() && !j.skipQueue {
 		// Check if we should stop the process
@@ -248,23 +251,27 @@ func (j *Job) startExecution() {
 			break
 		}
 		j.pauseWg.Wait()
-		limiter <- true
+		// Handle the rate & thread limiting
+		threadlimiter <- true
+		// Ratelimiter handles the rate ticker
+		<-j.Rate.RateLimiter.C
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
+		// Add FFUFHASH and its value
+		nextInput["FFUFHASH"] = j.ffufHash(nextPosition)
+
 		wg.Add(1)
 		j.Counter++
 
 		go func() {
-			defer func() { <-limiter }()
+			defer func() { <-threadlimiter }()
 			defer wg.Done()
 			threadStart := time.Now()
 			j.runTask(nextInput, nextPosition, false)
 			j.sleepIfNeeded()
-			j.Rate.Throttle()
 			threadEnd := time.Now()
 			j.Rate.Tick(threadStart, threadEnd)
 		}()
-
 		if !j.RunningJob {
 			defer j.Output.Warning(j.Error)
 			return
@@ -305,7 +312,6 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 		if !j.RunningJob {
 			return
 		}
-		j.Rate.Adjust()
 		time.Sleep(time.Millisecond * time.Duration(j.Config.ProgressFrequency))
 	}
 }
@@ -325,29 +331,64 @@ func (j *Job) updateProgress() {
 
 func (j *Job) isMatch(resp Response) bool {
 	matched := false
-	for _, m := range j.Config.Matchers {
+	var matchers map[string]FilterProvider
+	var filters map[string]FilterProvider
+	if j.Config.AutoCalibrationPerHost {
+		filters = j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*resp.Request))
+	} else {
+		filters = j.Config.MatcherManager.GetFilters()
+	}
+	matchers = j.Config.MatcherManager.GetMatchers()
+	for _, m := range matchers {
 		match, err := m.Filter(&resp)
 		if err != nil {
 			continue
 		}
 		if match {
 			matched = true
+		} else if j.Config.MatcherMode == "and" {
+			// we already know this isn't "and" match
+			return false
+
 		}
 	}
 	// The response was not matched, return before running filters
 	if !matched {
 		return false
 	}
-	for _, f := range j.Config.Filters {
+	for _, f := range filters {
 		fv, err := f.Filter(&resp)
 		if err != nil {
 			continue
 		}
 		if fv {
-			return false
+			//	return false
+			if j.Config.FilterMode == "or" {
+				// return early, as filter matched
+				return false
+			}
+		} else {
+			if j.Config.FilterMode == "and" {
+				// return early as not all filters matched in "and" mode
+				return true
+			}
 		}
 	}
+	if len(filters) > 0 && j.Config.FilterMode == "and" {
+		// we did not return early, so all filters were matched
+		return false
+	}
 	return true
+}
+
+func (j *Job) ffufHash(pos int) []byte {
+	hashstring := ""
+	r := []rune(j.Jobhash)
+	if len(r) > 5 {
+		hashstring = string(r[:5])
+	}
+	hashstring += fmt.Sprintf("%x", pos)
+	return []byte(hashstring)
 }
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
@@ -360,6 +401,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		log.Printf("%s", err)
 		return
 	}
+
 	resp, err := j.Runner.Execute(&req)
 	if err != nil {
 		if retried {
@@ -386,6 +428,10 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 	j.pauseWg.Wait()
+
+	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
+	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
+
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
@@ -413,7 +459,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 }
 
-//handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
+// handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
 func (j *Job) handleGreedyRecursionJob(resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
@@ -426,8 +472,8 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	}
 }
 
-//handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
-//not been reached
+// handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
+// not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
 	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
@@ -442,47 +488,6 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 	} else {
 		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
 	}
-}
-
-//CalibrateResponses returns slice of Responses for randomly generated filter autocalibration requests
-func (j *Job) CalibrateResponses() ([]Response, error) {
-	basereq := BaseRequest(j.Config)
-	cInputs := make([]string, 0)
-	rand.Seed(time.Now().UnixNano())
-	if len(j.Config.AutoCalibrationStrings) < 1 {
-		cInputs = append(cInputs, "admin"+RandomString(16)+"/")
-		cInputs = append(cInputs, ".htaccess"+RandomString(16))
-		cInputs = append(cInputs, RandomString(16)+"/")
-		cInputs = append(cInputs, RandomString(16))
-	} else {
-		cInputs = append(cInputs, j.Config.AutoCalibrationStrings...)
-	}
-
-	results := make([]Response, 0)
-	for _, input := range cInputs {
-		inputs := make(map[string][]byte, len(j.Config.InputProviders))
-		for _, v := range j.Config.InputProviders {
-			inputs[v.Keyword] = []byte(input)
-		}
-
-		req, err := j.Runner.Prepare(inputs, &basereq)
-		if err != nil {
-			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
-			j.incError()
-			log.Printf("%s", err)
-			return results, err
-		}
-		resp, err := j.Runner.Execute(&req)
-		if err != nil {
-			return results, err
-		}
-
-		// Only calibrate on responses that would be matched otherwise
-		if j.isMatch(resp) {
-			results = append(results, resp)
-		}
-	}
-	return results, nil
 }
 
 // CheckStop stops the job if stopping conditions are met
@@ -533,13 +538,13 @@ func (j *Job) CheckStop() {
 	}
 }
 
-//Stop the execution of the Job
+// Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
 	j.Config.Cancel()
 }
 
-//Stop current, resume to next
+// Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
 }
