@@ -29,6 +29,9 @@ Come to hang out & to discuss about ffuf, it's usage and development!
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
+
+  _or_
+- If you are on mac with [homebrew](https://brew.sh) installed `brew install ffuf`
   
   _or_
 - If you have recent go compiler installed: `go install github.com/ffuf/ffuf@latest` (the same command works for updating)
@@ -193,7 +196,7 @@ MATCHER OPTIONS:
   -ml                 Match amount of lines in response
   -mr                 Match regexp
   -ms                 Match HTTP response size
-  -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100
+  -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: ">100" or "<100"
   -mw                 Match amount of words in response
 
 FILTER OPTIONS:
@@ -201,7 +204,7 @@ FILTER OPTIONS:
   -fl                 Filter by amount of lines in response. Comma separated list of line counts and ranges
   -fr                 Filter regexp
   -fs                 Filter HTTP response size. Comma separated list of sizes and ranges
-  -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100
+  -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: ">100" or "<100"
   -fw                 Filter by amount of words in response. Comma separated list of word counts and ranges
 
 INPUT OPTIONS:

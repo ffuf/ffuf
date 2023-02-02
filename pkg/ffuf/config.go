@@ -17,6 +17,7 @@ type Config struct {
 	ConfigFile              string                `json:"configfile"`
 	Context                 context.Context       `json:"-"`
 	Data                    string                `json:"postdata"`
+	Debuglog                string                `json:"debuglog"`
 	Delay                   optRange              `json:"delay"`
 	DirSearchCompat         bool                  `json:"dirsearch_compatibility"`
 	Extensions              []string              `json:"extensions"`
@@ -48,6 +49,8 @@ type Config struct {
 	RecursionDepth          int                   `json:"recursion_depth"`
 	RecursionStrategy       string                `json:"recursion_strategy"`
 	ReplayProxyURL          string                `json:"replayproxyurl"`
+	RequestFile             string                `json:"requestfile"`
+	RequestProto            string                `json:"requestproto"`
 	SNI                     string                `json:"sni"`
 	StopOn403               bool                  `json:"stop_403"`
 	StopOnAll               bool                  `json:"stop_all"`
@@ -56,6 +59,7 @@ type Config struct {
 	Timeout                 int                   `json:"timeout"`
 	Url                     string                `json:"url"`
 	Verbose                 bool                  `json:"verbose"`
+	Wordlists               []string              `json:"wordlists"`
 	Http2                   bool                  `json:"http2"`
 }
 
@@ -75,6 +79,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Context = ctx
 	conf.Cancel = cancel
 	conf.Data = ""
+	conf.Debuglog = ""
 	conf.Delay = optRange{0, 0, false, false}
 	conf.DirSearchCompat = false
 	conf.Extensions = make([]string, 0)
@@ -99,6 +104,8 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Recursion = false
 	conf.RecursionDepth = 0
 	conf.RecursionStrategy = "default"
+	conf.RequestFile = ""
+	conf.RequestProto = "https"
 	conf.SNI = ""
 	conf.StopOn403 = false
 	conf.StopOnAll = false
@@ -106,6 +113,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Timeout = 10
 	conf.Url = ""
 	conf.Verbose = false
+	conf.Wordlists = []string{}
 	conf.Http2 = false
 	return conf
 }

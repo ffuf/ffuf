@@ -25,6 +25,7 @@
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [jimen0](https://github.com/jimen0)
 * [joohoi](https://github.com/joohoi)
+* [JoshuaMulliken](https://github.com/JoshuaMulliken)
 * [jsgv](https://github.com/jsgv)
 * [justinsteven](https://github.com/justinsteven)
 * [jvesiluoma](https://github.com/jvesiluoma)
@@ -44,3 +45,4 @@
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [TomNomNom](https://github.com/tomnomnom)
 * [xfgusta](https://github.com/xfgusta)
+
