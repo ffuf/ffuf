@@ -45,7 +45,7 @@ func SearchHash(hash string) ([]ConfigOptionsHistory, int, error) {
 		return coptions, 0, errors.New("bad FFUFHASH value")
 	}
 	historypart := hash[0:5]
-	position, err := strconv.ParseInt(hash[5:], 16, 64)
+	position, err := strconv.ParseInt(hash[5:], 16, 32)
 	if err != nil {
 		return coptions, 0, errors.New("bad positional value in FFUFHASH")
 	}
