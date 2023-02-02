@@ -155,13 +155,14 @@ parameter.
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.3.0-dev
+Fuzz Faster U Fool - v1.5.0-dev
 
 HTTP OPTIONS:
   -H                  Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
   -X                  HTTP method to use
   -b                  Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
   -d                  POST data
+  -http2              Use HTTP2 protocol (default: false)
   -ignore-body        Do not fetch the response content. (default: false)
   -r                  Follow redirects (default: false)
   -recursion          Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
@@ -177,8 +178,12 @@ GENERAL OPTIONS:
   -V                  Show version information. (default: false)
   -ac                 Automatically calibrate filtering options (default: false)
   -acc                Custom auto-calibration string. Can be used multiple times. Implies -ac
+  -ach                Per host autocalibration (default: false)
+  -ack                Autocalibration keyword (default: FUZZ)
+  -acs                Autocalibration strategy: "basic" or "advanced" (default: basic)
   -c                  Colorize output. (default: false)
   -config             Load configuration from a file
+  -json               JSON output, printing newline-delimited JSON records (default: false)
   -maxtime            Maximum running time in seconds for entire process. (default: 0)
   -maxtime-job        Maximum running time in seconds per job. (default: 0)
   -noninteractive     Disable the interactive console functionality (default: false)
@@ -194,6 +199,7 @@ GENERAL OPTIONS:
 MATCHER OPTIONS:
   -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405,500)
   -ml                 Match amount of lines in response
+  -mmode              Matcher set operator. Either of: and, or (default: or)
   -mr                 Match regexp
   -ms                 Match HTTP response size
   -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: ">100" or "<100"
@@ -202,6 +208,7 @@ MATCHER OPTIONS:
 FILTER OPTIONS:
   -fc                 Filter HTTP status codes from response. Comma separated list of codes and ranges
   -fl                 Filter by amount of lines in response. Comma separated list of line counts and ranges
+  -fmode              Filter set operator. Either of: and, or (default: or)
   -fr                 Filter regexp
   -fs                 Filter HTTP response size. Comma separated list of sizes and ranges
   -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: ">100" or "<100"
