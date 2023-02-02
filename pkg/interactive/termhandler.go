@@ -177,6 +177,20 @@ func (i *interactive) handleInput(in []byte) {
 		case "queueskip":
 			i.Job.SkipQueue()
 			i.Job.Output.Info("Skipping to the next queued job")
+		case "rate":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define the new rate")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"rate\"")
+			} else {
+				newrate, err := strconv.Atoi(args[1])
+				if err != nil {
+					i.Job.Output.Error(fmt.Sprintf("Could not adjust rate: %s", err))
+				} else {
+					i.Job.Rate.ChangeRate(newrate)
+				}
+			}
+
 		default:
 			if i.paused {
 				i.Job.Output.Warning(fmt.Sprintf("Unknown command: \"%s\". Enter \"help\" for a list of available commands", args[0]))
@@ -278,26 +292,28 @@ func (i *interactive) printHelp() {
 			ft = "(active: " + filter.Repr() + ")"
 		}
 	}
+	rate := fmt.Sprintf("(active: %d)", i.Job.Config.Rate)
 	help := `
 available commands:
- afc [value]             - append to status code filter %s
- fc  [value]             - (re)configure status code filter %s
- afl [value]             - append to line count filter %s
- fl  [value]             - (re)configure line count filter %s
- afw [value]             - append to word count filter %s
- fw  [value]             - (re)configure word count filter %s
- afs [value]             - append to size filter %s
- fs  [value]             - (re)configure size filter %s
- aft [value]             - append to time filter %s
- ft  [value]			 - (re)configure time filter %s
- queueshow              - show job queue
- queuedel [number]      - delete a job in the queue
- queueskip              - advance to the next queued job
- restart                - restart and resume the current ffuf job
- resume                 - resume current ffuf job (or: ENTER) 
- show                   - show results for the current job
- savejson [filename]    - save current matches to a file
- help                   - you are looking at it
+ afc  [value]             - append to status code filter %s
+ fc   [value]             - (re)configure status code filter %s
+ afl  [value]             - append to line count filter %s
+ fl   [value]             - (re)configure line count filter %s
+ afw  [value]             - append to word count filter %s
+ fw   [value]             - (re)configure word count filter %s
+ afs  [value]             - append to size filter %s
+ fs   [value]             - (re)configure size filter %s
+ aft  [value]             - append to time filter %s
+ ft   [value]             - (re)configure time filter %s
+ rate [value]             - adjust rate of requests per second %s
+ queueshow                - show job queue
+ queuedel [number]        - delete a job in the queue
+ queueskip                - advance to the next queued job
+ restart                  - restart and resume the current ffuf job
+ resume                   - resume current ffuf job (or: ENTER) 
+ show                     - show results for the current job
+ savejson [filename]      - save current matches to a file
+ help                     - you are looking at it
 `
-	i.Job.Output.Raw(fmt.Sprintf(help, fc, fc, fl, fl, fw, fw, fs, fs, ft, ft))
+	i.Job.Output.Raw(fmt.Sprintf(help, fc, fc, fl, fl, fw, fw, fs, fs, ft, ft, rate))
 }
