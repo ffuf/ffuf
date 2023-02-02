@@ -19,6 +19,7 @@ type Job struct {
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
 	Output               OutputProvider
+	Jobhash              string
 	Counter              int
 	ErrorCounter         int
 	SpuriousErrorCounter int
@@ -180,6 +181,7 @@ func (j *Job) prepareQueueJob() {
 	//And activate / disable inputproviders as needed
 	j.Input.ActivateKeywords(found_kws)
 	j.queuepos += 1
+	j.Jobhash, _ = WriteHistoryEntry(j.Config)
 }
 
 // SkipQueue allows to skip the current job and advance to the next queued recursion job
@@ -255,6 +257,8 @@ func (j *Job) startExecution() {
 		<-j.Rate.RateLimiter.C
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
+		// Add FFUFHASH and its value
+		nextInput["FFUFHASH"] = j.ffufHash(nextPosition)
 
 		wg.Add(1)
 		j.Counter++
@@ -375,6 +379,16 @@ func (j *Job) isMatch(resp Response) bool {
 		return false
 	}
 	return true
+}
+
+func (j *Job) ffufHash(pos int) []byte {
+	hashstring := ""
+	r := []rune(j.Jobhash)
+	if len(r) > 5 {
+		hashstring = string(r[:5])
+	}
+	hashstring += fmt.Sprintf("%x", pos)
+	return []byte(hashstring)
 }
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
