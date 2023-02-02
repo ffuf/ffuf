@@ -26,7 +26,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.Timeout = c.Timeout
 	o.HTTP.URL = c.Url
 	o.HTTP.Http2 = c.Http2
-	
+
 	o.General.AutoCalibration = c.AutoCalibration
 	o.General.AutoCalibrationKeyword = c.AutoCalibrationKeyword
 	o.General.AutoCalibrationPerHost = c.AutoCalibrationPerHost
@@ -36,9 +36,9 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.General.ConfigFile = ""
 	if c.Delay.HasDelay {
 		if c.Delay.IsRange {
-			o.General.Delay = fmt.Sprintf("%d-%d", c.Delay.Min, c.Delay.Max)
+			o.General.Delay = fmt.Sprintf("%.2f-%.2f", c.Delay.Min, c.Delay.Max)
 		} else {
-			o.General.Delay = fmt.Sprintf("%d", c.Delay.Min)
+			o.General.Delay = fmt.Sprintf("%.2f", c.Delay.Min)
 		}
 	} else {
 		o.General.Delay = ""
