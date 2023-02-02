@@ -172,10 +172,12 @@ func injectKeyword(input string, keyword string, startOffset int, endOffset int)
 	prefix := inputslice[:startOffset]
 	suffix := inputslice[endOffset+1:]
 
-	inputslice = append(prefix, keywordslice...)
-	inputslice = append(inputslice, suffix...)
+	var outputslice []rune
+	outputslice = append(outputslice, prefix...)
+	outputslice = append(outputslice, keywordslice...)
+	outputslice = append(outputslice, suffix...)
 
-	return string(inputslice)
+	return string(outputslice)
 }
 
 // scrubTemplates removes all template (§) strings from the request struct
