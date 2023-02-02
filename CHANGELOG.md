@@ -7,7 +7,8 @@
     - Multiline output prints out alphabetically sorted by keyword
     - Default configuration directories now follow `XDG_CONFIG_HOME` variable (less spam in your home directory)
     - Fixed issue with autocalibration of line & words filter
-    - Fixed issue with `-json` when used in conjunction with silent mode
+    - Made JSON (`-json`) output format take precedence over quiet output mode, to allow JSON output without the banner etc
+
   
 - v1.5.0
   - New
