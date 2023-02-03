@@ -14,13 +14,13 @@ const (
   Command line : ` + "`{{.CommandLine}}`" + `
   Time: ` + "{{ .Time }}" + `
 
-  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile |
-  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- |
-  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} |
+  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile | ScraperData
+  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- | :------------ |
+  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} | {{ .ScraperData }} |
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
-func writeMarkdown(filename string, config *ffuf.Config, res []ffuf.Result) error {
+func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) error {
 	ti := time.Now()
 
 	keywords := make([]string, 0)
@@ -28,10 +28,50 @@ func writeMarkdown(filename string, config *ffuf.Config, res []ffuf.Result) erro
 		keywords = append(keywords, inputprovider.Keyword)
 	}
 
+	htmlResults := make([]htmlResult, 0)
+
+	for _, r := range results {
+		strinput := make(map[string]string)
+		for k, v := range r.Input {
+			strinput[k] = string(v)
+		}
+		strscraper := ""
+		for k, v := range r.ScraperData {
+			if len(v) > 0 {
+				strscraper = strscraper + "<p><b>" + k + ":</b><br />"
+				firstval := true
+				for _, val := range v {
+					if !firstval {
+						strscraper += "<br />"
+					}
+					strscraper += val
+					firstval = false
+				}
+				strscraper += "</p>"
+			}
+		}
+		hres := htmlResult{
+			Input:            strinput,
+			Position:         r.Position,
+			StatusCode:       r.StatusCode,
+			ContentLength:    r.ContentLength,
+			ContentWords:     r.ContentWords,
+			ContentLines:     r.ContentLines,
+			ContentType:      r.ContentType,
+			RedirectLocation: r.RedirectLocation,
+			ScraperData:      strscraper,
+			Duration:         r.Duration,
+			ResultFile:       r.ResultFile,
+			Url:              r.Url,
+			Host:             r.Host,
+		}
+		htmlResults = append(htmlResults, hres)
+	}
+
 	outMD := htmlFileOutput{
 		CommandLine: config.CommandLine,
 		Time:        ti.Format(time.RFC3339),
-		Results:     res,
+		Results:     htmlResults,
 		Keys:        keywords,
 	}
 
