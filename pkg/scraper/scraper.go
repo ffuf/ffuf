@@ -2,7 +2,10 @@ package scraper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -21,31 +24,77 @@ type ScraperRule struct {
 	Action       []string `json:"action"`
 }
 
-type Scraper struct {
+type ScraperGroup struct {
 	Rules  []*ScraperRule `json:"rules"`
-	active bool
+	Name   string         `json:"groupname"`
+	Active bool           `json:"active"`
 }
 
-func FromFile(path string) (ffuf.Scraper, error) {
-	data, err := ioutil.ReadFile(path)
+type Scraper struct {
+	Rules []*ScraperRule
+}
+
+func readGroupFromFile(filename string) (ScraperGroup, error) {
+	data, err := os.ReadFile(filename)
 	if err != nil {
-		return &Scraper{}, err
+		return ScraperGroup{Rules: make([]*ScraperRule, 0)}, err
 	}
-	sc := Scraper{}
+	sc := ScraperGroup{}
 	err = json.Unmarshal([]byte(data), &sc)
-	for _, r := range sc.Rules {
-		err = r.init()
-		if err != nil {
-			return &sc, err
+	return sc, err
+}
+
+func FromDir(dirname string, activestr string) (ffuf.Scraper, ffuf.Multierror) {
+	scr := Scraper{Rules: make([]*ScraperRule, 0)}
+	errs := ffuf.NewMultierror()
+	activegrps := parseActiveGroups(activestr)
+	all_files, err := os.ReadDir(ffuf.SCRAPERDIR)
+	if err != nil {
+		errs.Add(err)
+		return &scr, errs
+	}
+	for _, filename := range all_files {
+		if filename.Type().IsRegular() && strings.HasSuffix(filename.Name(), ".json") {
+			sg, err := readGroupFromFile(filepath.Join(dirname, filename.Name()))
+			if err != nil {
+				cerr := errors.New(fmt.Sprintf("%s : %s", filepath.Join(dirname, filename.Name()), err))
+				errs.Add(cerr)
+				continue
+			}
+			if (sg.Active && isActive("all", activegrps)) || isActive(sg.Name, activegrps) {
+				for _, r := range sg.Rules {
+					err = r.init()
+					if err != nil {
+						cerr := errors.New(fmt.Sprintf("%s : %s", filepath.Join(dirname, filename.Name()), err))
+						errs.Add(cerr)
+						continue
+					}
+					scr.Rules = append(scr.Rules, r)
+				}
+			}
 		}
 	}
-	sc.active = true
-	return &sc, err
+	return &scr, errs
 }
 
-func (s *Scraper) Active() bool {
-	return s.active
+// FromFile initializes a scraper instance and reads rules from a file
+func (s *Scraper) AppendFromFile(path string) error {
+	sg, err := readGroupFromFile(path)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range sg.Rules {
+		err = r.init()
+		if err != nil {
+			continue
+		}
+		s.Rules = append(s.Rules, r)
+	}
+
+	return err
 }
+
 func (s *Scraper) Execute(resp *ffuf.Response, matched bool) []ffuf.ScraperResult {
 	res := make([]ffuf.ScraperResult, 0)
 	for _, rule := range s.Rules {
@@ -74,7 +123,7 @@ func (s *Scraper) Execute(resp *ffuf.Response, matched bool) []ffuf.ScraperResul
 	return res
 }
 
-//init initializes the scraper rule, and returns an error in case there's an error in the syntax
+// init initializes the scraper rule, and returns an error in case there's an error in the syntax
 func (r *ScraperRule) init() error {
 	var err error
 	if r.Type == "regexp" {

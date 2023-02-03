@@ -90,7 +90,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
 	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
-	flag.StringVar(&opts.General.ScraperFile, "scraper", "", "Scraper configuration file path")
+	flag.StringVar(&opts.General.ScraperFile, "scraperfile", "", "Custom scraper file path")
+	flag.StringVar(&opts.General.Scrapers, "scrapers", opts.General.Scrapers, "Active scraper groups")
 	flag.StringVar(&opts.Filter.Mode, "fmode", opts.Filter.Mode, "Filter set operator. Either of: and, or")
 	flag.StringVar(&opts.Filter.Lines, "fl", opts.Filter.Lines, "Filter by amount of lines in response. Comma separated list of line counts and ranges")
 	flag.StringVar(&opts.Filter.Regexp, "fr", opts.Filter.Regexp, "Filter regexp")
@@ -261,9 +262,14 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	// We only have stdout outputprovider right now
 	job.Output = output.NewOutputProviderByName("stdout", conf)
 
-	// If scraperfile is set, initialize scraper
+	// Initialize scraper
+	newscraper, scraper_err := scraper.FromDir(ffuf.SCRAPERDIR, conf.Scrapers)
+	if scraper_err.ErrorOrNil() != nil {
+		errs.Add(scraper_err.ErrorOrNil())
+	}
+	job.Scraper = newscraper
 	if conf.ScraperFile != "" {
-		job.Scraper, err = scraper.FromFile(conf.ScraperFile)
+		err = job.Scraper.AppendFromFile(conf.ScraperFile)
 		if err != nil {
 			errs.Add(err)
 		}

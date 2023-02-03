@@ -384,7 +384,7 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
 	if len(res.Input) > 1 {
 		for k, v := range res.Input {
-			if inSlice(k, s.config.CommandKeywords) {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(res.Position))
 			} else {
@@ -393,7 +393,7 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 		}
 	} else {
 		for k, v := range res.Input {
-			if inSlice(k, s.config.CommandKeywords) {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = strconv.Itoa(res.Position)
 			} else {
@@ -424,7 +424,7 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
 	}
 	for _, k := range s.fuzzkeywords {
-		if inSlice(k, s.config.CommandKeywords) {
+		if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 			// If we're using external command for input, display the position instead of input
 			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
 		} else {
@@ -480,13 +480,4 @@ func (s *Stdoutput) colorize(status int64) string {
 
 func printOption(name []byte, value []byte) {
 	fmt.Fprintf(os.Stderr, " :: %-16s : %s\n", name, value)
-}
-
-func inSlice(key string, slice []string) bool {
-	for _, v := range slice {
-		if v == key {
-			return true
-		}
-	}
-	return false
 }

@@ -52,6 +52,7 @@ type Config struct {
 	RequestFile             string                `json:"requestfile"`
 	RequestProto            string                `json:"requestproto"`
 	ScraperFile             string                `json:"scraperfile"`
+	Scrapers                string                `json:"scrapers"`
 	SNI                     string                `json:"sni"`
 	StopOn403               bool                  `json:"stop_403"`
 	StopOnAll               bool                  `json:"stop_all"`
@@ -109,6 +110,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.RequestProto = "https"
 	conf.SNI = ""
 	conf.ScraperFile = ""
+	conf.Scrapers = "all"
 	conf.StopOn403 = false
 	conf.StopOnAll = false
 	conf.StopOnErrors = false

@@ -80,11 +80,4 @@ func configFromHistory(dirname string) (ConfigOptionsHistory, error) {
 	tmpOptions := ConfigOptionsHistory{}
 	err = json.Unmarshal(jsonOptions, &tmpOptions)
 	return tmpOptions, err
-	/*
-		// These are dummy values for this use case
-		ctx, cancel := context.WithCancel(context.Background())
-		conf, err := ConfigFromOptions(&tmpOptions.ConfigOptions, ctx, cancel)
-		job.Input, errs = input.NewInputProvider(conf)
-		return conf, tmpOptions.Time, err
-	*/
 }

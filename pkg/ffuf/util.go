@@ -89,6 +89,10 @@ func CheckOrCreateConfigDir() error {
 		return err
 	}
 	err = createConfigDir(HISTORYDIR)
+	if err != nil {
+		return err
+	}
+	err = createConfigDir(SCRAPERDIR)
 	return err
 }
 
@@ -102,4 +106,13 @@ func createConfigDir(path string) error {
 		return err
 	}
 	return nil
+}
+
+func StrInSlice(key string, slice []string) bool {
+	for _, v := range slice {
+		if v == key {
+			return true
+		}
+	}
+	return false
 }

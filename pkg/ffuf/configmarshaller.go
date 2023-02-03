@@ -49,6 +49,8 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.General.Noninteractive = c.Noninteractive
 	o.General.Quiet = c.Quiet
 	o.General.Rate = int(c.Rate)
+	o.General.ScraperFile = c.ScraperFile
+	o.General.Scrapers = c.Scrapers
 	o.General.StopOn403 = c.StopOn403
 	o.General.StopOnAll = c.StopOnAll
 	o.General.StopOnErrors = c.StopOnErrors

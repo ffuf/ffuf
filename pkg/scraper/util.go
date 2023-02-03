@@ -1,6 +1,10 @@
 package scraper
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/ffuf/ffuf/pkg/ffuf"
+	"strings"
+)
 
 func headerString(headers map[string][]string) string {
 	val := ""
@@ -10,4 +14,16 @@ func headerString(headers map[string][]string) string {
 		}
 	}
 	return val
+}
+
+func isActive(name string, activegroups []string) bool {
+	return ffuf.StrInSlice(strings.ToLower(strings.TrimSpace(name)), activegroups)
+}
+
+func parseActiveGroups(activestr string) []string {
+	retslice := make([]string, 0)
+	for _, v := range strings.Split(activestr, ",") {
+		retslice = append(retslice, strings.ToLower(strings.TrimSpace(v)))
+	}
+	return retslice
 }

@@ -80,8 +80,8 @@ type OutputProvider interface {
 }
 
 type Scraper interface {
-	Active() bool
 	Execute(resp *Response, matched bool) []ScraperResult
+	AppendFromFile(path string) error
 }
 
 type ScraperResult struct {

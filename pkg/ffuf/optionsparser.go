@@ -59,6 +59,7 @@ type GeneralOptions struct {
 	Quiet                   bool     `json:"quiet"`
 	Rate                    int      `json:"rate"`
 	ScraperFile             string   `json:"scraperfile"`
+	Scrapers                string   `json:"scrapers"`
 	Searchhash              string   `json:"-"`
 	ShowVersion             bool     `toml:"-" json:"-"`
 	StopOn403               bool     `json:"stop_on_403"`
@@ -132,6 +133,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Rate = 0
 	c.General.Searchhash = ""
 	c.General.ScraperFile = ""
+	c.General.Scrapers = "all"
 	c.General.ShowVersion = false
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
@@ -249,7 +251,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			wl = strings.SplitN(v, ":", 2)
 		}
 		// Try to use absolute paths for wordlists
-		fullpath, err := filepath.Abs(wl[0])
+		fullpath := ""
+		if wl[0] != "-" {
+			fullpath, err = filepath.Abs(wl[0])
+		} else {
+			fullpath = wl[0]
+		}
+
 		if err == nil {
 			wl[0] = fullpath
 		}
@@ -459,6 +467,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
 	conf.ScraperFile = parseOpts.General.ScraperFile
+	conf.Scrapers = parseOpts.General.Scrapers
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
@@ -693,7 +702,7 @@ func ReadConfig(configFile string) (*ConfigOptions, error) {
 func ReadDefaultConfig() (*ConfigOptions, error) {
 	// Try to create configuration directory, ignore the potential error
 	_ = CheckOrCreateConfigDir()
-	conffile := filepath.Join(CONFIGDIR, ".ffufrc")
+	conffile := filepath.Join(CONFIGDIR, "ffufrc")
 	if !FileExists(conffile) {
 		userhome, err := os.UserHomeDir()
 		if err == nil {
