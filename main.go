@@ -16,6 +16,7 @@ import (
 	"github.com/ffuf/ffuf/pkg/interactive"
 	"github.com/ffuf/ffuf/pkg/output"
 	"github.com/ffuf/ffuf/pkg/runner"
+	"github.com/ffuf/ffuf/pkg/scraper"
 )
 
 type multiStringFlag []string
