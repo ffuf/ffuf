@@ -170,7 +170,13 @@ func main() {
 			if err != nil {
 				continue
 			}
-			printSearchResults(conf, pos, copt.Time, opts.General.Searchhash)
+			ok, reason := ffuf.HistoryReplayable(conf)
+			if ok {
+				printSearchResults(conf, pos, copt.Time, opts.General.Searchhash)
+			} else {
+				fmt.Printf("[ERR] Hash cannot be mapped back because %s\n", reason)
+			}
+
 		}
 		if err != nil {
 			fmt.Printf("[ERR] %s\n", err)

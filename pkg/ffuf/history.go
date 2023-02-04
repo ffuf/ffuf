@@ -72,6 +72,15 @@ func SearchHash(hash string) ([]ConfigOptionsHistory, int, error) {
 	return coptions, int(position), err
 }
 
+func HistoryReplayable(conf *Config) (bool, string) {
+	for _, w := range conf.Wordlists {
+		if w == "-" || strings.HasPrefix(w, "-:") {
+			return false, "stdin input was used for one of the wordlists"
+		}
+	}
+	return true, ""
+}
+
 func configFromHistory(dirname string) (ConfigOptionsHistory, error) {
 	jsonOptions, err := os.ReadFile(filepath.Join(dirname, "options"))
 	if err != nil {
