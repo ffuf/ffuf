@@ -37,6 +37,7 @@
     noninteractive = false
     quiet = false
     rate = 0
+    scrapers = "all"
     stopon403 = false
     stoponall = false
     stoponerrors = false

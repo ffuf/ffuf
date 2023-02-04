@@ -2,6 +2,7 @@ package runner
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -154,8 +155,18 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		resp.Request.Raw = string(rawreq)
 		resp.Raw = string(rawresp)
 	}
+	var bodyReader io.ReadCloser
+	if httpresp.Header.Get("Content-Encoding") == "gzip" {
+		bodyReader, err = gzip.NewReader(httpresp.Body)
+		if err != nil {
+			// fallback to raw data
+			bodyReader = httpresp.Body
+		}
+	} else {
+		bodyReader = httpresp.Body
+	}
 
-	if respbody, err := io.ReadAll(httpresp.Body); err == nil {
+	if respbody, err := io.ReadAll(bodyReader); err == nil {
 		resp.ContentLength = int64(len(string(respbody)))
 		resp.Data = respbody
 	}
@@ -165,7 +176,6 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
 	resp.Time = firstByteTime
-
 	return resp, nil
 }
 

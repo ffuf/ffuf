@@ -18,6 +18,7 @@ type Job struct {
 	Input                InputProvider
 	Runner               RunnerProvider
 	ReplayRunner         RunnerProvider
+	Scraper              Scraper
 	Output               OutputProvider
 	Jobhash              string
 	Counter              int
@@ -432,6 +433,14 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
 	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
 
+	// Handle scraper actions
+	if j.Scraper != nil {
+		for _, sres := range j.Scraper.Execute(&resp, j.isMatch(resp)) {
+			resp.ScraperData[sres.Name] = sres.Results
+			j.handleScraperResult(&resp, sres)
+		}
+	}
+
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
@@ -452,10 +461,24 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
 			j.handleGreedyRecursionJob(resp)
 		}
+	} else {
+		if len(resp.ScraperData) > 0 {
+			// print the result anyway, as scraper found something
+			j.Output.Result(resp)
+		}
 	}
 
 	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && len(resp.GetRedirectLocation(false)) > 0 {
 		j.handleDefaultRecursionJob(resp)
+	}
+}
+
+func (j *Job) handleScraperResult(resp *Response, sres ScraperResult) {
+	for _, a := range sres.Action {
+		switch a {
+		case "output":
+			resp.ScraperData[sres.Name] = sres.Results
+		}
 	}
 }
 

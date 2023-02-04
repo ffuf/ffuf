@@ -1,6 +1,7 @@
 package output
 
 import (
+	"html"
 	"html/template"
 	"os"
 	"time"
@@ -8,11 +9,27 @@ import (
 	"github.com/ffuf/ffuf/pkg/ffuf"
 )
 
+type htmlResult struct {
+	Input            map[string]string
+	Position         int
+	StatusCode       int64
+	ContentLength    int64
+	ContentWords     int64
+	ContentLines     int64
+	ContentType      string
+	RedirectLocation string
+	ScraperData      string
+	Duration         time.Duration
+	ResultFile       string
+	Url              string
+	Host             string
+}
+
 type htmlFileOutput struct {
 	CommandLine string
 	Time        string
 	Keys        []string
-	Results     []ffuf.Result
+	Results     []htmlResult
 }
 
 const (
@@ -65,7 +82,7 @@ const (
    <table id="ffufreport">
         <thead>
         <div style="display:none">
-|result_raw|StatusCode|Input|Position|ContentLength|ContentWords|ContentLines|
+|result_raw|StatusCode|Input|Position|ContentLength|ContentWords|ContentLines|ContentType|Duration|Resultfile|ScraperData|
         </div>
           <tr>
               <th>Status</th>
@@ -78,8 +95,9 @@ const (
               <th>Words</th>
 			  <th>Lines</th>
 			  <th>Type</th>
-        <th>Duration</th>
+              <th>Duration</th>
 			  <th>Resultfile</th>
+              <th>Scraper data</th>
           </tr>
         </thead>
 
@@ -100,8 +118,9 @@ const (
                     <td>{{ $result.ContentWords }}</td>
 					<td>{{ $result.ContentLines }}</td>
 					<td>{{ $result.ContentType }}</td>
-          <td>{{ $result.Duration }}</td>
+					<td>{{ $result.Duration }}</td>
                     <td>{{ $result.ResultFile }}</td>
+					<td>{{ $result.ScraperData }}
                 </tr>
             {{ end }}
         </tbody>
@@ -187,11 +206,49 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 	for _, inputprovider := range config.InputProviders {
 		keywords = append(keywords, inputprovider.Keyword)
 	}
+	htmlResults := make([]htmlResult, 0)
 
+	for _, r := range results {
+		strinput := make(map[string]string)
+		for k, v := range r.Input {
+			strinput[k] = string(v)
+		}
+		strscraper := ""
+		for k, v := range r.ScraperData {
+			if len(v) > 0 {
+				strscraper = strscraper + "<p><b>" + html.EscapeString(k) + ":</b><br />"
+				firstval := true
+				for _, val := range v {
+					if !firstval {
+						strscraper += "<br />"
+					}
+					strscraper += html.EscapeString(val)
+					firstval = false
+				}
+				strscraper += "</p>"
+			}
+		}
+		hres := htmlResult{
+			Input:            strinput,
+			Position:         r.Position,
+			StatusCode:       r.StatusCode,
+			ContentLength:    r.ContentLength,
+			ContentWords:     r.ContentWords,
+			ContentLines:     r.ContentLines,
+			ContentType:      r.ContentType,
+			RedirectLocation: r.RedirectLocation,
+			ScraperData:      strscraper,
+			Duration:         r.Duration,
+			ResultFile:       r.ResultFile,
+			Url:              r.Url,
+			Host:             r.Host,
+		}
+		htmlResults = append(htmlResults, hres)
+	}
 	outHTML := htmlFileOutput{
 		CommandLine: config.CommandLine,
 		Time:        ti.Format(time.RFC3339),
-		Results:     results,
+		Results:     htmlResults,
 		Keys:        keywords,
 	}
 

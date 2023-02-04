@@ -61,7 +61,7 @@ func Usage() {
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "search", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -105,7 +105,7 @@ func Usage() {
 	flag.VisitAll(func(f *flag.Flag) {
 		found := false
 		for i, section := range sections {
-			if strInSlice(f.Name, section.ExpectedFlags) {
+			if ffuf.StrInSlice(f.Name, section.ExpectedFlags) {
 				sections[i].Flags = append(sections[i].Flags, UsageFlag{
 					Name:        f.Name,
 					Description: f.Usage,
@@ -148,13 +148,4 @@ func Usage() {
 	fmt.Printf("    ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr \"VAL\" -c\n\n")
 
 	fmt.Printf("  More information and examples: https://github.com/ffuf/ffuf\n\n")
-}
-
-func strInSlice(val string, slice []string) bool {
-	for _, v := range slice {
-		if v == val {
-			return true
-		}
-	}
-	return false
 }

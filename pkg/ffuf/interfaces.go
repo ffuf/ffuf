@@ -79,18 +79,31 @@ type OutputProvider interface {
 	Cycle()
 }
 
+type Scraper interface {
+	Execute(resp *Response, matched bool) []ScraperResult
+	AppendFromFile(path string) error
+}
+
+type ScraperResult struct {
+	Name    string   `json:"name"`
+	Type    string   `json:"type"`
+	Action  []string `json:"action"`
+	Results []string `json:"results"`
+}
+
 type Result struct {
-	Input            map[string][]byte `json:"input"`
-	Position         int               `json:"position"`
-	StatusCode       int64             `json:"status"`
-	ContentLength    int64             `json:"length"`
-	ContentWords     int64             `json:"words"`
-	ContentLines     int64             `json:"lines"`
-	ContentType      string            `json:"content-type"`
-	RedirectLocation string            `json:"redirectlocation"`
-	Url              string            `json:"url"`
-	Duration         time.Duration     `json:"duration"`
-	ResultFile       string            `json:"resultfile"`
-	Host             string            `json:"host"`
-	HTMLColor        string            `json:"-"`
+	Input            map[string][]byte   `json:"input"`
+	Position         int                 `json:"position"`
+	StatusCode       int64               `json:"status"`
+	ContentLength    int64               `json:"length"`
+	ContentWords     int64               `json:"words"`
+	ContentLines     int64               `json:"lines"`
+	ContentType      string              `json:"content-type"`
+	RedirectLocation string              `json:"redirectlocation"`
+	Url              string              `json:"url"`
+	Duration         time.Duration       `json:"duration"`
+	ScraperData      map[string][]string `json:"scraper"`
+	ResultFile       string              `json:"resultfile"`
+	Host             string              `json:"host"`
+	HTMLColor        string              `json:"-"`
 }
