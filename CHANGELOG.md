@@ -1,13 +1,22 @@
 ## Changelog
 - master
   - New
+  - Changed
+  
+- v2.0.0
+  - New
     - Added a new, dynamic keyword `FFUFHASH` that generates hash from job configuration and wordlist position to map blind payloads back to the initial request.
     - New command line parameter for searching a hash: `-search FFUFHASH`
     - Data scraper functionality
+    - Requests per second rate can be configured in the interactive mode
   - Changed
     - Multiline output prints out alphabetically sorted by keyword
     - Default configuration directories now follow `XDG_CONFIG_HOME` variable (less spam in your home directory)
     - Fixed issue with autocalibration of line & words filter
+    - Rate doesn't have initial burst anymore and is more robust in general
+    - Sniper mode template parsing fixes
+    - Time-based matcher now works properly
+    - Proxy URLs are verified to avoid hard to debug issues
     - Made JSON (`-json`) output format take precedence over quiet output mode, to allow JSON output without the banner etc
 
   

@@ -13,25 +13,14 @@ A fast web fuzzer written in Go.
     - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
 - [Help](https://github.com/ffuf/ffuf#usage)
     - [Interactive mode](https://github.com/ffuf/ffuf#interactive-mode)
-- [Sponsorware?](https://github.com/ffuf/ffuf#sponsorware)
 
-## Sponsors
-[![Offensive Security](_img/offsec-logo.png)](https://www.offensive-security.com/)
-
-## Official Discord Channel
-
-ffuf has a channel at Porchetta Industries Discord server alongside of channels for many other tools.
-
-Come to hang out & to discuss about ffuf, it's usage and development!
-
-[![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner2)](https://discord.gg/VWcdZCUsQP)
 
 ## Installation
 
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
 
   _or_
-- If you are on mac with [homebrew](https://brew.sh) installed `brew install ffuf`
+- If you are on macOS with [homebrew](https://brew.sh), ffuf can be installed with: `brew install ffuf`
   
   _or_
 - If you have recent go compiler installed: `go install github.com/ffuf/ffuf@latest` (the same command works for updating)
@@ -44,6 +33,9 @@ Ffuf depends on Go 1.16 or greater.
 ## Example usage
 
 The usage examples below show just the simplest tasks you can accomplish using `ffuf`. 
+
+More elaborate documentation that goes through many features with a lot of examples is
+available in the ffuf wiki at [https://github.com/ffuf/ffuf/wiki](https://github.com/ffuf/ffuf/wiki)
 
 For more extensive documentation, with real life usage examples and tips, be sure to check out the awesome guide:
 "[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
@@ -133,12 +125,15 @@ ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST
 
 ### Configuration files
 
-When running ffuf, it first checks if a default configuration file exists. The file path for it is `~/.ffufrc` / `$HOME/.ffufrc`
-for most *nixes (for example `/home/joohoi/.ffufrc`) and `%USERPROFILE%\.ffufrc` for Windows. You can configure one or 
-multiple options in this file, and they will be applied on every subsequent ffuf job. An example of .ffufrc file can be
-found [here](https://github.com/ffuf/ffuf/blob/master/ffufrc.example). 
+When running ffuf, it first checks if a default configuration file exists. Default path for a `ffufrc` file is
+`$XDG_CONFIG_HOME/ffuf/ffufrc`.  You can configure one or multiple options in this file, and they will be applied on 
+every subsequent ffuf job. An example of ffufrc file can be found 
+[here](https://github.com/ffuf/ffuf/blob/master/ffufrc.example). 
 
-The configuration options provided on the command line override the ones loaded from `~/.ffufrc`.
+A more detailed description about configuration file locations can be found in the wiki: 
+[https://github.com/ffuf/ffuf/wiki/Configuration](https://github.com/ffuf/ffuf/wiki/Configuration)
+
+The configuration options provided on the command line override the ones loaded from the default `ffufrc` file.
 Note: this does not apply for CLI flags that can be provided more than once. One of such examples is `-H` (header) flag.
 In this case, the `-H` values provided on the command line will be _appended_ to the ones from the config file instead.
 
@@ -155,7 +150,7 @@ parameter.
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v1.5.0-dev
+Fuzz Faster U Fool - v2.0.0
 
 HTTP OPTIONS:
   -H                  Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
@@ -191,7 +186,10 @@ GENERAL OPTIONS:
   -rate               Rate of requests per second (default: 0)
   -s                  Do not print additional information (silent mode) (default: false)
   -sa                 Stop on all error cases. Implies -sf and -se. (default: false)
+  -scraperfile        Custom scraper file path
+  -scrapers           Active scraper groups (default: all)
   -se                 Stop on spurious errors (default: false)
+  -search             Search for a FFUFHASH payload from ffuf history
   -sf                 Stop when > 95% of responses return 403 Forbidden (default: false)
   -t                  Number of concurrent threads. (default: 40)
   -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
@@ -202,7 +200,7 @@ MATCHER OPTIONS:
   -mmode              Matcher set operator. Either of: and, or (default: or)
   -mr                 Match regexp
   -ms                 Match HTTP response size
-  -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: ">100" or "<100"
+  -mt                 Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100
   -mw                 Match amount of words in response
 
 FILTER OPTIONS:
@@ -211,7 +209,7 @@ FILTER OPTIONS:
   -fmode              Filter set operator. Either of: and, or (default: or)
   -fr                 Filter regexp
   -fs                 Filter HTTP response size. Comma separated list of sizes and ranges
-  -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: ">100" or "<100"
+  -ft                 Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100
   -fw                 Filter by amount of words in response. Comma separated list of word counts and ranges
 
 INPUT OPTIONS:
@@ -249,7 +247,6 @@ EXAMPLE USAGE:
     ffuf -w params.txt:PARAM -w values.txt:VAL -u https://example.org/?PARAM=VAL -mr "VAL" -c
 
   More information and examples: https://github.com/ffuf/ffuf
-
 ```
 
 ### Interactive mode
@@ -261,18 +258,25 @@ type "help" for a list of commands, or ENTER to resume.
 > help
 
 available commands:
- fc [value]             - (re)configure status code filter 
- fl [value]             - (re)configure line count filter 
- fw [value]             - (re)configure word count filter 
- fs [value]             - (re)configure size filter 
- queueshow              - show recursive job queue
- queuedel [number]      - delete a recursion job in the queue
- queueskip              - advance to the next queued recursion job
- restart                - restart and resume the current ffuf job
- resume                 - resume current ffuf job (or: ENTER) 
- show                   - show results for the current job
- savejson [filename]    - save current matches to a file
- help                   - you are looking at it
+ afc  [value]             - append to status code filter 
+ fc   [value]             - (re)configure status code filter 
+ afl  [value]             - append to line count filter 
+ fl   [value]             - (re)configure line count filter 
+ afw  [value]             - append to word count filter 
+ fw   [value]             - (re)configure word count filter 
+ afs  [value]             - append to size filter 
+ fs   [value]             - (re)configure size filter 
+ aft  [value]             - append to time filter 
+ ft   [value]             - (re)configure time filter 
+ rate [value]             - adjust rate of requests per second (active: 0)
+ queueshow                - show job queue
+ queuedel [number]        - delete a job in the queue
+ queueskip                - advance to the next queued job
+ restart                  - restart and resume the current ffuf job
+ resume                   - resume current ffuf job (or: ENTER) 
+ show                     - show results for the current job
+ savejson [filename]      - save current matches to a file
+ help                     - you are looking at it
 > 
 ```
 
@@ -291,30 +295,6 @@ job from the beginning.
 <p align="center">
   <img width="250" src="_img/ffuf_waving_250.png">
 </p>
-
-
-## Sponsorware
-
-`ffuf` employs a sponsorware model. This means that all new features developed by its author are initially exclusively 
-available for their sponsors. 30 days after the exclusive release, all the new features will be released at the freely
-available open source repository at https://github.com/ffuf/ffuf . 
-
-This model enables me to provide concrete benefits for the generous individuals and companies that enable me to work on 
-`ffuf`. The different sponsorship tiers can be seen [here](https://github.com/sponsors/joohoi).
-
-All the community contributions are and will be available directly in the freely available open source repository. The
-exclusive version benefits only include new features created by [@joohoi](https://github.com/joohoi)
-
-### Access the sponsorware through code contributions
-
-People that create significant contributions to the `ffuf` project itself should and will have access to the sponsorware
-as well. If you are planning to create such a contribution, please contact [@joohoi](https://github.com/joohoi)
-first to ensure that there aren't other people working on the same feature.
-
-## Helper scripts and advanced payloads
-
-See [ffuf-scripts](https://github.com/ffuf/ffuf-scripts) repository for helper scripts and payload generators
-for different workflows and usage scenarios.
 
 ## License
 

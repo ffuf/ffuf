@@ -61,7 +61,6 @@
         "/path/to/hostlist:HOST"
     ]
 
-
 [output]
     debuglog = "debug.log"
     outputdirectory = "/tmp/rawoutputdir"
