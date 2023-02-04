@@ -87,6 +87,6 @@ func NewResponse(httpresp *http.Response, req *Request) Response {
 	resp.Cancelled = false
 	resp.Raw = ""
 	resp.ResultFile = ""
-	resp.ScraperData = make(map[string][]string, 0)
+	resp.ScraperData = make(map[string][]string)
 	return resp
 }

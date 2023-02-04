@@ -2,7 +2,6 @@ package scraper
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -57,7 +56,7 @@ func FromDir(dirname string, activestr string) (ffuf.Scraper, ffuf.Multierror) {
 		if filename.Type().IsRegular() && strings.HasSuffix(filename.Name(), ".json") {
 			sg, err := readGroupFromFile(filepath.Join(dirname, filename.Name()))
 			if err != nil {
-				cerr := errors.New(fmt.Sprintf("%s : %s", filepath.Join(dirname, filename.Name()), err))
+				cerr := fmt.Errorf("%s : %s", filepath.Join(dirname, filename.Name()), err)
 				errs.Add(cerr)
 				continue
 			}
@@ -65,7 +64,7 @@ func FromDir(dirname string, activestr string) (ffuf.Scraper, ffuf.Multierror) {
 				for _, r := range sg.Rules {
 					err = r.init()
 					if err != nil {
-						cerr := errors.New(fmt.Sprintf("%s : %s", filepath.Join(dirname, filename.Name()), err))
+						cerr := fmt.Errorf("%s : %s", filepath.Join(dirname, filename.Name()), err)
 						errs.Add(cerr)
 						continue
 					}
