@@ -2,8 +2,9 @@ package filter
 
 import (
 	"fmt"
-	"github.com/ffuf/ffuf/pkg/ffuf"
 	"sync"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 // MatcherManager handles both filters and matchers.
