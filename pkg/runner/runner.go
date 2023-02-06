@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 func NewRunnerByName(name string, conf *ffuf.Config, replay bool) ffuf.RunnerProvider {

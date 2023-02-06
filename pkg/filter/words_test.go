@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 func TestNewWordFilter(t *testing.T) {

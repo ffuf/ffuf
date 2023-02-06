@@ -10,7 +10,7 @@ builds:
     gcflags:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags: |
-      -s -w -X github.com/ffuf/ffuf/pkg/ffuf.VERSION_APPENDIX= -extldflags '-static'
+      -s -w -X github.com/ffuf/ffuf/v2/pkg/ffuf.VERSION_APPENDIX= -extldflags '-static'
     goos:
       - linux
       - windows

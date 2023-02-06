@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ffuf/ffuf/pkg/ffuf"
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "duration", "resultfile"}
