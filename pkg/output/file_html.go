@@ -23,6 +23,8 @@ type htmlResult struct {
 	ResultFile       string
 	Url              string
 	Host             string
+	HTMLColor        string
+	FfufHash         string
 }
 
 type htmlFileOutput struct {
@@ -82,12 +84,11 @@ const (
    <table id="ffufreport">
         <thead>
         <div style="display:none">
-|result_raw|StatusCode|Input|Position|ContentLength|ContentWords|ContentLines|ContentType|Duration|Resultfile|ScraperData|
+|result_raw|StatusCode{{ range $keyword := .Keys }}|{{ $keyword | printf "%s" }}{{ end }}|Url|RedirectLocation|Position|ContentLength|ContentWords|ContentLines|ContentType|Duration|Resultfile|ScraperData|FfufHash|
         </div>
           <tr>
               <th>Status</th>
-{{ range .Keys }}              <th>{{ . }}</th>
-{{ end }}
+{{ range .Keys }}              <th>{{ . }}</th>{{ end }}
 			  <th>URL</th>
 			  <th>Redirect location</th>
               <th>Position</th>
@@ -98,13 +99,14 @@ const (
               <th>Duration</th>
 			  <th>Resultfile</th>
               <th>Scraper data</th>
+              <th>Ffuf Hash</th>
           </tr>
         </thead>
 
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
@@ -120,7 +122,8 @@ const (
 					<td>{{ $result.ContentType }}</td>
 					<td>{{ $result.Duration }}</td>
                     <td>{{ $result.ResultFile }}</td>
-					<td>{{ $result.ScraperData }}
+					<td>{{ $result.ScraperData }}</td>
+					<td>{{ $result.FfufHash }}</td>
                 </tr>
             {{ end }}
         </tbody>
@@ -209,9 +212,14 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 	htmlResults := make([]htmlResult, 0)
 
 	for _, r := range results {
+		ffufhash := ""
 		strinput := make(map[string]string)
 		for k, v := range r.Input {
-			strinput[k] = string(v)
+			if k == "FFUFHASH" {
+				ffufhash = string(v)
+			} else {
+				strinput[k] = string(v)
+			}
 		}
 		strscraper := ""
 		for k, v := range r.ScraperData {
@@ -242,6 +250,8 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 			ResultFile:       r.ResultFile,
 			Url:              r.Url,
 			Host:             r.Host,
+			HTMLColor:        r.HTMLColor,
+			FfufHash:         ffufhash,
 		}
 		htmlResults = append(htmlResults, hres)
 	}
