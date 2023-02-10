@@ -401,11 +401,10 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 			}
 		}
 	}
-	return inputs
+	return fmt.Sprintf("%s%s", BEFORE_TERMINAL_CLEAR_LINE, inputs)
 }
 
 func (s *Stdoutput) resultQuiet(res ffuf.Result) {
-	fmt.Print("\x1b[1K \x1b[100D")
 	fmt.Println(s.prepareInputsOneLine(res))
 }
 
@@ -441,13 +440,11 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 			}
 		}
 	}
-	fmt.Print("\x1b[1K \x1b[100D")
-	fmt.Printf("%s\n%s\n", res_hdr, reslines)
+	fmt.Printf("%s%s\n%s\n", BEFORE_TERMINAL_CLEAR_LINE, res_hdr, reslines)
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
-	fmt.Print("\x1b[1K \x1b[100D")
+	resnormal := fmt.Sprintf("%s%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", BEFORE_TERMINAL_CLEAR_LINE, TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 
@@ -456,8 +453,7 @@ func (s *Stdoutput) resultJson(res ffuf.Result) {
 	if err != nil {
 		s.Error(err.Error())
 	} else {
-		fmt.Print("\x1b[1K \x1b[100D")
-		fmt.Fprint(os.Stderr, TERMINAL_CLEAR_LINE)
+		fmt.Fprint(os.Stderr, BEFORE_TERMINAL_CLEAR_LINE, TERMINAL_CLEAR_LINE)
 		fmt.Println(string(resBytes))
 	}
 }
