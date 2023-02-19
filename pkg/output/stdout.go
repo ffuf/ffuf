@@ -372,8 +372,9 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 		s.resultJson(res)
 	case s.config.Quiet:
 		s.resultQuiet(res)
-	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
-		// Print a multi-line result (when using multiple input keywords and wordlists)
+	case len(res.Input) > 2 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
+		// Print a multi-line result (when using multiple input keywords and wordlists). The res.Input contains
+		// also the FFUFHASH, so with one inputprovider the len should be 2
 		s.resultMultiline(res)
 	default:
 		s.resultNormal(res)
