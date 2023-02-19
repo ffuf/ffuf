@@ -4,11 +4,10 @@
 package output
 
 const (
-	TERMINAL_CLEAR_LINE        = "\r\r"
-	BEFORE_TERMINAL_CLEAR_LINE = "\x1b[1K \x1b[100D"
-	ANSI_CLEAR                 = ""
-	ANSI_RED                   = ""
-	ANSI_GREEN                 = ""
-	ANSI_BLUE                  = ""
-	ANSI_YELLOW                = ""
+	TERMINAL_CLEAR_LINE = "\r\r\x1b[2K"
+	ANSI_CLEAR          = ""
+	ANSI_RED            = ""
+	ANSI_GREEN          = ""
+	ANSI_BLUE           = ""
+	ANSI_YELLOW         = ""
 )
