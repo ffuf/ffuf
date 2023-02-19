@@ -401,7 +401,7 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 			}
 		}
 	}
-	return fmt.Sprintf("%s", inputs)
+	return inputs
 }
 
 func (s *Stdoutput) resultQuiet(res ffuf.Result) {
