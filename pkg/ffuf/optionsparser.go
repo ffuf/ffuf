@@ -526,19 +526,25 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	conf.CommandLine = strings.Join(os.Args, " ")
 
+	newInputProviders := []InputProviderConfig{}
 	for _, provider := range conf.InputProviders {
 		if provider.Template != "" {
 			if !templatePresent(provider.Template, &conf) {
 				errmsg := fmt.Sprintf("Template %s defined, but not found in pairs in headers, method, URL or POST data.", provider.Template)
 				errs.Add(fmt.Errorf(errmsg))
+			} else {
+				newInputProviders = append(newInputProviders, provider)
 			}
 		} else {
 			if !keywordPresent(provider.Keyword, &conf) {
 				errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-				errs.Add(fmt.Errorf(errmsg))
+				_, _ = fmt.Fprintf(os.Stderr, "%s\n", fmt.Errorf(errmsg))
+			} else {
+				newInputProviders = append(newInputProviders, provider)
 			}
 		}
 	}
+	conf.InputProviders = newInputProviders
 
 	// Do checks for recursion mode
 	if parseOpts.HTTP.Recursion {
