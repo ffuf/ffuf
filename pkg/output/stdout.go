@@ -372,7 +372,7 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 		s.resultJson(res)
 	case s.config.Quiet:
 		s.resultQuiet(res)
-	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
+	case len(s.fuzzkeywords) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
 		// Print a multi-line result (when using multiple input keywords and wordlists)
 		s.resultMultiline(res)
 	default:
