@@ -14,9 +14,9 @@ const (
   Command line : ` + "`{{.CommandLine}}`" + `
   Time: ` + "{{ .Time }}" + `
 
-  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile | ScraperData
-  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- | :------------ |
-  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} | {{ .ScraperData }} |
+  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile | ScraperData | Ffufhash
+  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- | :------------ | :-------- |
+  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} | {{ .ScraperData }} | {{ .FfufHash }}
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
@@ -30,10 +30,15 @@ func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) 
 
 	htmlResults := make([]htmlResult, 0)
 
+	ffufhash := ""
 	for _, r := range results {
 		strinput := make(map[string]string)
 		for k, v := range r.Input {
-			strinput[k] = string(v)
+			if k == "FFUFHASH" {
+				ffufhash = string(v)
+			} else {
+				strinput[k] = string(v)
+			}
 		}
 		strscraper := ""
 		for k, v := range r.ScraperData {
@@ -64,6 +69,7 @@ func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) 
 			ResultFile:       r.ResultFile,
 			Url:              r.Url,
 			Host:             r.Host,
+			FfufHash:         ffufhash,
 		}
 		htmlResults = append(htmlResults, hres)
 	}
