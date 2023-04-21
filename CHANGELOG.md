@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Explicitly allow TLS1.0 
   
 - v2.0.0
   - New
