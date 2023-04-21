@@ -382,7 +382,7 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 
 func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
-	if len(res.Input) > 1 {
+	if len(s.fuzzkeywords) > 1 {
 		for _, k := range s.fuzzkeywords {
 		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
