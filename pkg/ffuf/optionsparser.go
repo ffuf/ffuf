@@ -540,6 +540,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	// If sniper mode, ensure there is no FUZZ keyword
+	if conf.InputMode == "sniper" {
+		if keywordPresent("FUZZ", &conf) {
+			errs.Add(fmt.Errorf("FUZZ keyword defined, but we are using sniper mode."))
+		}
+	}
+
 	// Do checks for recursion mode
 	if parseOpts.HTTP.Recursion {
 		if !strings.HasSuffix(conf.Url, "FUZZ") {
