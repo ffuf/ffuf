@@ -372,7 +372,7 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 		s.resultJson(res)
 	case s.config.Quiet:
 		s.resultQuiet(res)
-	case len(res.Input) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
+	case len(s.fuzzkeywords) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
 		// Print a multi-line result (when using multiple input keywords and wordlists)
 		s.resultMultiline(res)
 	default:
@@ -382,22 +382,22 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 
 func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
-	if len(res.Input) > 1 {
-		for k, v := range res.Input {
-			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+	if len(s.fuzzkeywords) > 1 {
+		for _, k := range s.fuzzkeywords {
+		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(res.Position))
 			} else {
-				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, v)
+				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, res.Input[k])
 			}
 		}
 	} else {
-		for k, v := range res.Input {
-			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+        for _, k := range s.fuzzkeywords {
+		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = strconv.Itoa(res.Position)
 			} else {
-				inputs = string(v)
+				inputs = string(res.Input[k])
 			}
 		}
 	}

@@ -37,6 +37,7 @@
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
 * [penguinxoxo](https://github.com/penguinxoxo)
+* [p0dalirius](https://github.com/p0dalirius)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
 * [seblw](https://github.com/seblw)
