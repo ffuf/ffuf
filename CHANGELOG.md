@@ -3,6 +3,7 @@
   - New
   - Changed
     - Explicitly allow TLS1.0 
+    - Fix markdown output file format
   
 - v2.0.0
   - New
