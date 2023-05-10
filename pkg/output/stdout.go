@@ -307,7 +307,9 @@ func (s *Stdoutput) Finalize() error {
 			s.Error(err.Error())
 		}
 	}
-	fmt.Fprintf(os.Stderr, "\n")
+	if !s.config.Quiet {
+		fmt.Fprintf(os.Stderr, "\n")
+	}
 	return nil
 }
 
@@ -384,7 +386,7 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
 	if len(s.fuzzkeywords) > 1 {
 		for _, k := range s.fuzzkeywords {
-		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(res.Position))
 			} else {
@@ -392,8 +394,8 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 			}
 		}
 	} else {
-        for _, k := range s.fuzzkeywords {
-		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+		for _, k := range s.fuzzkeywords {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = strconv.Itoa(res.Position)
 			} else {
