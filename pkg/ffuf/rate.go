@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const Million = 1000000 // pre-compute the value for improved performance
+
 type RateThrottle struct {
 	rateCounter    *ring.Ring
 	Config         *Config
@@ -25,7 +27,7 @@ func NewRateThrottle(conf *Config) *RateThrottle {
 		r.rateCounter = ring.New(conf.Threads * 5)
 	}
 	if conf.Rate > 0 {
-		ratemicros := 1000000 / conf.Rate
+		ratemicros := Million / conf.Rate
 		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	} else {
 		//Million rps is probably a decent hardcoded upper speedlimit
@@ -65,7 +67,7 @@ func (r *RateThrottle) CurrentRate() int64 {
 }
 
 func (r *RateThrottle) ChangeRate(rate int) {
-	ratemicros := 1000000 / rate
+	ratemicros := Million / rate
 	r.RateLimiter.Stop()
 	r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	r.Config.Rate = int64(rate)
