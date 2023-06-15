@@ -36,6 +36,7 @@ type HTTPOptions struct {
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
 	RecursionStrategy string   `json:"recursion_strategy"`
+	RecursionStatus   []int    `json:"recursion_status"`
 	ReplayProxyURL    string   `json:"replay_proxy_url"`
 	SNI               string   `json:"sni"`
 	Timeout           int      `json:"timeout"`
@@ -148,6 +149,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
+	c.HTTP.RecursionStatus = []int{301, 302, 303, 307, 308}
 	c.HTTP.ReplayProxyURL = ""
 	c.HTTP.Timeout = 10
 	c.HTTP.SNI = ""
@@ -475,6 +477,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
+	conf.RecursionStatus = parseOpts.HTTP.RecursionStatus
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
 	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
@@ -551,6 +554,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.HTTP.Recursion {
 		if !strings.HasSuffix(conf.Url, "FUZZ") {
 			errmsg := "When using -recursion the URL (-u) must end with FUZZ keyword."
+			errs.Add(fmt.Errorf(errmsg))
+		}
+	}
+
+	for _, v := range parseOpts.HTTP.RecursionStatus {
+		if v < 100 || v >= 600 {
+			errmsg := "Invalid recursion_status, status code must be between 100 and 599."
 			errs.Add(fmt.Errorf(errmsg))
 		}
 	}

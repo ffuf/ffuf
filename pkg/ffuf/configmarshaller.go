@@ -21,6 +21,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.Recursion = c.Recursion
 	o.HTTP.RecursionDepth = c.RecursionDepth
 	o.HTTP.RecursionStrategy = c.RecursionStrategy
+	o.HTTP.RecursionStatus = c.RecursionStatus
 	o.HTTP.ReplayProxyURL = c.ReplayProxyURL
 	o.HTTP.SNI = c.SNI
 	o.HTTP.Timeout = c.Timeout

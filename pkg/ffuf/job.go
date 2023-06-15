@@ -468,7 +468,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 
-	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && len(resp.GetRedirectLocation(false)) > 0 {
+	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && intSliceContains(j.Config.RecursionStatus, int(resp.StatusCode)) {
 		j.handleDefaultRecursionJob(resp)
 	}
 }
@@ -499,7 +499,7 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 // not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
-	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
+	if (resp.Request.Url+"/") != resp.GetRedirectLocation(true) && resp.StatusCode >= 300 && resp.StatusCode < 400 {
 		// Not a directory, return early
 		return
 	}
@@ -570,4 +570,13 @@ func (j *Job) Stop() {
 // Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
+}
+
+func intSliceContains(sslice []int, num int) bool {
+	for _, v := range sslice {
+		if v == num {
+			return true
+		}
+	}
+	return false
 }
