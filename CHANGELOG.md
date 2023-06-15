@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New command line parameter for blacklist response detection `-blacklist-detection`
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

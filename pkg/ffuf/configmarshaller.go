@@ -32,6 +32,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.General.AutoCalibrationPerHost = c.AutoCalibrationPerHost
 	o.General.AutoCalibrationStrategy = c.AutoCalibrationStrategy
 	o.General.AutoCalibrationStrings = c.AutoCalibrationStrings
+	o.General.BlackListDetection = c.BlackListDetection
 	o.General.Colors = c.Colors
 	o.General.ConfigFile = ""
 	if c.Delay.HasDelay {
