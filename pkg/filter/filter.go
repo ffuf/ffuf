@@ -14,6 +14,12 @@ type MatcherManager struct {
 	Matchers         map[string]ffuf.FilterProvider
 	Filters          map[string]ffuf.FilterProvider
 	PerDomainFilters map[string]*PerDomainFilter
+	PerPathFilters   map[string]*PerPathFilter
+}
+
+type PerPathFilter struct {
+	IsCalibrated bool
+	Filters      map[string]ffuf.FilterProvider
 }
 
 type PerDomainFilter struct {
@@ -25,7 +31,15 @@ func NewPerDomainFilter(globfilters map[string]ffuf.FilterProvider) *PerDomainFi
 	return &PerDomainFilter{IsCalibrated: false, Filters: globfilters}
 }
 
+func NewPerPathFilter(globfilters map[string]ffuf.FilterProvider) *PerPathFilter {
+	return &PerPathFilter{IsCalibrated: false, Filters: globfilters}
+}
+
 func (p *PerDomainFilter) SetCalibrated(value bool) {
+	p.IsCalibrated = value
+}
+
+func (p *PerPathFilter) SetCalibrated(value bool) {
 	p.IsCalibrated = value
 }
 
@@ -35,6 +49,7 @@ func NewMatcherManager() ffuf.MatcherManager {
 		Matchers:         make(map[string]ffuf.FilterProvider),
 		Filters:          make(map[string]ffuf.FilterProvider),
 		PerDomainFilters: make(map[string]*PerDomainFilter),
+		PerPathFilters:   make(map[string]*PerPathFilter),
 	}
 }
 
@@ -49,6 +64,16 @@ func (f *MatcherManager) SetCalibratedForHost(host string, value bool) {
 		newFilter := NewPerDomainFilter(f.Filters)
 		newFilter.IsCalibrated = true
 		f.PerDomainFilters[host] = newFilter
+	}
+}
+
+func (f *MatcherManager) SetCalibratedForPath(path string, value bool) {
+	if f.PerPathFilters[path] != nil {
+		f.PerPathFilters[path].IsCalibrated = value
+	} else {
+		newFilter := NewPerPathFilter(f.Filters)
+		newFilter.IsCalibrated = true
+		f.PerPathFilters[path] = newFilter
 	}
 }
 
@@ -121,6 +146,33 @@ func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option s
 	return err
 }
 
+//AddPerPathFilter adds a new filter to PerPathFilter configuration
+func (f *MatcherManager) AddPerPathFilter(path string, name string, option string) error {
+	f.Mutex.Lock()
+	defer f.Mutex.Unlock()
+	var ppFilters *PerPathFilter
+	if filter, ok := f.PerPathFilters[path]; ok {
+		ppFilters = filter
+	} else {
+		ppFilters = NewPerPathFilter(f.Filters)
+	}
+	newf, err := NewFilterByName(name, option)
+	if err == nil {
+		// valid filter create or append
+		if ppFilters.Filters[name] == nil {
+			ppFilters.Filters[name] = newf
+		} else {
+			newoption := ppFilters.Filters[name].Repr() + "," + option
+			newerf, err := NewFilterByName(name, newoption)
+			if err == nil {
+				ppFilters.Filters[name] = newerf
+			}
+		}
+	}
+	f.PerPathFilters[path] = ppFilters
+	return err
+}
+
 //RemoveFilter removes a filter of a given type
 func (f *MatcherManager) RemoveFilter(name string) {
 	f.Mutex.Lock()
@@ -163,9 +215,23 @@ func (f *MatcherManager) FiltersForDomain(domain string) map[string]ffuf.FilterP
 	return f.PerDomainFilters[domain].Filters
 }
 
+func (f *MatcherManager) FiltersForPath(path string) map[string]ffuf.FilterProvider {
+	if f.PerPathFilters[path] == nil {
+		return f.Filters
+	}
+	return f.PerPathFilters[path].Filters
+}
+
 func (f *MatcherManager) CalibratedForDomain(domain string) bool {
 	if f.PerDomainFilters[domain] != nil {
 		return f.PerDomainFilters[domain].IsCalibrated
+	}
+	return false
+}
+
+func (f *MatcherManager) CalibratedForPath(path string) bool {
+	if f.PerPathFilters[path] != nil {
+		return f.PerPathFilters[path].IsCalibrated
 	}
 	return false
 }

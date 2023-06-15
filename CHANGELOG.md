@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New command line parameter for recursive autocalibration on every path `-acp`
     - New command line parameter for controlling recursion status code `-recursion-status`
   - Changed
     - Explicitly allow TLS1.0 

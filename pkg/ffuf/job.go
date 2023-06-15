@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/url"
 	"os"
 	"os/signal"
 	"sync"
@@ -334,7 +335,10 @@ func (j *Job) isMatch(resp Response) bool {
 	matched := false
 	var matchers map[string]FilterProvider
 	var filters map[string]FilterProvider
-	if j.Config.AutoCalibrationPerHost {
+	if j.Config.AutoCalibrationPerPath {
+		parsed, _ := url.Parse(resp.Request.Url)
+		filters = j.Config.MatcherManager.FiltersForPath(parsed.Path)
+	} else if j.Config.AutoCalibrationPerHost {
 		filters = j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*resp.Request))
 	} else {
 		filters = j.Config.MatcherManager.GetFilters()
@@ -431,7 +435,8 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	j.pauseWg.Wait()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
-	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
+	parsed, _ := url.Parse(req.Url)
+	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), parsed.Path, input)
 
 	// Handle scraper actions
 	if j.Scraper != nil {
@@ -461,15 +466,16 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
 			j.handleGreedyRecursionJob(resp)
 		}
-	} else {
-		if len(resp.ScraperData) > 0 {
-			// print the result anyway, as scraper found something
-			j.Output.Result(resp)
+		if j.Config.Recursion && j.Config.RecursionStrategy == "default" && intSliceContains(j.Config.RecursionStatus, int(resp.StatusCode)) {
+			j.handleDefaultRecursionJob(resp)
 		}
+
+		return
 	}
 
-	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && intSliceContains(j.Config.RecursionStatus, int(resp.StatusCode)) {
-		j.handleDefaultRecursionJob(resp)
+	if len(resp.ScraperData) > 0 {
+		// print the result anyway, as scraper found something
+		j.Output.Result(resp)
 	}
 }
 

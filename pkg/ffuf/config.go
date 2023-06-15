@@ -8,6 +8,7 @@ type Config struct {
 	AutoCalibration         bool                  `json:"autocalibration"`
 	AutoCalibrationKeyword  string                `json:"autocalibration_keyword"`
 	AutoCalibrationPerHost  bool                  `json:"autocalibration_perhost"`
+	AutoCalibrationPerPath  bool                  `json:"autocalibration_perpath"`
 	AutoCalibrationStrategy string                `json:"autocalibration_strategy"`
 	AutoCalibrationStrings  []string              `json:"autocalibration_strings"`
 	Cancel                  context.CancelFunc    `json:"-"`

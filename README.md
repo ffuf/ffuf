@@ -163,6 +163,7 @@ HTTP OPTIONS:
   -recursion          Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
   -recursion-depth    Maximum recursion depth. (default: 0)
   -recursion-strategy Recursion strategy: "default" for a redirect based, and "greedy" to recurse on all matches (default: default)
+  -recursion-status   Recurses on responses with the given status (default: 301,302,303,307,308)
   -replay-proxy       Replay matched requests using this proxy.
   -sni                Target TLS SNI, does not support FUZZ keyword
   -timeout            HTTP request timeout in seconds. (default: 10)
@@ -174,6 +175,7 @@ GENERAL OPTIONS:
   -ac                 Automatically calibrate filtering options (default: false)
   -acc                Custom auto-calibration string. Can be used multiple times. Implies -ac
   -ach                Per host autocalibration (default: false)
+  -acp                Per path autocalibration (default: false)
   -ack                Autocalibration keyword (default: FUZZ)
   -acs                Autocalibration strategy: "basic" or "advanced" (default: basic)
   -c                  Colorize output. (default: false)

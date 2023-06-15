@@ -48,6 +48,7 @@ type GeneralOptions struct {
 	AutoCalibration         bool     `json:"autocalibration"`
 	AutoCalibrationKeyword  string   `json:"autocalibration_keyword"`
 	AutoCalibrationPerHost  bool     `json:"autocalibration_per_host"`
+	AutoCalibrationPerPath  bool     `json:"autocalibration_per_path"`
 	AutoCalibrationStrategy string   `json:"autocalibration_strategy"`
 	AutoCalibrationStrings  []string `json:"autocalibration_strings"`
 	Colors                  bool     `json:"colors"`
@@ -480,6 +481,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.RecursionStatus = parseOpts.HTTP.RecursionStatus
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
+	conf.AutoCalibrationPerPath = parseOpts.General.AutoCalibrationPerPath
 	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
@@ -515,6 +517,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	if conf.AutoCalibrationPerHost {
 		// AutoCalibrationPerHost implies AutoCalibration
+		conf.AutoCalibration = true
+	}
+
+	if conf.AutoCalibrationPerPath {
+		// AutoCalibrationPerPath implies AutoCalibration
 		conf.AutoCalibration = true
 	}
 

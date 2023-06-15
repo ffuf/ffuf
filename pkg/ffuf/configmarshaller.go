@@ -31,6 +31,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.General.AutoCalibration = c.AutoCalibration
 	o.General.AutoCalibrationKeyword = c.AutoCalibrationKeyword
 	o.General.AutoCalibrationPerHost = c.AutoCalibrationPerHost
+	o.General.AutoCalibrationPerPath = c.AutoCalibrationPerPath
 	o.General.AutoCalibrationStrategy = c.AutoCalibrationStrategy
 	o.General.AutoCalibrationStrings = c.AutoCalibrationStrings
 	o.General.Colors = c.Colors
