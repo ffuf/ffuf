@@ -247,6 +247,11 @@ func (j *Job) startExecution() {
 		// Check if we should stop the process
 		j.CheckStop()
 
+		// Check if we should auto adjast ratelimiting
+		if j.Config.AutoRatelimit {
+			j.CheckAutoRatelimit()
+		}
+
 		if !j.Running {
 			defer j.Output.Warning(j.Error)
 			break
@@ -422,7 +427,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc403()
 		}
 	}
-	if j.Config.StopOnAll {
+	if j.Config.StopOnAll || j.Config.AutoRatelimit {
 		// increment 429 counter if the response code is 429
 		if resp.StatusCode == 429 {
 			j.inc429()
@@ -557,6 +562,17 @@ func (j *Job) CheckStop() {
 			j.Error = "Maximum running time for this job reached, continuing with next job if one exists."
 			j.Next()
 
+		}
+	}
+}
+
+func (j *Job) CheckAutoRatelimit() {
+	if j.Counter > 50 {
+		//fmt.Printf("AutoRatelimit %t %f/%f=%f\n", j.Config.AutoRatelimit, float64(j.Count429), float64(j.Counter), (float64(j.Count429) / float64(j.Counter)))
+		if j.Config.AutoRatelimit && (float64(j.Count429)/float64(j.Counter) > 0.2) {
+			// Over 20% of responses are 429
+			j.Rate.ChangeRate(int(j.Rate.CurrentRate()) / 2)
+			j.Count429 = 0
 		}
 	}
 }

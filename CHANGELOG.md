@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New command line parameter for auto adjasting ratelimiting based on amount of 429 `-ar`
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

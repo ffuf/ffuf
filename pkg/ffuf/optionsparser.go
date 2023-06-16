@@ -65,6 +65,7 @@ type GeneralOptions struct {
 	StopOn403               bool     `json:"stop_on_403"`
 	StopOnAll               bool     `json:"stop_on_all"`
 	StopOnErrors            bool     `json:"stop_on_errors"`
+	AutoRatelimit           bool     `json:"auto_ratelimit"`
 	Threads                 int      `json:"threads"`
 	Verbose                 bool     `json:"verbose"`
 }
@@ -120,6 +121,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Status = ""
 	c.Filter.Time = ""
 	c.Filter.Words = ""
+	c.General.AutoRatelimit = false
 	c.General.AutoCalibration = false
 	c.General.AutoCalibrationKeyword = "FUZZ"
 	c.General.AutoCalibrationStrategy = "basic"
@@ -475,6 +477,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
+	conf.AutoRatelimit = parseOpts.General.AutoRatelimit
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
 	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
