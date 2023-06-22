@@ -57,6 +57,7 @@ type Config struct {
 	StopOn403               bool                  `json:"stop_403"`
 	StopOnAll               bool                  `json:"stop_all"`
 	StopOnErrors            bool                  `json:"stop_errors"`
+	AutoRatelimit           bool                  `json:"auto_ratelimit"`
 	Threads                 int                   `json:"threads"`
 	Timeout                 int                   `json:"timeout"`
 	Url                     string                `json:"url"`

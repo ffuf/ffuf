@@ -2,6 +2,7 @@
 - master
   - New
     - New autocalibration strategy "extra" that uses a list of commonly blacklisted files to filter blacklist responses
+    - New command line parameter for auto adjasting ratelimiting based on amount of 429 `-ar`
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

@@ -27,6 +27,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.URL = c.Url
 	o.HTTP.Http2 = c.Http2
 
+	o.General.AutoRatelimit = c.AutoRatelimit
 	o.General.AutoCalibration = c.AutoCalibration
 	o.General.AutoCalibrationKeyword = c.AutoCalibrationKeyword
 	o.General.AutoCalibrationPerHost = c.AutoCalibrationPerHost
