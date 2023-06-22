@@ -433,7 +433,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	j.pauseWg.Wait()
 
 	// use a list of commonly blacklisted files to detect & filter blacklist responses
-	if j.Config.BlackListDetection {
+	if j.Config.AutoCalibrationStrategy == "extra" {
 		j.DetectBlacklist(HostURLFromRequest(req), input)
 	}
 

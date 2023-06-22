@@ -1,7 +1,7 @@
 ## Changelog
 - master
   - New
-    - New command line parameter for blacklist response detection `-blacklist-detection`
+    - New autocalibration strategy "extra" that uses a list of commonly blacklisted files to filter blacklist responses
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

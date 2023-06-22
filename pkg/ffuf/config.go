@@ -10,7 +10,6 @@ type Config struct {
 	AutoCalibrationPerHost  bool                  `json:"autocalibration_perhost"`
 	AutoCalibrationStrategy string                `json:"autocalibration_strategy"`
 	AutoCalibrationStrings  []string              `json:"autocalibration_strings"`
-	BlackListDetection      bool                  `json:"blacklist_detection"`
 	Cancel                  context.CancelFunc    `json:"-"`
 	Colors                  bool                  `json:"colors"`
 	CommandKeywords         []string              `json:"-"`

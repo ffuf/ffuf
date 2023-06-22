@@ -49,7 +49,6 @@ type GeneralOptions struct {
 	AutoCalibrationPerHost  bool     `json:"autocalibration_per_host"`
 	AutoCalibrationStrategy string   `json:"autocalibration_strategy"`
 	AutoCalibrationStrings  []string `json:"autocalibration_strings"`
-	BlackListDetection      bool     `json:"blacklist_detection"`
 	Colors                  bool     `json:"colors"`
 	ConfigFile              string   `toml:"-" json:"config_file"`
 	Delay                   string   `json:"delay"`
@@ -479,7 +478,6 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
 	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
-	conf.BlackListDetection = parseOpts.General.BlackListDetection
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
@@ -514,11 +512,6 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	if conf.AutoCalibrationPerHost {
 		// AutoCalibrationPerHost implies AutoCalibration
-		conf.AutoCalibration = true
-	}
-
-	if conf.BlackListDetection {
-		// BlackListDetection implies AutoCalibration
 		conf.AutoCalibration = true
 	}
 
