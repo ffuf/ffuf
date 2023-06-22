@@ -18,7 +18,7 @@ func (j *Job) autoCalibrationStrings() map[string][]string {
 		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+RandomString(8))
 		cInputs["basic_random"] = append(cInputs["basic_random"], RandomString(16))
 		cInputs["basic_random"] = append(cInputs["basic_random"], RandomString(8))
-		if j.Config.AutoCalibrationStrategy == "advanced" {
+		if j.Config.AutoCalibrationStrategy == "advanced" || j.Config.AutoCalibrationStrategy == "extra" {
 			// Add directory tests and .htaccess too
 			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+RandomString(16)+"/")
 			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+RandomString(8)+"/")
