@@ -73,14 +73,14 @@ func (j *Job) DetectBlacklist(host string, inputs map[string][]byte) error {
 
 	for _, r := range successResponses {
 		if len(r) > 1 {
-			err := j.calibrateFilters(r, j.Config.AutoCalibrationPerHost /*, j.Config.AutoCalibrationPerPath*/)
+			err := j.calibrateFilters(r, j.Config.AutoCalibrationPerHost, j.Config.AutoCalibrationPerPath)
 			if err != nil {
 				j.Output.Error(fmt.Sprintf("%s", err))
 			}
 		}
 	}
 
-	err := j.calibrateFilters(responses, j.Config.AutoCalibrationPerHost /*, j.Config.AutoCalibrationPerPath*/)
+	err := j.calibrateFilters(responses, j.Config.AutoCalibrationPerHost, j.Config.AutoCalibrationPerPath)
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("%s", err))
 	}
