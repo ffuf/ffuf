@@ -8,6 +8,7 @@ type Config struct {
 	AutoCalibration         bool                  `json:"autocalibration"`
 	AutoCalibrationKeyword  string                `json:"autocalibration_keyword"`
 	AutoCalibrationPerHost  bool                  `json:"autocalibration_perhost"`
+	AutoCalibrationPerPath  bool                  `json:"autocalibration_perpath"`
 	AutoCalibrationStrategy string                `json:"autocalibration_strategy"`
 	AutoCalibrationStrings  []string              `json:"autocalibration_strings"`
 	Cancel                  context.CancelFunc    `json:"-"`
@@ -47,6 +48,7 @@ type Config struct {
 	Rate                    int64                 `json:"rate"`
 	Recursion               bool                  `json:"recursion"`
 	RecursionDepth          int                   `json:"recursion_depth"`
+	RecursionStatus         []int                 `json:"recursion_status"`
 	RecursionStrategy       string                `json:"recursion_strategy"`
 	ReplayProxyURL          string                `json:"replayproxyurl"`
 	RequestFile             string                `json:"requestfile"`
@@ -107,6 +109,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Recursion = false
 	conf.RecursionDepth = 0
 	conf.RecursionStrategy = "default"
+	conf.RecursionStatus = []int{301, 302, 303, 307, 308}
 	conf.RequestFile = ""
 	conf.RequestProto = "https"
 	conf.SNI = ""

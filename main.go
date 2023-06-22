@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,9 +21,14 @@ import (
 )
 
 type multiStringFlag []string
+type multiIntFlag []int
 type wordlistFlag []string
 
 func (m *multiStringFlag) String() string {
+	return ""
+}
+
+func (m *multiIntFlag) String() string {
 	return ""
 }
 
@@ -32,6 +38,22 @@ func (m *wordlistFlag) String() string {
 
 func (m *multiStringFlag) Set(value string) error {
 	*m = append(*m, value)
+	return nil
+}
+
+func (m *multiIntFlag) Set(value string) error {
+	nums := strings.Split(value, ",")
+	for _, n := range nums {
+		num, err := strconv.Atoi(n)
+		if err != nil {
+			errmsg := fmt.Errorf("multiIntFlag int conversion error")
+			fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", errmsg)
+			Usage()
+			fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", errmsg)
+			os.Exit(1)
+		}
+		*m = append(*m, num)
+	}
 	return nil
 }
 
@@ -51,6 +73,7 @@ func (m *wordlistFlag) Set(value string) error {
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
+	var recursionStatus multiIntFlag
 	var wordlists wordlistFlag
 
 	cookies = opts.HTTP.Cookies
@@ -66,6 +89,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&opts.General.AutoRatelimit, "ar", opts.General.AutoRatelimit, "Automatically adjast ratelimit based on amount of 429s received")
 	flag.BoolVar(&opts.General.AutoCalibration, "ac", opts.General.AutoCalibration, "Automatically calibrate filtering options")
 	flag.BoolVar(&opts.General.AutoCalibrationPerHost, "ach", opts.General.AutoCalibration, "Per host autocalibration")
+	flag.BoolVar(&opts.General.AutoCalibrationPerPath, "acp", false, "Recursive autocalibration on every path")
 	flag.BoolVar(&opts.General.Colors, "c", opts.General.Colors, "Colorize output.")
 	flag.BoolVar(&opts.General.Json, "json", opts.General.Json, "JSON output, printing newline-delimited JSON records")
 	flag.BoolVar(&opts.General.Noninteractive, "noninteractive", opts.General.Noninteractive, "Disable the interactive console functionality")
@@ -128,6 +152,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Output.OutputDirectory, "od", opts.Output.OutputDirectory, "Directory path to store matched results to.")
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
 	flag.StringVar(&opts.Output.OutputFormat, "of", opts.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
+	flag.Var(&recursionStatus, "recursion-status", "Recurses on responses with the given status (default: 301,302,303,307,308)")
 	flag.Var(&autocalibrationstrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.Var(&cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
 	flag.Var(&cookies, "cookie", "Cookie data (alias of -b)")
@@ -140,6 +165,9 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
 	opts.HTTP.Cookies = cookies
 	opts.HTTP.Headers = headers
+	if len(recursionStatus) != 0 {
+		opts.HTTP.RecursionStatus = recursionStatus
+	}
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
 	return opts

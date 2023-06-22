@@ -36,6 +36,7 @@ type HTTPOptions struct {
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
 	RecursionStrategy string   `json:"recursion_strategy"`
+	RecursionStatus   []int    `json:"recursion_status"`
 	ReplayProxyURL    string   `json:"replay_proxy_url"`
 	SNI               string   `json:"sni"`
 	Timeout           int      `json:"timeout"`
@@ -47,6 +48,7 @@ type GeneralOptions struct {
 	AutoCalibration         bool     `json:"autocalibration"`
 	AutoCalibrationKeyword  string   `json:"autocalibration_keyword"`
 	AutoCalibrationPerHost  bool     `json:"autocalibration_per_host"`
+	AutoCalibrationPerPath  bool     `json:"autocalibration_per_path"`
 	AutoCalibrationStrategy string   `json:"autocalibration_strategy"`
 	AutoCalibrationStrings  []string `json:"autocalibration_strings"`
 	Colors                  bool     `json:"colors"`
@@ -150,6 +152,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
+	c.HTTP.RecursionStatus = []int{301, 302, 303, 307, 308}
 	c.HTTP.ReplayProxyURL = ""
 	c.HTTP.Timeout = 10
 	c.HTTP.SNI = ""
@@ -478,8 +481,10 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoRatelimit = parseOpts.General.AutoRatelimit
+	conf.RecursionStatus = parseOpts.HTTP.RecursionStatus
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
+	conf.AutoCalibrationPerPath = parseOpts.General.AutoCalibrationPerPath
 	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
@@ -515,6 +520,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	if conf.AutoCalibrationPerHost {
 		// AutoCalibrationPerHost implies AutoCalibration
+		conf.AutoCalibration = true
+	}
+
+	if conf.AutoCalibrationPerPath {
+		// AutoCalibrationPerPath implies AutoCalibration
 		conf.AutoCalibration = true
 	}
 
@@ -554,6 +564,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.HTTP.Recursion {
 		if !strings.HasSuffix(conf.Url, "FUZZ") {
 			errmsg := "When using -recursion the URL (-u) must end with FUZZ keyword."
+			errs.Add(fmt.Errorf(errmsg))
+		}
+	}
+
+	for _, v := range parseOpts.HTTP.RecursionStatus {
+		if v < 100 || v >= 600 {
+			errmsg := "Invalid recursion_status, status code must be between 100 and 599."
 			errs.Add(fmt.Errorf(errmsg))
 		}
 	}
