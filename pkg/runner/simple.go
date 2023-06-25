@@ -61,7 +61,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 				ServerName:         conf.SNI,
 			},
 		}
-	if conf.Http2 {
+	if !conf.Http2 {
 		transport.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
 	}
 	simplerunner.client = &http.Client{
