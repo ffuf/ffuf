@@ -109,11 +109,8 @@ func (j *Job) CalibrateForPath(path string, baseinput map[string][]byte) error {
 				continue
 			}
 			responses = append(responses, resp)
-			err = j.calibrateFilters(responses, true, j.Config.AutoCalibrationPerPath)
-			if err != nil {
-				j.Output.Error(fmt.Sprintf("%s", err))
-			}
 		}
+		_ = j.calibrateFilters(responses, false, j.Config.AutoCalibrationPerPath)
 	}
 	j.Config.MatcherManager.SetCalibratedForPath(path, true)
 	return nil
