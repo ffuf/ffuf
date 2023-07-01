@@ -8,11 +8,18 @@ import (
 func (j *Job) blackListFiles() map[string][]string {
 	blackListedFiles := make(map[string][]string)
 
-	blackListedFiles["FUZZ"] = append(blackListedFiles["FUZZ"], ".htaccess")
-	blackListedFiles["FUZZ"] = append(blackListedFiles["FUZZ"], "web.config")
-	blackListedFiles["FUZZ"] = append(blackListedFiles["FUZZ"], ".bash_history")
-	blackListedFiles["FUZZ"] = append(blackListedFiles["FUZZ"], ".git/HEAD")
-	blackListedFiles["FUZZ"] = append(blackListedFiles["FUZZ"], ".ssh/id_rsa")
+	// if a couple of those returns same size, its probably a blacklisted response.
+	blackListedFiles["BLACKLIST"] = append(blackListedFiles["BLACKLIST"], ".htaccess")
+	blackListedFiles["BLACKLIST"] = append(blackListedFiles["BLACKLIST"], "web.config")
+	blackListedFiles["BLACKLIST"] = append(blackListedFiles["BLACKLIST"], ".bash_history")
+	blackListedFiles["BLACKLIST"] = append(blackListedFiles["BLACKLIST"], ".git/HEAD")
+	blackListedFiles["BLACKLIST"] = append(blackListedFiles["BLACKLIST"], ".ssh/id_rsa")
+
+	// if a couple of those returns same size, its probably a wildcard not found response.
+	blackListedFiles["WILDCARD"] = append(blackListedFiles["WILDCARD"], "abc.xyz")
+	blackListedFiles["WILDCARD"] = append(blackListedFiles["WILDCARD"], "abc2.xyz")
+	blackListedFiles["WILDCARD"] = append(blackListedFiles["WILDCARD"], "abc3.xyzz")
+	blackListedFiles["WILDCARD"] = append(blackListedFiles["WILDCARD"], "xyz1.abc")
 
 	return blackListedFiles
 }
