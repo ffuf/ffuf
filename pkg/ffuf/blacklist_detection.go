@@ -62,10 +62,10 @@ func (j *Job) DetectBlacklist(host string, inputs map[string][]byte) error {
 	}
 
 	successResponses := make(map[int64][]Response, 0)
-	blackListedResponses := make([]Response, 0)
+	blackListedResponses := make(map[int64][]Response, 0)
 	for _, r := range responses {
 		if r.StatusCode != 200 {
-			blackListedResponses = append(blackListedResponses, r)
+			blackListedResponses[r.ContentWords] = append(blackListedResponses[r.ContentWords], r)
 		} else {
 			successResponses[r.ContentWords] = append(successResponses[r.ContentWords], r)
 		}
@@ -80,9 +80,13 @@ func (j *Job) DetectBlacklist(host string, inputs map[string][]byte) error {
 		}
 	}
 
-	err := j.calibrateFilters(responses, j.Config.AutoCalibrationPerHost /*, j.Config.AutoCalibrationPerPath*/)
-	if err != nil {
-		j.Output.Error(fmt.Sprintf("%s", err))
+	for _, r := range blackListedResponses {
+		if len(r) > 1 {
+			err := j.calibrateFilters(r, j.Config.AutoCalibrationPerHost /*, j.Config.AutoCalibrationPerPath */)
+			if err != nil {
+				j.Output.Error(fmt.Sprintf("%s", err))
+			}
+		}
 	}
 
 	j.blacklistChecked = true
