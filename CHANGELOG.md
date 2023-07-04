@@ -1,7 +1,7 @@
 ## Changelog
 - master
   - New
-    - New autocalibration strategy "extra" that uses a list of commonly blacklisted files to filter blacklist responses
+    - autocalibration-strategy refactored to support extensible strategy configuration
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

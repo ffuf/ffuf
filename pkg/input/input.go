@@ -54,7 +54,7 @@ func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error
 // ActivateKeywords enables / disables wordlists based on list of active keywords
 func (i *MainInputProvider) ActivateKeywords(kws []string) {
 	for _, p := range i.Providers {
-		if sliceContains(kws, p.Keyword()) {
+		if ffuf.StrInSlice(p.Keyword(), kws) {
 			p.Active()
 		} else {
 			p.Disable()
@@ -231,12 +231,3 @@ func (i *MainInputProvider) Total() int {
 	return count
 }
 
-// sliceContains is a helper function that returns true if a string is included in a string slice
-func sliceContains(sslice []string, str string) bool {
-	for _, v := range sslice {
-		if v == str {
-			return true
-		}
-	}
-	return false
-}

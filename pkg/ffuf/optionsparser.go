@@ -44,29 +44,29 @@ type HTTPOptions struct {
 }
 
 type GeneralOptions struct {
-	AutoCalibration         bool     `json:"autocalibration"`
-	AutoCalibrationKeyword  string   `json:"autocalibration_keyword"`
-	AutoCalibrationPerHost  bool     `json:"autocalibration_per_host"`
-	AutoCalibrationStrategy string   `json:"autocalibration_strategy"`
-	AutoCalibrationStrings  []string `json:"autocalibration_strings"`
-	Colors                  bool     `json:"colors"`
-	ConfigFile              string   `toml:"-" json:"config_file"`
-	Delay                   string   `json:"delay"`
-	Json                    bool     `json:"json"`
-	MaxTime                 int      `json:"maxtime"`
-	MaxTimeJob              int      `json:"maxtime_job"`
-	Noninteractive          bool     `json:"noninteractive"`
-	Quiet                   bool     `json:"quiet"`
-	Rate                    int      `json:"rate"`
-	ScraperFile             string   `json:"scraperfile"`
-	Scrapers                string   `json:"scrapers"`
-	Searchhash              string   `json:"-"`
-	ShowVersion             bool     `toml:"-" json:"-"`
-	StopOn403               bool     `json:"stop_on_403"`
-	StopOnAll               bool     `json:"stop_on_all"`
-	StopOnErrors            bool     `json:"stop_on_errors"`
-	Threads                 int      `json:"threads"`
-	Verbose                 bool     `json:"verbose"`
+	AutoCalibration           bool     `json:"autocalibration"`
+	AutoCalibrationKeyword    string   `json:"autocalibration_keyword"`
+	AutoCalibrationPerHost    bool     `json:"autocalibration_per_host"`
+	AutoCalibrationStrategies []string `json:"autocalibration_strategies"`
+	AutoCalibrationStrings    []string `json:"autocalibration_strings"`
+	Colors                    bool     `json:"colors"`
+	ConfigFile                string   `toml:"-" json:"config_file"`
+	Delay                     string   `json:"delay"`
+	Json                      bool     `json:"json"`
+	MaxTime                   int      `json:"maxtime"`
+	MaxTimeJob                int      `json:"maxtime_job"`
+	Noninteractive            bool     `json:"noninteractive"`
+	Quiet                     bool     `json:"quiet"`
+	Rate                      int      `json:"rate"`
+	ScraperFile               string   `json:"scraperfile"`
+	Scrapers                  string   `json:"scrapers"`
+	Searchhash                string   `json:"-"`
+	ShowVersion               bool     `toml:"-" json:"-"`
+	StopOn403                 bool     `json:"stop_on_403"`
+	StopOnAll                 bool     `json:"stop_on_all"`
+	StopOnErrors              bool     `json:"stop_on_errors"`
+	Threads                   int      `json:"threads"`
+	Verbose                   bool     `json:"verbose"`
 }
 
 type InputOptions struct {
@@ -122,7 +122,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Words = ""
 	c.General.AutoCalibration = false
 	c.General.AutoCalibrationKeyword = "FUZZ"
-	c.General.AutoCalibrationStrategy = "basic"
+	c.General.AutoCalibrationStrategies = []string{"basic"}
 	c.General.Colors = false
 	c.General.Delay = ""
 	c.General.Json = false
@@ -422,8 +422,16 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
 		conf.AutoCalibrationStrings = parseOpts.General.AutoCalibrationStrings
 	}
+	// Auto-calibration strategies
+	if len(parseOpts.General.AutoCalibrationStrategies) > 0 {
+		conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
+	}
 	// Using -acc implies -ac
 	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibration = true
+	}
+	// Using -acs implies -ac
+	if len(parseOpts.General.AutoCalibrationStrategies) > 0 {
 		conf.AutoCalibration = true
 	}
 
@@ -477,7 +485,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
-	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
+	conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
