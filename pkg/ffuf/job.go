@@ -505,7 +505,7 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 // not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
-	if (resp.Request.Url+"/") != resp.GetRedirectLocation(true) && resp.StatusCode >= 300 && resp.StatusCode < 400 {
+	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
 		// Not a directory, return early
 		return
 	}
