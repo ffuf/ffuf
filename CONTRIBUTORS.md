@@ -16,6 +16,7 @@
 * [denandz](https://github.com/denandz)
 * [erbbysam](https://github.com/erbbysam)
 * [eur0pa](https://github.com/eur0pa)
+* [gserrg](https://github.com/gserrg)
 * [fabiobauer](https://github.com/fabiobauer)
 * [fang0654](https://github.com/fang0654)
 * [Hazegard](https://github.com/Hazegard)
