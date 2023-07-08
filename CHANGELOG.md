@@ -4,6 +4,7 @@
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
+    - Fixed divide by 0 error when setting rate limit to 0 manually.
   
 - v2.0.0
   - New
