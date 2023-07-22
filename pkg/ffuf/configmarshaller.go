@@ -26,6 +26,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.Timeout = c.Timeout
 	o.HTTP.URL = c.Url
 	o.HTTP.Http2 = c.Http2
+	o.HTTP.RandomAgent = c.RandomAgent
 
 	o.General.AutoCalibration = c.AutoCalibration
 	o.General.AutoCalibrationKeyword = c.AutoCalibrationKeyword

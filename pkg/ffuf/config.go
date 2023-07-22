@@ -43,6 +43,7 @@ type Config struct {
 	OutputSkipEmptyFile     bool                  `json:"OutputSkipEmptyFile"`
 	ProgressFrequency       int                   `json:"-"`
 	ProxyURL                string                `json:"proxyurl"`
+	RandomAgent		bool		      `json:"random-agent"`
 	Quiet                   bool                  `json:"quiet"`
 	Rate                    int64                 `json:"rate"`
 	Recursion               bool                  `json:"recursion"`
@@ -101,6 +102,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Noninteractive = false
 	conf.ProgressFrequency = 125
 	conf.ProxyURL = ""
+	conf.RandomAgent = false
 	conf.Quiet = false
 	conf.Rate = 0
 	conf.Recursion = false

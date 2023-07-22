@@ -33,6 +33,7 @@ type HTTPOptions struct {
 	IgnoreBody        bool     `json:"ignore_body"`
 	Method            string   `json:"method"`
 	ProxyURL          string   `json:"proxy_url"`
+	RandomAgent	  bool	   `json:"random-agent"`
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
 	RecursionStrategy string   `json:"recursion_strategy"`
@@ -145,6 +146,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
+	c.HTTP.RandomAgent = false
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
@@ -401,6 +403,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			conf.ReplayProxyURL = parseOpts.HTTP.ReplayProxyURL
 		}
 	}
+
+	conf.RandomAgent = parseOpts.HTTP.RandomAgent
 
 	//Check the output file format option
 	if parseOpts.Output.OutputFile != "" {

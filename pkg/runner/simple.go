@@ -15,9 +15,24 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"math/rand"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
+
+var userAgents = []string{
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.86",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36",
+    "Mozilla/5.0 (X11; CrOS armv7l 13597.84.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.105 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; rv:109.0) Gecko/20100101 Firefox/115.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 OPR/99.0.0.0",
+    "Mozilla/5.0 (Windows NT 6.3; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/110.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5.2 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 8.1.0; SAMSUNG SM-J530F) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/22.0 Chrome/111.0.5563.116 Mobile Safari/537.36",
+}
+
 
 // Download results < 5MB
 const MAX_DOWNLOAD_SIZE = 5242880
@@ -110,12 +125,18 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.Url, data)
 
+
 	if err != nil {
 		return ffuf.Response{}, err
 	}
 
-	// set default User-Agent header if not present
-	if _, ok := req.Headers["User-Agent"]; !ok {
+	if r.config.RandomAgent {
+		rand.Seed(time.Now().UnixNano()) 
+		randIndex := rand.Intn(len(userAgents))
+		httpreq.Header.Set("User-Agent", userAgents[randIndex]) // Set the agent header
+		fmt.Printf("Debug: User-Agent is %s\n", httpreq.Header.Get("User-Agent")) // Debug print
+	} else if _, ok := req.Headers["User-Agent"]; !ok {
+		// If 'random-agent' is not enabled, set the default User-Agent header if not present
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
 	}
 
@@ -189,10 +210,16 @@ func (r *SimpleRunner) Dump(req *ffuf.Request) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	// set default User-Agent header if not present
-	if _, ok := req.Headers["User-Agent"]; !ok {
+	if r.config.RandomAgent {
+		rand.Seed(time.Now().UnixNano()) 
+		randIndex := rand.Intn(len(userAgents))
+		req.Headers["User-Agent"] = userAgents[randIndex] // Set the agent header
+	} else if _, ok := req.Headers["User-Agent"]; !ok {
+		// If 'random-agent' is not enabled, set the default User-Agent header if not present
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
 	}
+
+
 
 	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
