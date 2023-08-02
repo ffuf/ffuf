@@ -4,6 +4,7 @@
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
+    - The -p flag now includes the duration of the request in the delay
   
 - v2.0.0
   - New

@@ -190,22 +190,14 @@ func (j *Job) SkipQueue() {
 	j.skipQueue = true
 }
 
-func (j *Job) sleepIfNeeded() {
-	var sleepDuration time.Duration
-	if j.Config.Delay.HasDelay {
-		if j.Config.Delay.IsRange {
-			sTime := j.Config.Delay.Min + rand.Float64()*(j.Config.Delay.Max-j.Config.Delay.Min)
-			sleepDuration = time.Duration(sTime * 1000)
-		} else {
-			sleepDuration = time.Duration(j.Config.Delay.Min * 1000)
-		}
-		sleepDuration = sleepDuration * time.Millisecond
+func (j *Job) nextDelay() time.Duration {
+	if !j.Config.Delay.HasDelay {
+		return time.Duration(0)
+	} else if j.Config.Delay.IsRange {
+		sTime := j.Config.Delay.Min + rand.Float64()*(j.Config.Delay.Max-j.Config.Delay.Min)
+		return time.Duration(sTime*1000) * time.Millisecond
 	}
-	// makes the sleep cancellable by context
-	select {
-	case <-j.Config.Context.Done(): // cancelled
-	case <-time.After(sleepDuration): // sleep
-	}
+	return time.Duration(j.Config.Delay.Min*1000) * time.Millisecond
 }
 
 // Pause pauses the job process
@@ -268,8 +260,20 @@ func (j *Job) startExecution() {
 			defer func() { <-threadlimiter }()
 			defer wg.Done()
 			threadStart := time.Now()
-			j.runTask(nextInput, nextPosition, false)
-			j.sleepIfNeeded()
+			minDuration := j.nextDelay()
+			if minDuration > 0 {
+				delayTicker := time.NewTicker(minDuration)
+				defer delayTicker.Stop()
+				j.runTask(nextInput, nextPosition, false)
+
+				// makes the delay cancellable by context
+				select {
+				case <-j.Config.Context.Done(): // cancelled
+				case <-delayTicker.C: // sleep
+				}
+			} else {
+				j.runTask(nextInput, nextPosition, false)
+			}
 			threadEnd := time.Now()
 			j.Rate.Tick(threadStart, threadEnd)
 		}()
