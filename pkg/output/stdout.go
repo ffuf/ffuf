@@ -343,6 +343,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 
 func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	var fileContent, fileName, filePath string
+
 	// Create directory if needed
 	if s.config.OutputDirectory != "" {
 		err := os.MkdirAll(s.config.OutputDirectory, 0750)
@@ -353,7 +354,29 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 			}
 		}
 	}
-	fileContent = fmt.Sprintf("%s\n---- ↑ Request ---- Response ↓ ----\n\n%s", resp.Request.Raw, resp.Raw)
+
+	tmpStruct := map[string]interface{}{
+		"request": ffuf.RequestWithoutExcludedFields{
+			Method:  resp.Request.Method,
+			Host:    resp.Request.Host,
+			Url:     resp.Request.Url,
+			Headers: resp.Request.Headers,
+			Data:    resp.Request.Data,
+		},
+		"response": ffuf.ResponseWithoutExcludedFields{
+			StatusCode:    resp.StatusCode,
+			Headers:       resp.Headers,
+			ContentLength: resp.ContentLength,
+			ContentWords:  resp.ContentWords,
+			ContentLines:  resp.ContentLines,
+			ContentType:   resp.ContentType,
+			Time:          resp.Time,
+		},
+	}
+
+	jsonData, _ := json.Marshal(tmpStruct)
+
+	fileContent = fmt.Sprintf("%s\n%s", string(jsonData), resp.Data)
 
 	// Create file name
 	fileName = fmt.Sprintf("%x", md5.Sum([]byte(fileContent)))
@@ -384,7 +407,7 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
 	if len(s.fuzzkeywords) > 1 {
 		for _, k := range s.fuzzkeywords {
-		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(res.Position))
 			} else {
@@ -392,8 +415,8 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 			}
 		}
 	} else {
-        for _, k := range s.fuzzkeywords {
-		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+		for _, k := range s.fuzzkeywords {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = strconv.Itoa(res.Position)
 			} else {

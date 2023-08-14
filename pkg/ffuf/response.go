@@ -23,6 +23,16 @@ type Response struct {
 	Time          time.Duration
 }
 
+type ResponseWithoutExcludedFields struct {
+	StatusCode    int64
+	Headers       map[string][]string
+	ContentLength int64
+	ContentWords  int64
+	ContentLines  int64
+	ContentType   string
+	Time          time.Duration
+}
+
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response
 func (resp *Response) GetRedirectLocation(absolute bool) string {
 

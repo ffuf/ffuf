@@ -16,6 +16,14 @@ type Request struct {
 	Raw      string
 }
 
+type RequestWithoutExcludedFields struct {
+	Method  string
+	Host    string
+	Url     string
+	Headers map[string]string
+	Data    []byte
+}
+
 func NewRequest(conf *Config) Request {
 	var req Request
 	req.Method = conf.Method
