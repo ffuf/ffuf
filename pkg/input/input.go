@@ -2,12 +2,15 @@ package input
 
 import (
 	"fmt"
-
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+	"strings"
+
+	"github.com/ffuf/pencode/pkg/pencode"
 )
 
 type MainInputProvider struct {
 	Providers   []ffuf.InternalInputProvider
+	Encoders    map[string]*pencode.Chain
 	Config      *ffuf.Config
 	position    int
 	msbIterator int
@@ -25,7 +28,7 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
 		return &MainInputProvider{}, errs
 	}
-	mainip := MainInputProvider{Config: conf, msbIterator: 0}
+	mainip := MainInputProvider{Config: conf, msbIterator: 0, Encoders: make(map[string]*pencode.Chain, 0)}
 	// Initialize the correct inputprovider
 	for _, v := range conf.InputProviders {
 		err := mainip.AddProvider(v)
@@ -47,6 +50,14 @@ func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error
 			return err
 		}
 		i.Providers = append(i.Providers, newwl)
+	}
+	if len(provider.Encoders) > 0 {
+		chain := pencode.NewChain()
+		err := chain.Initialize(strings.Split(strings.TrimSpace(provider.Encoders), " "))
+		if err != nil {
+			return err
+		}
+		i.Encoders[provider.Keyword] = chain
 	}
 	return nil
 }
@@ -102,6 +113,18 @@ func (i *MainInputProvider) Value() map[string][]byte {
 	}
 	if i.Config.InputMode == "pitchfork" {
 		retval = i.pitchforkValue()
+	}
+	if len(i.Encoders) > 0 {
+		for key, val := range retval {
+			chain, ok := i.Encoders[key]
+			if ok {
+				tmpVal, err := chain.Encode([]byte(val))
+				if err != nil {
+					fmt.Printf("ERROR: %s\n", err)
+				}
+				retval[key] = tmpVal
+			}
+		}
 	}
 	return retval
 }
