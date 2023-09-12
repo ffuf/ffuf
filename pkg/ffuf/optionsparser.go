@@ -41,6 +41,8 @@ type HTTPOptions struct {
 	Timeout           int      `json:"timeout"`
 	URL               string   `json:"url"`
 	Http2             bool     `json:"http2"`
+	ClientCert        string   `json:"client-cert"`
+	ClientKey         string   `json:"client-key"`
 }
 
 type GeneralOptions struct {
@@ -360,6 +362,15 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.HTTP.SNI != "" {
 		conf.SNI = parseOpts.HTTP.SNI
 	}
+
+	// prepare cert
+	if parseOpts.HTTP.ClientCert != "" {
+		conf.ClientCert = parseOpts.HTTP.ClientCert
+	}
+	if parseOpts.HTTP.ClientKey != "" {
+		conf.ClientKey = parseOpts.HTTP.ClientKey
+	}
+
 
 	//Prepare headers and make canonical
 	for _, v := range parseOpts.HTTP.Headers {

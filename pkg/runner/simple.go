@@ -43,6 +43,13 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			proxyURL = http.ProxyURL(pu)
 		}
 	}
+	cert := []tls.Certificate{}
+
+	if conf.ClientCert != "" && conf.ClientKey != "" {
+		tmp, _ := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
+		cert =  []tls.Certificate{tmp}
+	} 
+	
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
@@ -62,6 +69,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 				MinVersion:         tls.VersionTLS10,
 				Renegotiation:      tls.RenegotiateOnceAsClient,
 				ServerName:         conf.SNI,
+				Certificates: cert,
 			},
 		}}
 

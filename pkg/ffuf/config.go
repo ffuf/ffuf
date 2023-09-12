@@ -64,6 +64,8 @@ type Config struct {
 	Verbose                 bool                  `json:"verbose"`
 	Wordlists               []string              `json:"wordlists"`
 	Http2                   bool                  `json:"http2"`
+	ClientCert              string                `json:"client-cert"`
+	ClientKey               string                `json:"client-key"`
 }
 
 type InputProviderConfig struct {

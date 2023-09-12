@@ -41,6 +41,7 @@
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
 * [seblw](https://github.com/seblw)
+* [Serizao](https://github.com/Serizao)
 * [Shaked](https://github.com/Shaked)
 * [Skyehopper](https://github.com/Skyehopper)
 * [SolomonSklash](https://github.com/SolomonSklash)
