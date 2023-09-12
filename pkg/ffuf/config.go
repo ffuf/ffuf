@@ -20,6 +20,7 @@ type Config struct {
 	Debuglog                  string                `json:"debuglog"`
 	Delay                     optRange              `json:"delay"`
 	DirSearchCompat           bool                  `json:"dirsearch_compatibility"`
+  Encoders                  []string              `json:"encoders"`
 	Extensions                []string              `json:"extensions"`
 	FilterMode                string                `json:"fmode"`
 	FollowRedirects           bool                  `json:"follow_redirects"`
@@ -69,6 +70,7 @@ type InputProviderConfig struct {
 	Name     string `json:"name"`
 	Keyword  string `json:"keyword"`
 	Value    string `json:"value"`
+	Encoders string `json:"encoders"`
 	Template string `json:"template"` // the templating string used for sniper mode (usually "§")
 }
 
@@ -84,6 +86,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Debuglog = ""
 	conf.Delay = optRange{0, 0, false, false}
 	conf.DirSearchCompat = false
+	conf.Encoders = make([]string, 0)
 	conf.Extensions = make([]string, 0)
 	conf.FilterMode = "or"
 	conf.FollowRedirects = false

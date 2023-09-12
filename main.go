@@ -50,14 +50,16 @@ func (m *wordlistFlag) Set(value string) error {
 // ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
-	var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
-	var wordlists wordlistFlag
+
+  var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
+	var wordlists, encoders wordlistFlag
 
 	cookies = opts.HTTP.Cookies
 	autocalibrationstrings = opts.General.AutoCalibrationStrings
 	headers = opts.HTTP.Headers
 	inputcommands = opts.Input.Inputcommands
 	wordlists = opts.Input.Wordlists
+	encoders = opts.Input.Encoders
 
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
@@ -133,6 +135,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Var(&headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.Var(&inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
+	flag.Var(&encoders, "enc", "Encoders for keywords, eg. 'FUZZ:urlencode b64encode'")
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -147,6 +150,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	opts.HTTP.Headers = headers
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
+	opts.Input.Encoders = encoders
 	return opts
 }
 
