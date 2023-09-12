@@ -40,6 +40,7 @@
 * [p0dalirius](https://github.com/p0dalirius)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
+* [Serizao](https://github.com/Serizao)
 * [seblw](https://github.com/seblw)
 * [Shaked](https://github.com/Shaked)
 * [Skyehopper](https://github.com/Skyehopper)
