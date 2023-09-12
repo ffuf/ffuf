@@ -227,7 +227,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf("sniper mode only supports one input command"))
 		}
 	}
-	tmpEncoders := make(map[string]string, 0)
+	tmpEncoders := make(map[string]string)
 	for _, e := range parseOpts.Input.Encoders {
 		if strings.Contains(e, ":") {
 			key := strings.Split(e, ":")[0]

@@ -28,7 +28,7 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
 		return &MainInputProvider{}, errs
 	}
-	mainip := MainInputProvider{Config: conf, msbIterator: 0, Encoders: make(map[string]*pencode.Chain, 0)}
+	mainip := MainInputProvider{Config: conf, msbIterator: 0, Encoders: make(map[string]*pencode.Chain)}
 	// Initialize the correct inputprovider
 	for _, v := range conf.InputProviders {
 		err := mainip.AddProvider(v)
