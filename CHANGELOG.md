@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New cli flag `-raw` to omit urlencoding for URIs
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

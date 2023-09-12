@@ -33,6 +33,7 @@ type HTTPOptions struct {
 	IgnoreBody        bool     `json:"ignore_body"`
 	Method            string   `json:"method"`
 	ProxyURL          string   `json:"proxy_url"`
+	Raw               bool     `json:"raw"`
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
 	RecursionStrategy string   `json:"recursion_strategy"`
@@ -145,6 +146,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
+	c.HTTP.Raw = false
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
@@ -472,6 +474,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
+	conf.Raw = parseOpts.HTTP.Raw
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
