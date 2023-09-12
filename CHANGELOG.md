@@ -3,6 +3,7 @@
   - New
     - New command line parameter for recursive autocalibration on every path `-acp`
     - New command line parameter for controlling recursion status code `-recursion-status`
+    - Integration with `github.com/ffuf/pencode` library, added `-enc` cli flag to do various in-fly encodings for input data
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
