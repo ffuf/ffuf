@@ -4,7 +4,6 @@
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
-    - Fix html output in template html.output
   
 - v2.0.0
   - New
