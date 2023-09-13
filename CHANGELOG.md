@@ -1,10 +1,13 @@
 ## Changelog
 - master
   - New
+    - Integration with `github.com/ffuf/pencode` library, added `-enc` cli flag to do various in-fly encodings for input data
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
     - Fix csv output file format
+    - Fixed divide by 0 error when setting rate limit to 0 manually.
+
   
 - v2.0.0
   - New
