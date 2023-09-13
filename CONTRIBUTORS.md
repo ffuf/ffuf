@@ -17,6 +17,7 @@
 * [Ephex2](https://github.com/Ephex2)
 * [erbbysam](https://github.com/erbbysam)
 * [eur0pa](https://github.com/eur0pa)
+* [gserrg](https://github.com/gserrg)
 * [fabiobauer](https://github.com/fabiobauer)
 * [fang0654](https://github.com/fang0654)
 * [haseobang](https://github.com/haseobang)
