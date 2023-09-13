@@ -21,6 +21,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.Recursion = c.Recursion
 	o.HTTP.RecursionDepth = c.RecursionDepth
 	o.HTTP.RecursionStrategy = c.RecursionStrategy
+	o.HTTP.RecursionStatus = c.RecursionStatus
 	o.HTTP.ReplayProxyURL = c.ReplayProxyURL
 	o.HTTP.SNI = c.SNI
 	o.HTTP.Timeout = c.Timeout
@@ -30,6 +31,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.General.AutoCalibration = c.AutoCalibration
 	o.General.AutoCalibrationKeyword = c.AutoCalibrationKeyword
 	o.General.AutoCalibrationPerHost = c.AutoCalibrationPerHost
+	o.General.AutoCalibrationPerPath = c.AutoCalibrationPerPath
 	o.General.AutoCalibrationStrategy = c.AutoCalibrationStrategy
 	o.General.AutoCalibrationStrings = c.AutoCalibrationStrings
 	o.General.Colors = c.Colors

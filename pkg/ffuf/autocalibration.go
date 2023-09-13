@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -76,13 +77,42 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 				continue
 			}
 			responses = append(responses, resp)
-			err = j.calibrateFilters(responses, true)
+			err = j.calibrateFilters(responses, true, j.Config.AutoCalibrationPerPath)
 			if err != nil {
 				j.Output.Error(fmt.Sprintf("%s", err))
 			}
 		}
 	}
 	j.Config.MatcherManager.SetCalibratedForHost(host, true)
+	return nil
+}
+
+// CalibrateForPath runs autocalibration for a specific path
+func (j *Job) CalibrateForPath(path string, baseinput map[string][]byte) error {
+	if j.Config.MatcherManager.CalibratedForPath(path) {
+		return nil
+	}
+	if baseinput[j.Config.AutoCalibrationKeyword] == nil {
+		return fmt.Errorf("Autocalibration keyword \"%s\" not found in the request.", j.Config.AutoCalibrationKeyword)
+	}
+	cStrings := j.autoCalibrationStrings()
+	input := make(map[string][]byte)
+	for k, v := range baseinput {
+		input[k] = v
+	}
+	for _, v := range cStrings {
+		responses := make([]Response, 0)
+		for _, cs := range v {
+			input[j.Config.AutoCalibrationKeyword] = []byte(cs)
+			resp, err := j.calibrationRequest(input)
+			if err != nil {
+				continue
+			}
+			responses = append(responses, resp)
+		}
+		_ = j.calibrateFilters(responses, false, j.Config.AutoCalibrationPerPath)
+	}
+	j.Config.MatcherManager.SetCalibratedForPath(path, true)
 	return nil
 }
 
@@ -103,7 +133,7 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 			}
 			responses = append(responses, resp)
 		}
-		_ = j.calibrateFilters(responses, false)
+		_ = j.calibrateFilters(responses, false, j.Config.AutoCalibrationPerPath)
 	}
 	j.Config.MatcherManager.SetCalibrated(true)
 	return nil
@@ -112,11 +142,14 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 // CalibrateIfNeeded runs a self-calibration task for filtering options (if needed) by requesting random resources and
 //
 //	configuring the filters accordingly
-func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
+func (j *Job) CalibrateIfNeeded(host string, path string, input map[string][]byte) error {
 	j.calibMutex.Lock()
 	defer j.calibMutex.Unlock()
 	if !j.Config.AutoCalibration {
 		return nil
+	}
+	if j.Config.AutoCalibrationPerPath {
+		return j.CalibrateForPath(path, input)
 	}
 	if j.Config.AutoCalibrationPerHost {
 		return j.CalibrateForHost(host, input)
@@ -124,7 +157,7 @@ func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
 	return j.Calibrate(input)
 }
 
-func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
+func (j *Job) calibrateFilters(responses []Response, perHost bool, perPath bool) error {
 	// Work down from the most specific common denominator
 	if len(responses) > 0 {
 		// Content length
@@ -136,7 +169,19 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 			}
 		}
 		if sizeMatch {
-			if perHost {
+			if perPath {
+				parsed, _ := url.Parse(responses[0].Request.Url)
+				// Check if already filtered
+				for _, f := range j.Config.MatcherManager.FiltersForPath(parsed.Path) {
+					match, _ := f.Filter(&responses[0])
+					if match {
+						// Already filtered
+						return nil
+					}
+				}
+				_ = j.Config.MatcherManager.AddPerPathFilter(parsed.Path, "size", strconv.FormatInt(baselineSize, 10))
+				return nil
+			} else if perHost {
 				// Check if already filtered
 				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
@@ -170,7 +215,19 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 			}
 		}
 		if wordsMatch {
-			if perHost {
+			if perPath {
+				parsed, _ := url.Parse(responses[0].Request.Url)
+				// Check if already filtered
+				for _, f := range j.Config.MatcherManager.FiltersForPath(parsed.Path) {
+					match, _ := f.Filter(&responses[0])
+					if match {
+						// Already filtered
+						return nil
+					}
+				}
+				_ = j.Config.MatcherManager.AddPerPathFilter(parsed.Path, "word", strconv.FormatInt(baselineWords, 10))
+				return nil
+			} else if perHost {
 				// Check if already filtered
 				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
@@ -204,7 +261,19 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 			}
 		}
 		if linesMatch {
-			if perHost {
+			if perPath {
+				parsed, _ := url.Parse(responses[0].Request.Url)
+				// Check if already filtered
+				for _, f := range j.Config.MatcherManager.FiltersForPath(parsed.Path) {
+					match, _ := f.Filter(&responses[0])
+					if match {
+						// Already filtered
+						return nil
+					}
+				}
+				_ = j.Config.MatcherManager.AddPerPathFilter(parsed.Path, "line", strconv.FormatInt(baselineLines, 10))
+				return nil
+			} else if perHost {
 				// Check if already filtered
 				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
