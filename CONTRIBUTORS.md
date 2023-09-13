@@ -14,6 +14,7 @@
 * [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
 * [denandz](https://github.com/denandz)
+* [Ephex2](https://github.com/Ephex2)
 * [erbbysam](https://github.com/erbbysam)
 * [eur0pa](https://github.com/eur0pa)
 * [fabiobauer](https://github.com/fabiobauer)
@@ -46,4 +47,3 @@
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [TomNomNom](https://github.com/tomnomnom)
 * [xfgusta](https://github.com/xfgusta)
-* [Ephex2](https://github.com/Ephex2)
