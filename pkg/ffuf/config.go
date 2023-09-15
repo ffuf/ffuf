@@ -20,7 +20,7 @@ type Config struct {
 	Debuglog                  string                `json:"debuglog"`
 	Delay                     optRange              `json:"delay"`
 	DirSearchCompat           bool                  `json:"dirsearch_compatibility"`
-  Encoders                  []string              `json:"encoders"`
+	Encoders                  []string              `json:"encoders"`
 	Extensions                []string              `json:"extensions"`
 	FilterMode                string                `json:"fmode"`
 	FollowRedirects           bool                  `json:"follow_redirects"`
@@ -46,6 +46,7 @@ type Config struct {
 	ProxyURL                  string                `json:"proxyurl"`
 	Quiet                     bool                  `json:"quiet"`
 	Rate                      int64                 `json:"rate"`
+	Raw                       bool                  `json:"raw"`
 	Recursion                 bool                  `json:"recursion"`
 	RecursionDepth            int                   `json:"recursion_depth"`
 	RecursionStrategy         string                `json:"recursion_strategy"`
@@ -64,6 +65,8 @@ type Config struct {
 	Verbose                   bool                  `json:"verbose"`
 	Wordlists                 []string              `json:"wordlists"`
 	Http2                     bool                  `json:"http2"`
+	ClientCert                string                `json:"client-cert"`
+	ClientKey                 string                `json:"client-key"`
 }
 
 type InputProviderConfig struct {
@@ -106,6 +109,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.ProxyURL = ""
 	conf.Quiet = false
 	conf.Rate = 0
+	conf.Raw = false
 	conf.Recursion = false
 	conf.RecursionDepth = 0
 	conf.RecursionStrategy = "default"

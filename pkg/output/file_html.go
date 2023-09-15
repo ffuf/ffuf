@@ -108,7 +108,7 @@ const (
                 <div style="display:none">
 |result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
                 </div>
-                <tr class="result-{{ $result.StatusCode }}" style="background-color: {{$result.HTMLColor}};">
+                <tr class="result-{{ $result.StatusCode }}" style="background-color: {{ $result.HTMLColor }};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
                     {{ range $keyword, $value := $result.Input }}
                         <td>{{ $value | printf "%s" }}</td>

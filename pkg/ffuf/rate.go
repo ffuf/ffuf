@@ -65,7 +65,12 @@ func (r *RateThrottle) CurrentRate() int64 {
 }
 
 func (r *RateThrottle) ChangeRate(rate int) {
-	ratemicros := 1000000 / rate
+	ratemicros := 0 // set default to 0, avoids integer divide by 0 error
+
+	if rate != 0 {
+		ratemicros = 1000000 / rate
+	}
+
 	r.RateLimiter.Stop()
 	r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	r.Config.Rate = int64(rate)

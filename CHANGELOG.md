@@ -2,11 +2,15 @@
 - master
   - New
     - autocalibration-strategy refactored to support extensible strategy configuration
+    - New cli flag `-raw` to omit urlencoding for URIs
     - Integration with `github.com/ffuf/pencode` library, added `-enc` cli flag to do various in-fly encodings for input data
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
-  
+    - Fix csv output file format
+    - Fixed divide by 0 error when setting rate limit to 0 manually.
+    - Automatic brotli and deflate decompression
+
 - v2.0.0
   - New
     - Added a new, dynamic keyword `FFUFHASH` that generates hash from job configuration and wordlist position to map blind payloads back to the initial request.

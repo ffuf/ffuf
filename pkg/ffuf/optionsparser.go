@@ -33,6 +33,7 @@ type HTTPOptions struct {
 	IgnoreBody        bool     `json:"ignore_body"`
 	Method            string   `json:"method"`
 	ProxyURL          string   `json:"proxy_url"`
+	Raw               bool     `json:"raw"`
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
 	RecursionStrategy string   `json:"recursion_strategy"`
@@ -41,6 +42,8 @@ type HTTPOptions struct {
 	Timeout           int      `json:"timeout"`
 	URL               string   `json:"url"`
 	Http2             bool     `json:"http2"`
+	ClientCert        string   `json:"client-cert"`
+	ClientKey         string   `json:"client-key"`
 }
 
 type GeneralOptions struct {
@@ -146,6 +149,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
+	c.HTTP.Raw = false
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
@@ -361,6 +365,15 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.SNI = parseOpts.HTTP.SNI
 	}
 
+	// prepare cert
+	if parseOpts.HTTP.ClientCert != "" {
+		conf.ClientCert = parseOpts.HTTP.ClientCert
+	}
+	if parseOpts.HTTP.ClientKey != "" {
+		conf.ClientKey = parseOpts.HTTP.ClientKey
+	}
+
+
 	//Prepare headers and make canonical
 	for _, v := range parseOpts.HTTP.Headers {
 		hs := strings.SplitN(v, ":", 2)
@@ -511,6 +524,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
+	conf.Raw = parseOpts.HTTP.Raw
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
@@ -565,19 +579,25 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	conf.CommandLine = strings.Join(os.Args, " ")
 
+	newInputProviders := []InputProviderConfig{}
 	for _, provider := range conf.InputProviders {
 		if provider.Template != "" {
 			if !templatePresent(provider.Template, &conf) {
 				errmsg := fmt.Sprintf("Template %s defined, but not found in pairs in headers, method, URL or POST data.", provider.Template)
 				errs.Add(fmt.Errorf(errmsg))
+			} else {
+				newInputProviders = append(newInputProviders, provider)
 			}
 		} else {
 			if !keywordPresent(provider.Keyword, &conf) {
 				errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-				errs.Add(fmt.Errorf(errmsg))
+				_, _ = fmt.Fprintf(os.Stderr, "%s\n", fmt.Errorf(errmsg))
+			} else {
+				newInputProviders = append(newInputProviders, provider)
 			}
 		}
 	}
+	conf.InputProviders = newInputProviders
 
 	// If sniper mode, ensure there is no FUZZ keyword
 	if conf.InputMode == "sniper" {

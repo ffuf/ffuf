@@ -14,6 +14,7 @@
     ignorebody = false
     method = "GET"
     proxyurl = "http://127.0.0.1:8080"
+    raw = false
     recursion = false
     recursion_depth = 0
     recursion_strategy = "default"
