@@ -39,9 +39,7 @@ type Job struct {
 	skipQueue            bool
 	currentDepth         int
 	calibMutex           sync.Mutex
-	blacklistMutex       sync.Mutex
 	pauseWg              sync.WaitGroup
-	blacklistChecked     bool
 }
 
 type QueueJob struct {
