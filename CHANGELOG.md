@@ -10,6 +10,7 @@
     - Fix csv output file format
     - Fixed divide by 0 error when setting rate limit to 0 manually.
     - Automatic brotli and deflate decompression
+    - Report if request times out when a time based matcher or filter is active
 
 - v2.0.0
   - New
