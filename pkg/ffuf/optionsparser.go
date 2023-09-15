@@ -170,7 +170,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
-	c.Matcher.Status = "200,204,301,302,307,401,403,405,500"
+	c.Matcher.Status = "200-299,301,302,307,401,403,405,500"
 	c.Matcher.Time = ""
 	c.Matcher.Words = ""
 	c.Output.DebugLog = ""
@@ -372,7 +372,6 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.HTTP.ClientKey != "" {
 		conf.ClientKey = parseOpts.HTTP.ClientKey
 	}
-
 
 	//Prepare headers and make canonical
 	for _, v := range parseOpts.HTTP.Headers {
