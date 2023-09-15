@@ -42,6 +42,8 @@ type HTTPOptions struct {
 	Timeout           int      `json:"timeout"`
 	URL               string   `json:"url"`
 	Http2             bool     `json:"http2"`
+	ClientCert        string   `json:"client-cert"`
+	ClientKey         string   `json:"client-key"`
 }
 
 type GeneralOptions struct {
@@ -72,6 +74,7 @@ type GeneralOptions struct {
 
 type InputOptions struct {
 	DirSearchCompat        bool     `json:"dirsearch_compat"`
+	Encoders               []string `json:"encoders"`
 	Extensions             string   `json:"extensions"`
 	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments"`
 	InputMode              string   `json:"input_mode"`
@@ -156,6 +159,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.URL = ""
 	c.HTTP.Http2 = false
 	c.Input.DirSearchCompat = false
+	c.Input.Encoders = []string{}
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
 	c.Input.InputMode = "clusterbomb"
@@ -227,7 +231,14 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf("sniper mode only supports one input command"))
 		}
 	}
-
+	tmpEncoders := make(map[string]string)
+	for _, e := range parseOpts.Input.Encoders {
+		if strings.Contains(e, ":") {
+			key := strings.Split(e, ":")[0]
+			val := strings.Split(e, ":")[1]
+			tmpEncoders[key] = val
+		}
+	}
 	tmpWordlists := make([]string, 0)
 	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
@@ -267,19 +278,31 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			if conf.InputMode == "sniper" {
 				errs.Add(fmt.Errorf("sniper mode does not support wordlist keywords"))
 			} else {
-				conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+				newp := InputProviderConfig{
 					Name:    "wordlist",
 					Value:   wl[0],
 					Keyword: wl[1],
-				})
+				}
+				// Add encoders if set
+				enc, ok := tmpEncoders[wl[1]]
+				if ok {
+					newp.Encoders = enc
+				}
+				conf.InputProviders = append(conf.InputProviders, newp)
 			}
 		} else {
-			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+			newp := InputProviderConfig{
 				Name:     "wordlist",
 				Value:    wl[0],
 				Keyword:  "FUZZ",
 				Template: template,
-			})
+			}
+			// Add encoders if set
+			enc, ok := tmpEncoders["FUZZ"]
+			if ok {
+				newp.Encoders = enc
+			}
+			conf.InputProviders = append(conf.InputProviders, newp)
 		}
 		tmpWordlists = append(tmpWordlists, strings.Join(wl, ":"))
 	}
@@ -291,20 +314,30 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			if conf.InputMode == "sniper" {
 				errs.Add(fmt.Errorf("sniper mode does not support command keywords"))
 			} else {
-				conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+				newp := InputProviderConfig{
 					Name:    "command",
 					Value:   ic[0],
 					Keyword: ic[1],
-				})
+				}
+				enc, ok := tmpEncoders[ic[1]]
+				if ok {
+					newp.Encoders = enc
+				}
+				conf.InputProviders = append(conf.InputProviders, newp)
 				conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
 			}
 		} else {
-			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+			newp := InputProviderConfig{
 				Name:     "command",
 				Value:    ic[0],
 				Keyword:  "FUZZ",
 				Template: template,
-			})
+			}
+			enc, ok := tmpEncoders["FUZZ"]
+			if ok {
+				newp.Encoders = enc
+			}
+			conf.InputProviders = append(conf.InputProviders, newp)
 			conf.CommandKeywords = append(conf.CommandKeywords, "FUZZ")
 		}
 	}
@@ -331,6 +364,15 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.HTTP.SNI != "" {
 		conf.SNI = parseOpts.HTTP.SNI
 	}
+
+	// prepare cert
+	if parseOpts.HTTP.ClientCert != "" {
+		conf.ClientCert = parseOpts.HTTP.ClientCert
+	}
+	if parseOpts.HTTP.ClientKey != "" {
+		conf.ClientKey = parseOpts.HTTP.ClientKey
+	}
+
 
 	//Prepare headers and make canonical
 	for _, v := range parseOpts.HTTP.Headers {

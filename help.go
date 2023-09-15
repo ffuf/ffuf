@@ -54,7 +54,7 @@ func Usage() {
 		Description:   "Options controlling the HTTP request and its parts.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"H", "X", "b", "d", "r", "u", "raw", "recursion", "recursion-depth", "recursion-strategy", "replay-proxy", "timeout", "ignore-body", "x", "sni", "http2"},
+		ExpectedFlags: []string{"cc", "ck", "H", "X", "b", "d", "r", "u", "raw", "recursion", "recursion-depth", "recursion-strategy", "replay-proxy", "timeout", "ignore-body", "x", "sni", "http2"},
 	}
 	u_general := UsageSection{
 		Name:          "GENERAL OPTIONS",
@@ -89,7 +89,7 @@ func Usage() {
 		Description:   "Options for input data for fuzzing. Wordlists and input generators.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"D", "ic", "input-cmd", "input-num", "input-shell", "mode", "request", "request-proto", "e", "w"},
+		ExpectedFlags: []string{"D", "enc", "ic", "input-cmd", "input-num", "input-shell", "mode", "request", "request-proto", "e", "w"},
 	}
 	u_output := UsageSection{
 		Name:          "OUTPUT OPTIONS",

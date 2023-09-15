@@ -51,13 +51,14 @@ func (m *wordlistFlag) Set(value string) error {
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
-	var wordlists wordlistFlag
+	var wordlists, encoders wordlistFlag
 
 	cookies = opts.HTTP.Cookies
 	autocalibrationstrings = opts.General.AutoCalibrationStrings
 	headers = opts.HTTP.Headers
 	inputcommands = opts.Input.Inputcommands
 	wordlists = opts.Input.Wordlists
+	encoders = opts.Input.Encoders
 
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
@@ -89,6 +90,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
+	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
+	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
 	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
 	flag.StringVar(&opts.General.ScraperFile, "scraperfile", "", "Custom scraper file path")
@@ -134,6 +137,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Var(&headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.Var(&inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
+	flag.Var(&encoders, "enc", "Encoders for keywords, eg. 'FUZZ:urlencode b64encode'")
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -142,6 +146,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	opts.HTTP.Headers = headers
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
+	opts.Input.Encoders = encoders
 	return opts
 }
 

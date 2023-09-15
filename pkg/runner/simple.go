@@ -2,6 +2,7 @@ package runner
 
 import (
 	"bytes"
+	"compress/flate"
 	"compress/gzip"
 	"crypto/tls"
 	"fmt"
@@ -17,6 +18,8 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+
+	"github.com/andybalholm/brotli"
 )
 
 // Download results < 5MB
@@ -43,6 +46,13 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			proxyURL = http.ProxyURL(pu)
 		}
 	}
+	cert := []tls.Certificate{}
+
+	if conf.ClientCert != "" && conf.ClientKey != "" {
+		tmp, _ := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
+		cert = []tls.Certificate{tmp}
+	}
+
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
@@ -62,6 +72,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 				MinVersion:         tls.VersionTLS10,
 				Renegotiation:      tls.RenegotiateOnceAsClient,
 				ServerName:         conf.SNI,
+				Certificates:       cert,
 			},
 		}}
 
@@ -165,6 +176,18 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	var bodyReader io.ReadCloser
 	if httpresp.Header.Get("Content-Encoding") == "gzip" {
 		bodyReader, err = gzip.NewReader(httpresp.Body)
+		if err != nil {
+			// fallback to raw data
+			bodyReader = httpresp.Body
+		}
+	} else if httpresp.Header.Get("Content-Encoding") == "br" {
+		bodyReader = io.NopCloser(brotli.NewReader(httpresp.Body))
+		if err != nil {
+			// fallback to raw data
+			bodyReader = httpresp.Body
+		}
+	} else if httpresp.Header.Get("Content-Encoding") == "deflate" {
+		bodyReader = flate.NewReader(httpresp.Body)
 		if err != nil {
 			// fallback to raw data
 			bodyReader = httpresp.Body
