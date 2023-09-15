@@ -7,8 +7,8 @@
     - Fix markdown output file format
     - Fix csv output file format
     - Fixed divide by 0 error when setting rate limit to 0 manually.
+    - Automatic brotli and deflate decompression
 
-  
 - v2.0.0
   - New
     - Added a new, dynamic keyword `FFUFHASH` that generates hash from job configuration and wordlist position to map blind payloads back to the initial request.
