@@ -412,7 +412,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.runTask(input, position, true)
 		}
 		if os.IsTimeout(err) {
-			for name, _ := range j.Config.MatcherManager.GetMatchers() {
+			for name := range j.Config.MatcherManager.GetMatchers() {
 				if name == "time" {
 					inputmsg := ""
 					for k, v := range input {
@@ -422,7 +422,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 					return
 				}
 			}
-			for name, _ := range j.Config.MatcherManager.GetFilters() {
+			for name := range j.Config.MatcherManager.GetFilters() {
 				if name == "time" {
 					inputmsg := ""
 					for k, v := range input {
