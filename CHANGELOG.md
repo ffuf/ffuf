@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - autocalibration-strategy refactored to support extensible strategy configuration
     - New cli flag `-raw` to omit urlencoding for URIs
     - Integration with `github.com/ffuf/pencode` library, added `-enc` cli flag to do various in-fly encodings for input data
   - Changed

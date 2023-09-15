@@ -50,7 +50,8 @@ func (m *wordlistFlag) Set(value string) error {
 // ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
-	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
+
+  var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
 	var wordlists, encoders wordlistFlag
 
 	cookies = opts.HTTP.Cookies
@@ -92,7 +93,6 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
 	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
 	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
-	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
 	flag.StringVar(&opts.General.ScraperFile, "scraperfile", "", "Custom scraper file path")
 	flag.StringVar(&opts.General.Scrapers, "scrapers", opts.General.Scrapers, "Active scraper groups")
@@ -132,6 +132,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
 	flag.StringVar(&opts.Output.OutputFormat, "of", opts.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
 	flag.Var(&autocalibrationstrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
+	flag.Var(&autocalibrationstrategies, "acs", "Custom auto-calibration strategies. Can be used multiple times. Implies -ac")
 	flag.Var(&cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
 	flag.Var(&cookies, "cookie", "Cookie data (alias of -b)")
 	flag.Var(&headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
@@ -142,6 +143,12 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Parse()
 
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
+	if len(autocalibrationstrategies) > 0 {
+		opts.General.AutoCalibrationStrategies = []string {}
+		for _, strategy := range autocalibrationstrategies {
+			opts.General.AutoCalibrationStrategies = append(opts.General.AutoCalibrationStrategies, strings.Split(strategy, ",")...)
+		}
+	}
 	opts.HTTP.Cookies = cookies
 	opts.HTTP.Headers = headers
 	opts.Input.Inputcommands = inputcommands

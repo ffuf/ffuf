@@ -6,29 +6,78 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+	"encoding/json"
+	"path/filepath"
+	"os"
 )
+
+type AutocalibrationStrategy map[string][]string
 
 func (j *Job) autoCalibrationStrings() map[string][]string {
 	rand.Seed(time.Now().UnixNano())
 	cInputs := make(map[string][]string)
-	if len(j.Config.AutoCalibrationStrings) < 1 {
-		cInputs["basic_admin"] = append(cInputs["basic_admin"], "admin"+RandomString(16))
-		cInputs["basic_admin"] = append(cInputs["basic_admin"], "admin"+RandomString(8))
-		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+RandomString(16))
-		cInputs["htaccess"] = append(cInputs["htaccess"], ".htaccess"+RandomString(8))
-		cInputs["basic_random"] = append(cInputs["basic_random"], RandomString(16))
-		cInputs["basic_random"] = append(cInputs["basic_random"], RandomString(8))
-		if j.Config.AutoCalibrationStrategy == "advanced" {
-			// Add directory tests and .htaccess too
-			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+RandomString(16)+"/")
-			cInputs["admin_dir"] = append(cInputs["admin_dir"], "admin"+RandomString(8)+"/")
-			cInputs["random_dir"] = append(cInputs["random_dir"], RandomString(16)+"/")
-			cInputs["random_dir"] = append(cInputs["random_dir"], RandomString(8)+"/")
-		}
-	} else {
+
+	if len(j.Config.AutoCalibrationStrings) > 0 {
 		cInputs["custom"] = append(cInputs["custom"], j.Config.AutoCalibrationStrings...)
+		return cInputs
+		
 	}
+		
+	for _, strategy := range j.Config.AutoCalibrationStrategies {
+		jsonStrategy, err := os.ReadFile(filepath.Join(AUTOCALIBDIR, strategy+".json"))
+		if err != nil {
+			j.Output.Warning(fmt.Sprintf("Skipping strategy \"%s\" because of error: %s\n", strategy, err))
+			continue
+		}
+
+		tmpStrategy := AutocalibrationStrategy{}
+		err = json.Unmarshal(jsonStrategy, &tmpStrategy)
+		if err != nil {
+			j.Output.Warning(fmt.Sprintf("Skipping strategy \"%s\" because of error: %s\n", strategy, err))
+			continue
+		}
+		
+		cInputs = mergeMaps(cInputs, tmpStrategy)
+	}
+	
 	return cInputs
+}
+
+func setupDefaultAutocalibrationStrategies() error {
+	basic_strategy := AutocalibrationStrategy {
+		"basic_admin": []string{"admin"+RandomString(16), "admin"+RandomString(8)},
+		"htaccess": []string{".htaccess"+RandomString(16), ".htaccess"+RandomString(8)},
+		"basic_random": []string{RandomString(16), RandomString(8)},
+	}
+	basic_strategy_json, err := json.Marshal(basic_strategy)
+	if err != nil {
+		return err
+	}
+	
+	advanced_strategy := AutocalibrationStrategy {
+		"basic_admin": []string{"admin"+RandomString(16), "admin"+RandomString(8)},
+		"htaccess": []string{".htaccess"+RandomString(16), ".htaccess"+RandomString(8)},
+		"basic_random": []string{RandomString(16), RandomString(8)},
+		"admin_dir": []string{"admin"+RandomString(16)+"/", "admin"+RandomString(8)+"/"},
+		"random_dir": []string{RandomString(16)+"/", RandomString(8)+"/"},
+	}
+	advanced_strategy_json, err := json.Marshal(advanced_strategy)
+	if err != nil {
+		return err
+	}
+	
+	basic_strategy_file := filepath.Join(AUTOCALIBDIR, "basic.json")
+	if !FileExists(basic_strategy_file) {
+		err = os.WriteFile(filepath.Join(AUTOCALIBDIR, "basic.json"), basic_strategy_json, 0640)
+		return err
+	}
+	advanced_strategy_file := filepath.Join(AUTOCALIBDIR, "advanced.json")
+	if !FileExists(advanced_strategy_file) {
+		err = os.WriteFile(filepath.Join(AUTOCALIBDIR, "advanced.json"), advanced_strategy_json, 0640)
+		return err
+	}
+	
+	return nil
 }
 
 func (j *Job) calibrationRequest(inputs map[string][]byte) (Response, error) {
