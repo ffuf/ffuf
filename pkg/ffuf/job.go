@@ -416,7 +416,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				if name == "time" {
 					inputmsg := ""
 					for k, v := range input {
-						inputmsg = inputmsg + fmt.Sprintf("{} : {}  // ", k, v)
+						inputmsg = inputmsg + fmt.Sprintf("%s : %s  // ", k, v)
 					}
 					j.Output.Info("Timeout while 'time' matcher is active: " + inputmsg)
 					return
@@ -426,7 +426,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				if name == "time" {
 					inputmsg := ""
 					for k, v := range input {
-						inputmsg = inputmsg + fmt.Sprintf("{} : {}  // ", k, v)
+						inputmsg = inputmsg + fmt.Sprintf("%s : %s  // ", k, v)
 					}
 					j.Output.Info("Timeout while 'time' filter is active: " + inputmsg)
 					return
