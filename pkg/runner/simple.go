@@ -137,6 +137,11 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	req.Host = httpreq.Host
 	httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
+
+	if r.config.Raw {
+		httpreq.URL.Opaque = req.Url
+	}
+
 	for k, v := range req.Headers {
 		httpreq.Header.Set(k, v)
 	}
@@ -144,6 +149,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if len(r.config.OutputDirectory) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
 	}
+
 	httpresp, err := r.client.Do(httpreq)
 	if err != nil {
 		return ffuf.Response{}, err
