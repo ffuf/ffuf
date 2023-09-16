@@ -1,10 +1,16 @@
 ## Changelog
 - master
   - New
+  - Changed
+  
+- v2.1.0
+  - New
     - autocalibration-strategy refactored to support extensible strategy configuration
     - New cli flag `-raw` to omit urlencoding for URIs
+    - New cli flags `-ck` and `-cc` to enable the use of client side certificate authentication
     - Integration with `github.com/ffuf/pencode` library, added `-enc` cli flag to do various in-fly encodings for input data
   - Changed
+    - Fix multiline output
     - Explicitly allow TLS1.0 
     - Fix markdown output file format
     - Fix csv output file format
@@ -12,6 +18,7 @@
     - Automatic brotli and deflate decompression
     - Report if request times out when a time based matcher or filter is active
     - All 2XX status codes are now matched
+    - Allow adding "unused" wordlists in config file
 
 - v2.0.0
   - New
