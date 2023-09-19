@@ -61,6 +61,8 @@ func (i *interactive) handleInput(in []byte) {
 			for _, r := range i.Job.Output.GetCurrentResults() {
 				i.Job.Output.PrintResult(r)
 			}
+		case "quit":
+			i.Job.Quit()
 		case "savejson":
 			if len(args) < 2 {
 				i.Job.Output.Error("Please define the filename")
@@ -313,6 +315,7 @@ available commands:
  resume                   - resume current ffuf job (or: ENTER) 
  show                     - show results for the current job
  savejson [filename]      - save current matches to a file
+ quit                     - quit ffuf
  help                     - you are looking at it
 `
 	i.Job.Output.Raw(fmt.Sprintf(help, fc, fc, fl, fl, fw, fw, fs, fs, ft, ft, rate))

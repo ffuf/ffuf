@@ -226,6 +226,13 @@ func (j *Job) Resume() {
 	}
 }
 
+func (j *Job) Quit() {
+	if j.Paused {
+		j.pauseWg.Done()
+		j.Stop()
+	}
+}
+
 func (j *Job) startExecution() {
 	var wg sync.WaitGroup
 	wg.Add(1)
