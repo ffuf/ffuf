@@ -45,9 +45,7 @@ func (i *interactive) handleInput(in []byte) {
 		}
 	} else {
 		switch args[0] {
-		case "?":
-			i.printHelp()
-		case "help":
+		case "?", "help":
 			i.printHelp()
 		case "resume":
 			i.paused = false
@@ -164,9 +162,9 @@ func (i *interactive) handleInput(in []byte) {
 				i.appendFilter("time", args[1])
 				i.Job.Output.Info("New response time filter value set")
 			}
-		case "queueshow":
+		case "q", "queueshow":
 			i.printQueue()
-		case "queuedel":
+		case "qd", "queuedel":
 			if len(args) < 2 {
 				i.Job.Output.Error("Please define the index of a queued job to remove. Use \"queueshow\" for listing of jobs.")
 			} else if len(args) > 2 {
@@ -174,7 +172,7 @@ func (i *interactive) handleInput(in []byte) {
 			} else {
 				i.deleteQueue(args[1])
 			}
-		case "queueskip":
+		case "qs", "queueskip":
 			i.Job.SkipQueue()
 			i.Job.Output.Info("Skipping to the next queued job")
 		case "rate":

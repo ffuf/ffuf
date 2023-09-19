@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+  - Add `q`, `qd`, `qs` alias for `queueshow`, `queuedel` and `queueskip`
   - Changed
   
 - v2.1.0
