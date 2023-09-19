@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sort"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
@@ -169,10 +170,8 @@ func (i *interactive) handleInput(in []byte) {
 		case "queuedel":
 			if len(args) < 2 {
 				i.Job.Output.Error("Please define the index of a queued job to remove. Use \"queueshow\" for listing of jobs.")
-			} else if len(args) > 2 {
-				i.Job.Output.Error("Too many arguments for \"queuedel\"")
 			} else {
-				i.deleteQueue(args[1])
+				i.deleteQueue(args[1:])
 			}
 		case "queueskip":
 			i.Job.SkipQueue()
@@ -253,19 +252,35 @@ func (i *interactive) printQueue() {
 	}
 }
 
-func (i *interactive) deleteQueue(in string) {
-	index, err := strconv.Atoi(in)
-	if err != nil {
-		i.Job.Output.Warning(fmt.Sprintf("Not a number: %s", in))
-	} else {
-		if index < 0 || index > len(i.Job.QueuedJobs())-1 {
-			i.Job.Output.Warning("No such queued job. Use \"queueshow\" to list the jobs in queue")
-		} else if index == 0 {
-			i.Job.Output.Warning("Cannot delete the currently running job. Use \"queueskip\" to advance to the next one")
-		} else {
-			i.Job.DeleteQueueItem(index)
-			i.Job.Output.Info("Job successfully deleted!")
+func (i *interactive) deleteQueue(in []string) {
+	sort.Slice(in, func(k, l int) bool {
+		ink, err := strconv.Atoi(in[k])
+		if err != nil {
+			// Do not log, it will be logged later
+			ink = -1
 		}
+		inl, err := strconv.Atoi(in[l])
+		if err != nil {
+			// Do not log, it will be logged later
+			inl = -1
+		}
+		return ink > inl
+	})
+	for _, in_elt := range in {
+		index, err := strconv.Atoi(in_elt)
+		if err != nil {
+			// That's where the wrong input are logged
+			i.Job.Output.Warning(fmt.Sprintf("Not a number: %s", in_elt))
+		} else {
+			if index < 0 || index > len(i.Job.QueuedJobs())-1 {
+				i.Job.Output.Warning("No such queued job. Use \"queueshow\" to list the jobs in queue")
+			} else if index == 0 {
+				i.Job.Output.Warning("Cannot delete the currently running job. Use \"queueskip\" to advance to the next one")
+			} else {
+				i.Job.DeleteQueueItem(index)
+				i.Job.Output.Info("Job successfully deleted!")
+			}
+	}
 	}
 }
 func (i *interactive) printBanner() {

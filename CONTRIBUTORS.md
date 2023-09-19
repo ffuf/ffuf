@@ -42,6 +42,7 @@
 * [penguinxoxo](https://github.com/penguinxoxo)
 * [p0dalirius](https://github.com/p0dalirius)
 * [putsi](https://github.com/putsi)
+* [S1m](https://github.com/p1gp1g)
 * [SakiiR](https://github.com/SakiiR)
 * [seblw](https://github.com/seblw)
 * [Serizao](https://github.com/Serizao)
