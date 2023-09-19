@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Allow deletion of multiple queues with a single command
   
 - v2.1.0
   - New
