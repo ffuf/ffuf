@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Add `quit` command to interactive mode
   
 - v2.1.0
   - New
