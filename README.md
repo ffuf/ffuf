@@ -274,7 +274,7 @@ available commands:
  ft   [value]             - (re)configure time filter 
  rate [value]             - adjust rate of requests per second (active: 0)
  queueshow                - show job queue
- queuedel [number]        - delete a job in the queue
+ queuedel [number] [...]  - delete jobs in the queue
  queueskip                - advance to the next queued job
  restart                  - restart and resume the current ffuf job
  resume                   - resume current ffuf job (or: ENTER) 
