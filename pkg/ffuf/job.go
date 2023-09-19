@@ -294,11 +294,11 @@ func (j *Job) interruptMonitor() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		for range sigChan {
-			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
-			// resume if paused
+			// ignore if paused
 			if j.Paused {
-				j.pauseWg.Done()
+				return
 			}
+			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
 			// Stop the job
 			j.Stop()
 		}
