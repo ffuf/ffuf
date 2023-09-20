@@ -304,9 +304,9 @@ available commands:
  aft  [value]             - append to time filter %s
  ft   [value]             - (re)configure time filter %s
  rate [value]             - adjust rate of requests per second %s
- queueshow                - show job queue
- queuedel [number]        - delete a job in the queue
- queueskip                - advance to the next queued job
+ q                        - show job queue
+ qd [number]              - delete a job in the queue
+ qs                       - advance to the next queued job
  restart                  - restart and resume the current ffuf job
  resume                   - resume current ffuf job (or: ENTER) 
  show                     - show results for the current job
