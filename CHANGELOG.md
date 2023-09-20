@@ -2,6 +2,7 @@
 - master
   - New
   - Changed
+    - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
   
 - v2.1.0
   - New
