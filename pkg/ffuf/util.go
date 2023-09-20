@@ -131,7 +131,16 @@ func mergeMaps(m1 map[string][]string, m2 map[string][]string) map[string][]stri
 		merged[k] = v
 	}
 	for key, value := range m2 {
-		merged[key] = value
+		if _, ok := merged[key]; !ok {
+			// Key not found, add it
+			merged[key] = value
+			continue
+		}
+		for _, entry := range value {
+			if !StrInSlice(entry, merged[key]) {
+				merged[key] = append(merged[key], entry)
+			}
+		}
 	}
 	return merged
 }

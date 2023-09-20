@@ -51,7 +51,7 @@ func (m *wordlistFlag) Set(value string) error {
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 
-  var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
+	var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
 	var wordlists, encoders wordlistFlag
 
 	cookies = opts.HTTP.Cookies
@@ -144,7 +144,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
 	if len(autocalibrationstrategies) > 0 {
-		opts.General.AutoCalibrationStrategies = []string {}
+		opts.General.AutoCalibrationStrategies = []string{}
 		for _, strategy := range autocalibrationstrategies {
 			opts.General.AutoCalibrationStrategies = append(opts.General.AutoCalibrationStrategies, strings.Split(strategy, ",")...)
 		}
