@@ -453,7 +453,11 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	j.pauseWg.Wait()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
-	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
+	tempInput := make(map[string][]byte)
+	for k, v := range input {
+		tempInput[k] = v
+	}
+	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), tempInput)
 
 	// Handle scraper actions
 	if j.Scraper != nil {
