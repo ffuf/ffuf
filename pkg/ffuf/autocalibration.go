@@ -195,7 +195,6 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 					}
 				}
 				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "size", strconv.FormatInt(baselineSize, 10))
-				return nil
 			} else {
 				// Check if already filtered
 				for _, f := range j.Config.MatcherManager.GetFilters() {
@@ -206,7 +205,6 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 					}
 				}
 				_ = j.Config.MatcherManager.AddFilter("size", strconv.FormatInt(baselineSize, 10), false)
-				return nil
 			}
 		}
 
@@ -220,25 +218,9 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		}
 		if wordsMatch {
 			if perHost {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
 				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "word", strconv.FormatInt(baselineWords, 10))
 				return nil
 			} else {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.GetFilters() {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
 				_ = j.Config.MatcherManager.AddFilter("word", strconv.FormatInt(baselineWords, 10), false)
 				return nil
 			}
@@ -254,25 +236,9 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		}
 		if linesMatch {
 			if perHost {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
 				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "line", strconv.FormatInt(baselineLines, 10))
 				return nil
 			} else {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.GetFilters() {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
 				_ = j.Config.MatcherManager.AddFilter("line", strconv.FormatInt(baselineLines, 10), false)
 				return nil
 			}
