@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+	"github.com/gookit/color"
 )
 
 const (
@@ -24,6 +25,12 @@ const (
           \/_/    \/_/   \/___/    \/_/       
 `
 	BANNER_SEP = "________________________________________________"
+)
+
+var (
+	green  = []*color.Style256{color.S256(46), color.S256(47), color.S256(48), color.S256(49), color.S256(50), color.S256(51)}
+	pink   = []*color.Style256{color.S256(214), color.S256(215), color.S256(216), color.S256(217), color.S256(218), color.S256(219)}
+	yellow = []*color.Style256{color.S256(226), color.S256(227), color.S256(228), color.S256(229), color.S256(230), color.S256(231)}
 )
 
 type Stdoutput struct {
@@ -46,9 +53,35 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	return &outp
 }
 
+func gradient(text string, coloRR []*color.Style256) string {
+	lines := strings.Split(text, "\n")
+
+	var output string
+
+	t := len(text) / 6
+	i := 0
+	j := 0
+	for l := 0; l < len(lines); l++ {
+		str := strings.Split(lines[l], "")
+		for _, x := range str {
+			j++
+			output += coloRR[i].Sprint(x)
+			if j > t {
+				i++
+				j = 0
+			}
+		}
+		if len(lines) != 0 {
+			output += "\n"
+		}
+	}
+
+	return strings.TrimRight(output, "\n")
+}
+
 func (s *Stdoutput) Banner() {
 	version := strings.ReplaceAll(ffuf.Version(), "<3", fmt.Sprintf("%s<3%s", ANSI_RED, ANSI_CLEAR))
-	fmt.Fprintf(os.Stderr, "%s\n       v%s\n%s\n\n", BANNER_HEADER, version, BANNER_SEP)
+	fmt.Fprintf(os.Stderr, "%s\n       %s\n%s\n\n", gradient(BANNER_HEADER, green), gradient("v"+version, green), gradient(BANNER_SEP, green))
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
 
@@ -137,7 +170,7 @@ func (s *Stdoutput) Banner() {
 	for _, f := range s.config.MatcherManager.GetFilters() {
 		printOption([]byte("Filter"), []byte(f.ReprVerbose()))
 	}
-	fmt.Fprintf(os.Stderr, "%s\n\n", BANNER_SEP)
+	fmt.Fprintf(os.Stderr, "%s\n\n", gradient(BANNER_SEP, green))
 }
 
 // Reset resets the result slice
@@ -416,10 +449,10 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	reslines := ""
 	if s.config.Verbose {
-		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
+		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, gradient(res.Url, green))
 		redirectLocation := res.RedirectLocation
 		if redirectLocation != "" {
-			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
+			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, gradient(redirectLocation, pink))
 		}
 	}
 	if res.ResultFile != "" {
@@ -466,16 +499,16 @@ func (s *Stdoutput) colorize(status int64) string {
 	}
 	colorCode := ANSI_CLEAR
 	if status >= 200 && status < 300 {
-		colorCode = ANSI_GREEN
+		colorCode = color.Green.Sprint(strconv.FormatInt(status, 10))
 	}
 	if status >= 300 && status < 400 {
-		colorCode = ANSI_BLUE
+		colorCode = color.Blue.Sprint(strconv.FormatInt(status, 10))
 	}
 	if status >= 400 && status < 500 {
-		colorCode = ANSI_YELLOW
+		colorCode = color.Yellow.Sprint(strconv.FormatInt(status, 10))
 	}
 	if status >= 500 && status < 600 {
-		colorCode = ANSI_RED
+		colorCode = color.Red.Sprint(strconv.FormatInt(status, 10))
 	}
 	return colorCode
 }
