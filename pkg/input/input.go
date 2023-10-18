@@ -2,12 +2,15 @@ package input
 
 import (
 	"fmt"
-
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+	"strings"
+
+	"github.com/ffuf/pencode/pkg/pencode"
 )
 
 type MainInputProvider struct {
 	Providers   []ffuf.InternalInputProvider
+	Encoders    map[string]*pencode.Chain
 	Config      *ffuf.Config
 	position    int
 	msbIterator int
@@ -25,7 +28,7 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
 		return &MainInputProvider{}, errs
 	}
-	mainip := MainInputProvider{Config: conf, msbIterator: 0}
+	mainip := MainInputProvider{Config: conf, msbIterator: 0, Encoders: make(map[string]*pencode.Chain)}
 	// Initialize the correct inputprovider
 	for _, v := range conf.InputProviders {
 		err := mainip.AddProvider(v)
@@ -48,13 +51,21 @@ func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error
 		}
 		i.Providers = append(i.Providers, newwl)
 	}
+	if len(provider.Encoders) > 0 {
+		chain := pencode.NewChain()
+		err := chain.Initialize(strings.Split(strings.TrimSpace(provider.Encoders), " "))
+		if err != nil {
+			return err
+		}
+		i.Encoders[provider.Keyword] = chain
+	}
 	return nil
 }
 
 // ActivateKeywords enables / disables wordlists based on list of active keywords
 func (i *MainInputProvider) ActivateKeywords(kws []string) {
 	for _, p := range i.Providers {
-		if sliceContains(kws, p.Keyword()) {
+		if ffuf.StrInSlice(p.Keyword(), kws) {
 			p.Active()
 		} else {
 			p.Disable()
@@ -102,6 +113,18 @@ func (i *MainInputProvider) Value() map[string][]byte {
 	}
 	if i.Config.InputMode == "pitchfork" {
 		retval = i.pitchforkValue()
+	}
+	if len(i.Encoders) > 0 {
+		for key, val := range retval {
+			chain, ok := i.Encoders[key]
+			if ok {
+				tmpVal, err := chain.Encode([]byte(val))
+				if err != nil {
+					fmt.Printf("ERROR: %s\n", err)
+				}
+				retval[key] = tmpVal
+			}
+		}
 	}
 	return retval
 }
@@ -231,12 +254,3 @@ func (i *MainInputProvider) Total() int {
 	return count
 }
 
-// sliceContains is a helper function that returns true if a string is included in a string slice
-func sliceContains(sslice []string, str string) bool {
-	for _, v := range sslice {
-		if v == str {
-			return true
-		}
-	}
-	return false
-}

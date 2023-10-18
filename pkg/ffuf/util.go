@@ -93,6 +93,14 @@ func CheckOrCreateConfigDir() error {
 		return err
 	}
 	err = createConfigDir(SCRAPERDIR)
+	if err != nil {
+		return err
+	}
+	err = createConfigDir(AUTOCALIBDIR)
+	if err != nil {
+		return err
+	}
+	err = setupDefaultAutocalibrationStrategies()
 	return err
 }
 
@@ -115,4 +123,24 @@ func StrInSlice(key string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func mergeMaps(m1 map[string][]string, m2 map[string][]string) map[string][]string {
+	merged := make(map[string][]string)
+	for k, v := range m1 {
+		merged[k] = v
+	}
+	for key, value := range m2 {
+		if _, ok := merged[key]; !ok {
+			// Key not found, add it
+			merged[key] = value
+			continue
+		}
+		for _, entry := range value {
+			if !StrInSlice(entry, merged[key]) {
+				merged[key] = append(merged[key], entry)
+			}
+		}
+	}
+	return merged
 }

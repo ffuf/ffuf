@@ -33,6 +33,7 @@ type HTTPOptions struct {
 	IgnoreBody        bool     `json:"ignore_body"`
 	Method            string   `json:"method"`
 	ProxyURL          string   `json:"proxy_url"`
+	Raw               bool     `json:"raw"`
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
 	RecursionStrategy string   `json:"recursion_strategy"`
@@ -41,36 +42,39 @@ type HTTPOptions struct {
 	Timeout           int      `json:"timeout"`
 	URL               string   `json:"url"`
 	Http2             bool     `json:"http2"`
+	ClientCert        string   `json:"client-cert"`
+	ClientKey         string   `json:"client-key"`
 }
 
 type GeneralOptions struct {
-	AutoCalibration         bool     `json:"autocalibration"`
-	AutoCalibrationKeyword  string   `json:"autocalibration_keyword"`
-	AutoCalibrationPerHost  bool     `json:"autocalibration_per_host"`
-	AutoCalibrationStrategy string   `json:"autocalibration_strategy"`
-	AutoCalibrationStrings  []string `json:"autocalibration_strings"`
-	Colors                  bool     `json:"colors"`
-	ConfigFile              string   `toml:"-" json:"config_file"`
-	Delay                   string   `json:"delay"`
-	Json                    bool     `json:"json"`
-	MaxTime                 int      `json:"maxtime"`
-	MaxTimeJob              int      `json:"maxtime_job"`
-	Noninteractive          bool     `json:"noninteractive"`
-	Quiet                   bool     `json:"quiet"`
-	Rate                    int      `json:"rate"`
-	ScraperFile             string   `json:"scraperfile"`
-	Scrapers                string   `json:"scrapers"`
-	Searchhash              string   `json:"-"`
-	ShowVersion             bool     `toml:"-" json:"-"`
-	StopOn403               bool     `json:"stop_on_403"`
-	StopOnAll               bool     `json:"stop_on_all"`
-	StopOnErrors            bool     `json:"stop_on_errors"`
-	Threads                 int      `json:"threads"`
-	Verbose                 bool     `json:"verbose"`
+	AutoCalibration           bool     `json:"autocalibration"`
+	AutoCalibrationKeyword    string   `json:"autocalibration_keyword"`
+	AutoCalibrationPerHost    bool     `json:"autocalibration_per_host"`
+	AutoCalibrationStrategies []string `json:"autocalibration_strategies"`
+	AutoCalibrationStrings    []string `json:"autocalibration_strings"`
+	Colors                    bool     `json:"colors"`
+	ConfigFile                string   `toml:"-" json:"config_file"`
+	Delay                     string   `json:"delay"`
+	Json                      bool     `json:"json"`
+	MaxTime                   int      `json:"maxtime"`
+	MaxTimeJob                int      `json:"maxtime_job"`
+	Noninteractive            bool     `json:"noninteractive"`
+	Quiet                     bool     `json:"quiet"`
+	Rate                      int      `json:"rate"`
+	ScraperFile               string   `json:"scraperfile"`
+	Scrapers                  string   `json:"scrapers"`
+	Searchhash                string   `json:"-"`
+	ShowVersion               bool     `toml:"-" json:"-"`
+	StopOn403                 bool     `json:"stop_on_403"`
+	StopOnAll                 bool     `json:"stop_on_all"`
+	StopOnErrors              bool     `json:"stop_on_errors"`
+	Threads                   int      `json:"threads"`
+	Verbose                   bool     `json:"verbose"`
 }
 
 type InputOptions struct {
 	DirSearchCompat        bool     `json:"dirsearch_compat"`
+	Encoders               []string `json:"encoders"`
 	Extensions             string   `json:"extensions"`
 	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments"`
 	InputMode              string   `json:"input_mode"`
@@ -122,7 +126,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Words = ""
 	c.General.AutoCalibration = false
 	c.General.AutoCalibrationKeyword = "FUZZ"
-	c.General.AutoCalibrationStrategy = "basic"
+	c.General.AutoCalibrationStrategies = []string{"basic"}
 	c.General.Colors = false
 	c.General.Delay = ""
 	c.General.Json = false
@@ -145,6 +149,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
+	c.HTTP.Raw = false
 	c.HTTP.Recursion = false
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
@@ -154,6 +159,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.URL = ""
 	c.HTTP.Http2 = false
 	c.Input.DirSearchCompat = false
+	c.Input.Encoders = []string{}
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
 	c.Input.InputMode = "clusterbomb"
@@ -164,7 +170,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
-	c.Matcher.Status = "200,204,301,302,307,401,403,405,500"
+	c.Matcher.Status = "200-299,301,302,307,401,403,405,500"
 	c.Matcher.Time = ""
 	c.Matcher.Words = ""
 	c.Output.DebugLog = ""
@@ -225,7 +231,14 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf("sniper mode only supports one input command"))
 		}
 	}
-
+	tmpEncoders := make(map[string]string)
+	for _, e := range parseOpts.Input.Encoders {
+		if strings.Contains(e, ":") {
+			key := strings.Split(e, ":")[0]
+			val := strings.Split(e, ":")[1]
+			tmpEncoders[key] = val
+		}
+	}
 	tmpWordlists := make([]string, 0)
 	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
@@ -265,19 +278,31 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			if conf.InputMode == "sniper" {
 				errs.Add(fmt.Errorf("sniper mode does not support wordlist keywords"))
 			} else {
-				conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+				newp := InputProviderConfig{
 					Name:    "wordlist",
 					Value:   wl[0],
 					Keyword: wl[1],
-				})
+				}
+				// Add encoders if set
+				enc, ok := tmpEncoders[wl[1]]
+				if ok {
+					newp.Encoders = enc
+				}
+				conf.InputProviders = append(conf.InputProviders, newp)
 			}
 		} else {
-			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+			newp := InputProviderConfig{
 				Name:     "wordlist",
 				Value:    wl[0],
 				Keyword:  "FUZZ",
 				Template: template,
-			})
+			}
+			// Add encoders if set
+			enc, ok := tmpEncoders["FUZZ"]
+			if ok {
+				newp.Encoders = enc
+			}
+			conf.InputProviders = append(conf.InputProviders, newp)
 		}
 		tmpWordlists = append(tmpWordlists, strings.Join(wl, ":"))
 	}
@@ -289,20 +314,30 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			if conf.InputMode == "sniper" {
 				errs.Add(fmt.Errorf("sniper mode does not support command keywords"))
 			} else {
-				conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+				newp := InputProviderConfig{
 					Name:    "command",
 					Value:   ic[0],
 					Keyword: ic[1],
-				})
+				}
+				enc, ok := tmpEncoders[ic[1]]
+				if ok {
+					newp.Encoders = enc
+				}
+				conf.InputProviders = append(conf.InputProviders, newp)
 				conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
 			}
 		} else {
-			conf.InputProviders = append(conf.InputProviders, InputProviderConfig{
+			newp := InputProviderConfig{
 				Name:     "command",
 				Value:    ic[0],
 				Keyword:  "FUZZ",
 				Template: template,
-			})
+			}
+			enc, ok := tmpEncoders["FUZZ"]
+			if ok {
+				newp.Encoders = enc
+			}
+			conf.InputProviders = append(conf.InputProviders, newp)
 			conf.CommandKeywords = append(conf.CommandKeywords, "FUZZ")
 		}
 	}
@@ -328,6 +363,14 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	// Prepare SNI
 	if parseOpts.HTTP.SNI != "" {
 		conf.SNI = parseOpts.HTTP.SNI
+	}
+
+	// prepare cert
+	if parseOpts.HTTP.ClientCert != "" {
+		conf.ClientCert = parseOpts.HTTP.ClientCert
+	}
+	if parseOpts.HTTP.ClientKey != "" {
+		conf.ClientKey = parseOpts.HTTP.ClientKey
 	}
 
 	//Prepare headers and make canonical
@@ -422,8 +465,16 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
 		conf.AutoCalibrationStrings = parseOpts.General.AutoCalibrationStrings
 	}
+	// Auto-calibration strategies
+	if len(parseOpts.General.AutoCalibrationStrategies) > 0 {
+		conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
+	}
 	// Using -acc implies -ac
 	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
+		conf.AutoCalibration = true
+	}
+	// Using -acs implies -ac
+	if len(parseOpts.General.AutoCalibrationStrategies) > 0 {
 		conf.AutoCalibration = true
 	}
 
@@ -472,12 +523,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
+	conf.Raw = parseOpts.HTTP.Raw
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
-	conf.AutoCalibrationStrategy = parseOpts.General.AutoCalibrationStrategy
+	conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
@@ -526,19 +578,25 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	conf.CommandLine = strings.Join(os.Args, " ")
 
+	newInputProviders := []InputProviderConfig{}
 	for _, provider := range conf.InputProviders {
 		if provider.Template != "" {
 			if !templatePresent(provider.Template, &conf) {
 				errmsg := fmt.Sprintf("Template %s defined, but not found in pairs in headers, method, URL or POST data.", provider.Template)
 				errs.Add(fmt.Errorf(errmsg))
+			} else {
+				newInputProviders = append(newInputProviders, provider)
 			}
 		} else {
 			if !keywordPresent(provider.Keyword, &conf) {
 				errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-				errs.Add(fmt.Errorf(errmsg))
+				_, _ = fmt.Fprintf(os.Stderr, "%s\n", fmt.Errorf(errmsg))
+			} else {
+				newInputProviders = append(newInputProviders, provider)
 			}
 		}
 	}
+	conf.InputProviders = newInputProviders
 
 	// If sniper mode, ensure there is no FUZZ keyword
 	if conf.InputMode == "sniper" {

@@ -150,16 +150,19 @@ parameter.
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).
 
 ```
-Fuzz Faster U Fool - v2.0.0
+Fuzz Faster U Fool - v2.1.0
 
 HTTP OPTIONS:
   -H                  Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
   -X                  HTTP method to use
   -b                  Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
+  -cc                 Client cert for authentication. Client key needs to be defined as well for this to work
+  -ck                 Client key for authentication. Client certificate needs to be defined as well for this to work
   -d                  POST data
   -http2              Use HTTP2 protocol (default: false)
   -ignore-body        Do not fetch the response content. (default: false)
   -r                  Follow redirects (default: false)
+  -raw                Do not encode URI (default: false)
   -recursion          Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
   -recursion-depth    Maximum recursion depth. (default: 0)
   -recursion-strategy Recursion strategy: "default" for a redirect based, and "greedy" to recurse on all matches (default: default)
@@ -175,7 +178,7 @@ GENERAL OPTIONS:
   -acc                Custom auto-calibration string. Can be used multiple times. Implies -ac
   -ach                Per host autocalibration (default: false)
   -ack                Autocalibration keyword (default: FUZZ)
-  -acs                Autocalibration strategy: "basic" or "advanced" (default: basic)
+  -acs                Custom auto-calibration strategies. Can be used multiple times. Implies -ac
   -c                  Colorize output. (default: false)
   -config             Load configuration from a file
   -json               JSON output, printing newline-delimited JSON records (default: false)
@@ -195,7 +198,7 @@ GENERAL OPTIONS:
   -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:
-  -mc                 Match HTTP status codes, or "all" for everything. (default: 200,204,301,302,307,401,403,405,500)
+  -mc                 Match HTTP status codes, or "all" for everything. (default: 200-299,301,302,307,401,403,405,500)
   -ml                 Match amount of lines in response
   -mmode              Matcher set operator. Either of: and, or (default: or)
   -mr                 Match regexp
@@ -215,6 +218,7 @@ FILTER OPTIONS:
 INPUT OPTIONS:
   -D                  DirSearch wordlist compatibility mode. Used in conjunction with -e flag. (default: false)
   -e                  Comma separated list of extensions. Extends FUZZ keyword.
+  -enc                Encoders for keywords, eg. 'FUZZ:urlencode b64encode'
   -ic                 Ignore wordlist comments (default: false)
   -input-cmd          Command producing the input. --input-num is required when using this input method. Overrides -w.
   -input-num          Number of inputs to test. Used in conjunction with --input-cmd. (default: 100)

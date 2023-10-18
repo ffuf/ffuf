@@ -50,14 +50,16 @@ func (m *wordlistFlag) Set(value string) error {
 // ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
-	var cookies, autocalibrationstrings, headers, inputcommands multiStringFlag
-	var wordlists wordlistFlag
+
+	var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
+	var wordlists, encoders wordlistFlag
 
 	cookies = opts.HTTP.Cookies
 	autocalibrationstrings = opts.General.AutoCalibrationStrings
 	headers = opts.HTTP.Headers
 	inputcommands = opts.Input.Inputcommands
 	wordlists = opts.Input.Wordlists
+	encoders = opts.Input.Encoders
 
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
@@ -76,6 +78,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&opts.General.Verbose, "v", opts.General.Verbose, "Verbose output, printing full URL and redirect location (if any) with the results.")
 	flag.BoolVar(&opts.HTTP.FollowRedirects, "r", opts.HTTP.FollowRedirects, "Follow redirects")
 	flag.BoolVar(&opts.HTTP.IgnoreBody, "ignore-body", opts.HTTP.IgnoreBody, "Do not fetch the response content.")
+	flag.BoolVar(&opts.HTTP.Raw, "raw", opts.HTTP.Raw, "Do not encode URI")
 	flag.BoolVar(&opts.HTTP.Recursion, "recursion", opts.HTTP.Recursion, "Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it.")
 	flag.BoolVar(&opts.HTTP.Http2, "http2", opts.HTTP.Http2, "Use HTTP2 protocol")
 	flag.BoolVar(&opts.Input.DirSearchCompat, "D", opts.Input.DirSearchCompat, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
@@ -88,7 +91,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
-	flag.StringVar(&opts.General.AutoCalibrationStrategy, "acs", opts.General.AutoCalibrationStrategy, "Autocalibration strategy: \"basic\" or \"advanced\"")
+	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
+	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
 	flag.StringVar(&opts.General.ScraperFile, "scraperfile", "", "Custom scraper file path")
 	flag.StringVar(&opts.General.Scrapers, "scrapers", opts.General.Scrapers, "Active scraper groups")
@@ -128,19 +132,28 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
 	flag.StringVar(&opts.Output.OutputFormat, "of", opts.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
 	flag.Var(&autocalibrationstrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
+	flag.Var(&autocalibrationstrategies, "acs", "Custom auto-calibration strategies. Can be used multiple times. Implies -ac")
 	flag.Var(&cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
 	flag.Var(&cookies, "cookie", "Cookie data (alias of -b)")
 	flag.Var(&headers, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
 	flag.Var(&inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
+	flag.Var(&encoders, "enc", "Encoders for keywords, eg. 'FUZZ:urlencode b64encode'")
 	flag.Usage = Usage
 	flag.Parse()
 
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
+	if len(autocalibrationstrategies) > 0 {
+		opts.General.AutoCalibrationStrategies = []string{}
+		for _, strategy := range autocalibrationstrategies {
+			opts.General.AutoCalibrationStrategies = append(opts.General.AutoCalibrationStrategies, strings.Split(strategy, ",")...)
+		}
+	}
 	opts.HTTP.Cookies = cookies
 	opts.HTTP.Headers = headers
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
+	opts.Input.Encoders = encoders
 	return opts
 }
 
