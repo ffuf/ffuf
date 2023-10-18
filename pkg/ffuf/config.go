@@ -64,7 +64,7 @@ type Config struct {
 	Url                       string                `json:"url"`
 	Verbose                   bool                  `json:"verbose"`
 	Wordlists                 []string              `json:"wordlists"`
-	Http2                     bool                  `json:"http2"`
+	NoHttp2                   bool                  `json:"nohttp2"`
 	ClientCert                string                `json:"client-cert"`
 	ClientKey                 string                `json:"client-key"`
 }
@@ -125,7 +125,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Url = ""
 	conf.Verbose = false
 	conf.Wordlists = []string{}
-	conf.Http2 = false
+	conf.NoHttp2 = false
 	return conf
 }
 

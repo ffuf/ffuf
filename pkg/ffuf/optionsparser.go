@@ -41,7 +41,7 @@ type HTTPOptions struct {
 	SNI               string   `json:"sni"`
 	Timeout           int      `json:"timeout"`
 	URL               string   `json:"url"`
-	Http2             bool     `json:"http2"`
+	NoHttp2           bool     `json:"nohttp2"`
 	ClientCert        string   `json:"client-cert"`
 	ClientKey         string   `json:"client-key"`
 }
@@ -157,7 +157,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Timeout = 10
 	c.HTTP.SNI = ""
 	c.HTTP.URL = ""
-	c.HTTP.Http2 = false
+	c.HTTP.NoHttp2 = false
 	c.Input.DirSearchCompat = false
 	c.Input.Encoders = []string{}
 	c.Input.Extensions = ""
@@ -537,7 +537,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Noninteractive = parseOpts.General.Noninteractive
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
-	conf.Http2 = parseOpts.HTTP.Http2
+	conf.NoHttp2 = parseOpts.HTTP.NoHttp2
 
 	// Check that fmode and mmode have sane values
 	valid_opmodes := []string{"and", "or"}
