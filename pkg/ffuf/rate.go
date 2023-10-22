@@ -19,15 +19,13 @@ func NewRateThrottle(conf *Config) *RateThrottle {
 		Config:         conf,
 		lastAdjustment: time.Now(),
 	}
+
 	if conf.Rate > 0 {
 		r.rateCounter = ring.New(int(conf.Rate * 5))
-	} else {
-		r.rateCounter = ring.New(conf.Threads * 5)
-	}
-	if conf.Rate > 0 {
 		ratemicros := 1000000 / conf.Rate
 		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	} else {
+		r.rateCounter = ring.New(conf.Threads * 5)
 		//Million rps is probably a decent hardcoded upper speedlimit
 		r.RateLimiter = time.NewTicker(time.Microsecond * 1)
 	}
@@ -72,10 +70,17 @@ func (r *RateThrottle) ChangeRate(rate int) {
 	}
 
 	r.RateLimiter.Stop()
-	r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
+	if rate > 0 {
+		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
+		// reset the rate counter
+		r.rateCounter = ring.New(rate * 5)
+	} else {
+		r.RateLimiter = time.NewTicker(time.Microsecond * 1)
+		// reset the rate counter
+		r.rateCounter = ring.New(r.Config.Threads * 5)
+	}
+
 	r.Config.Rate = int64(rate)
-	// reset the rate counter
-	r.rateCounter = ring.New(rate * 5)
 }
 
 // rateTick adds a new duration measurement tick to rate counter
