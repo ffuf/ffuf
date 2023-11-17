@@ -169,20 +169,20 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 
 	dur := time.Since(status.StartedAt)
 	runningSecs := int(dur / time.Second)
-	//var reqRate int64
+	var reqRate int64
 	if runningSecs > 0 {
-		//reqRate = status.ReqSec
+		reqRate = status.ReqSec
 	} else {
-		//reqRate = 0
+		reqRate = 0
 	}
 
 	hours := dur / time.Hour
 	dur -= hours * time.Hour
 	mins := dur / time.Minute
 	dur -= mins * time.Minute
-	//secs := dur / time.Second
+	secs := dur / time.Second
 
-	//fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Info(infostring string) {
