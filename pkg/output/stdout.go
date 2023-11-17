@@ -369,17 +369,9 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 }
 
 func (s *Stdoutput) PrintResult(res ffuf.Result) {
-	switch {
-	case s.config.Json:
-		s.resultJson(res)
-	case s.config.Quiet:
-		s.resultQuiet(res)
-	case len(s.fuzzkeywords) > 1 || s.config.Verbose || len(s.config.OutputDirectory) > 0 || len(res.ScraperData) > 0:
-		// Print a multi-line result (when using multiple input keywords and wordlists)
-		s.resultMultiline(res)
-	default:
-		s.resultNormal(res)
-	}
+    // Use the following line to format the output as per your requirements
+    output := fmt.Sprintf("%d         %d        %s", res.StatusCode, res.ContentLength, res.Url)
+    fmt.Println(output)
 }
 
 func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
