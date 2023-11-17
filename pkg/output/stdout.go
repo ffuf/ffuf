@@ -368,10 +368,26 @@ func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
 	return fileName
 }
 
+func colorizeStatus(status int64) string {
+	switch {
+	case status >= 200 && status < 300:
+		return ANSI_GREEN
+	case status >= 300 && status < 400:
+		return ANSI_BLUE
+	case status >= 400 && status < 500:
+		return ANSI_YELLOW
+	case status >= 500 && status < 600:
+		return ANSI_RED
+	default:
+		return ANSI_CLEAR
+	}
+}
+
 func (s *Stdoutput) PrintResult(res ffuf.Result) {
-    // Use the following line to format the output as per your requirements
-    output := fmt.Sprintf("%d         %d        %s", res.StatusCode, res.ContentLength, res.Url)
-    fmt.Println(output)
+	// Use a seguinte linha para formatar a saída conforme desejado
+	statusColor := colorizeStatus(res.StatusCode)
+	output := fmt.Sprintf("%s%d         %d        %s%s", statusColor, res.StatusCode, res.ContentLength, res.Url, ANSI_CLEAR)
+	fmt.Println(output)
 }
 
 func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
@@ -402,46 +418,6 @@ func (s *Stdoutput) resultQuiet(res ffuf.Result) {
 	fmt.Println(s.prepareInputsOneLine(res))
 }
 
-func (s *Stdoutput) resultMultiline(res ffuf.Result) {
-	var res_hdr, res_str string
-	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
-	reslines := ""
-	if s.config.Verbose {
-		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
-		redirectLocation := res.RedirectLocation
-		if redirectLocation != "" {
-			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
-		}
-	}
-	if res.ResultFile != "" {
-		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
-	}
-	for _, k := range s.fuzzkeywords {
-		if ffuf.StrInSlice(k, s.config.CommandKeywords) {
-			// If we're using external command for input, display the position instead of input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
-		} else {
-			// Wordlist input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, res.Input[k])
-		}
-	}
-	if len(res.ScraperData) > 0 {
-		reslines = fmt.Sprintf("%s%s| SCR |\n", reslines, TERMINAL_CLEAR_LINE)
-		for k, vslice := range res.ScraperData {
-			for _, v := range vslice {
-				reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
-			}
-		}
-	}
-	fmt.Printf("%s\n%s\n", res_hdr, reslines)
-}
-
-func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
-	fmt.Println(resnormal)
-}
-
 func (s *Stdoutput) resultJson(res ffuf.Result) {
 	resBytes, err := json.Marshal(res)
 	if err != nil {
@@ -450,26 +426,6 @@ func (s *Stdoutput) resultJson(res ffuf.Result) {
 		fmt.Fprint(os.Stderr, TERMINAL_CLEAR_LINE)
 		fmt.Println(string(resBytes))
 	}
-}
-
-func (s *Stdoutput) colorize(status int64) string {
-	if !s.config.Colors {
-		return ""
-	}
-	colorCode := ANSI_CLEAR
-	if status >= 200 && status < 300 {
-		colorCode = ANSI_GREEN
-	}
-	if status >= 300 && status < 400 {
-		colorCode = ANSI_BLUE
-	}
-	if status >= 400 && status < 500 {
-		colorCode = ANSI_YELLOW
-	}
-	if status >= 500 && status < 600 {
-		colorCode = ANSI_RED
-	}
-	return colorCode
 }
 
 func printOption(name []byte, value []byte) {
