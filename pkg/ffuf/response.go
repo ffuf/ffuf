@@ -3,6 +3,7 @@ package ffuf
 import (
 	"net/http"
 	"net/url"
+	"regexp"
 	"time"
 )
 
@@ -53,6 +54,18 @@ func (resp *Response) GetRedirectLocation(absolute bool) string {
 	}
 
 	return redirectLocation
+}
+
+func (resp *Response) GetPageTitle() string {
+	title := ""
+	if resp.ContentType == "text/html" {
+		re := regexp.MustCompile(`(?i)<title>(.*?)<\/title>`)
+		matches := re.FindStringSubmatch(string(resp.Data))
+		if len(matches) > 1 {
+			title = matches[1]
+		}
+	}
+	return title
 }
 
 func UrlEqual(url1, url2 *url.URL) bool {

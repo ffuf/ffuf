@@ -101,6 +101,7 @@ type Result struct {
 	ContentType      string              `json:"content-type"`
 	RedirectLocation string              `json:"redirectlocation"`
 	Url              string              `json:"url"`
+	Title            string              `json:"title"`
 	Duration         time.Duration       `json:"duration"`
 	ScraperData      map[string][]string `json:"scraper"`
 	ResultFile       string              `json:"resultfile"`
