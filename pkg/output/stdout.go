@@ -334,6 +334,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		RedirectLocation: resp.GetRedirectLocation(false),
 		ScraperData:      resp.ScraperData,
 		Url:              resp.Request.Url,
+		Title:            resp.GetPageTitle(),
 		Duration:         resp.Time,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
@@ -446,7 +447,7 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Title: %s, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.Title, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 
