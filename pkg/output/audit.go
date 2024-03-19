@@ -56,12 +56,3 @@ func (logger *AuditLogger) Write(data interface{}) error {
 
 	return nil
 }
-
-/*
-func writeAuditRequest(request *ffuf.Request, filename string) {
-
-}
-
-func writeAuditResponse(request *ffuf.Response, filename string) {
-
-}*/
