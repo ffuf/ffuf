@@ -23,7 +23,10 @@ func TestAuditLogger(t *testing.T) {
 
 	defer audit.Close()
 
-	os.Chmod(filename, 000)
+	err = os.Chmod(filename, 000)
+	if err != nil {
+		t.Errorf("Error executing Chmod: %s", err)
+	}
 
 	audit, err = NewAuditLogger(filename)
 
@@ -35,13 +38,21 @@ func TestAuditLogger(t *testing.T) {
 		t.Errorf("Audit was non-nil, expected nil")
 	}
 
-	os.Chmod(filename, 6550)
-	os.Remove(filename)
+	err = os.Chmod(filename, 6550)
+	if err != nil {
+		t.Errorf("Error executing Chmod: %s", err)
+	}
+
+	err = os.Remove(filename)
+	if err != nil {
+		t.Errorf("Error executing Remove: %s", err)
+	}
+
 }
 
 func TestAuditLogWrite(t *testing.T) {
-	expected := `{"Name":"ffuf.Config","Data":{"auditlog":"","autocalibration":false,"autocalibration_keyword":"","autocalibration_perhost":false,"autocalibration_strategies":null,"autocalibration_strings":null,"colors":false,"cmdline":"","configfile":"","postdata":"{\"quote\":\"I'll still be here tomorrow to high five you yesterday, my friend. Peace.\"}","debuglog":"","delay":{"Min":0,"Max":0,"IsRange":false,"HasDelay":false},"dirsearch_compatibility":false,"encoders":null,"extensions":null,"fmode":"","follow_redirects":false,"headers":{"Content-Type":"application/json","baz":"wibble","foo":"bar"},"ignorebody":false,"ignore_wordlist_comments":false,"inputmode":"","cmd_inputnum":0,"inputproviders":null,"inputshell":"","json":false,"matchers":null,"mmode":"","maxtime":0,"maxtime_job":0,"method":"POST","noninteractive":false,"outputdirectory":"","outputfile":"","outputformat":"","OutputSkipEmptyFile":false,"proxyurl":"","quiet":false,"rate":0,"raw":false,"recursion":false,"recursion_depth":0,"recursion_strategy":"","replayproxyurl":"","requestfile":"","requestproto":"","scraperfile":"","scrapers":"","sni":"","stop_403":false,"stop_all":false,"stop_errors":false,"threads":0,"timeout":0,"url":"http://example.com/aaaa","verbose":false,"wordlists":null,"http2":false,"client-cert":"","client-key":""}}
-{"Name":"ffuf.Request","Data":{"Method":"POST","Host":"","Url":"http://example.com/aaaa","Headers":{"Content-Type":"application/json","baz":"wibble","foo":"bar"},"Data":"eyJxdW90ZSI6IkknbGwgc3RpbGwgYmUgaGVyZSB0b21vcnJvdyB0byBoaWdoIGZpdmUgeW91IHllc3RlcmRheSwgbXkgZnJpZW5kLiBQZWFjZS4ifQ==","Input":null,"Position":0,"Raw":"","Timestamp":"0001-01-01T00:00:00Z"}}
+	expected := `{"Type":"ffuf.Config","Data":{"auditlog":"","autocalibration":false,"autocalibration_keyword":"","autocalibration_perhost":false,"autocalibration_strategies":null,"autocalibration_strings":null,"colors":false,"cmdline":"","configfile":"","postdata":"{\"quote\":\"I'll still be here tomorrow to high five you yesterday, my friend. Peace.\"}","debuglog":"","delay":{"Min":0,"Max":0,"IsRange":false,"HasDelay":false},"dirsearch_compatibility":false,"encoders":null,"extensions":null,"fmode":"","follow_redirects":false,"headers":{"Content-Type":"application/json","baz":"wibble","foo":"bar"},"ignorebody":false,"ignore_wordlist_comments":false,"inputmode":"","cmd_inputnum":0,"inputproviders":null,"inputshell":"","json":false,"matchers":null,"mmode":"","maxtime":0,"maxtime_job":0,"method":"POST","noninteractive":false,"outputdirectory":"","outputfile":"","outputformat":"","OutputSkipEmptyFile":false,"proxyurl":"","quiet":false,"rate":0,"raw":false,"recursion":false,"recursion_depth":0,"recursion_strategy":"","replayproxyurl":"","requestfile":"","requestproto":"","scraperfile":"","scrapers":"","sni":"","stop_403":false,"stop_all":false,"stop_errors":false,"threads":0,"timeout":0,"url":"http://example.com/aaaa","verbose":false,"wordlists":null,"http2":false,"client-cert":"","client-key":""}}
+{"Type":"ffuf.Request","Data":{"Method":"POST","Host":"","Url":"http://example.com/aaaa","Headers":{"Content-Type":"application/json","baz":"wibble","foo":"bar"},"Data":"eyJxdW90ZSI6IkknbGwgc3RpbGwgYmUgaGVyZSB0b21vcnJvdyB0byBoaWdoIGZpdmUgeW91IHllc3RlcmRheSwgbXkgZnJpZW5kLiBQZWFjZS4ifQ==","Input":null,"Position":0,"Raw":"","Timestamp":"0001-01-01T00:00:00Z"}}
 `
 
 	headers := make(map[string]string)
@@ -78,8 +89,16 @@ func TestAuditLogWrite(t *testing.T) {
 	}
 
 	// test writing the config and request objects
-	audit.Write(config)
-	audit.Write(req)
+	err = audit.Write(config)
+	if err != nil {
+		t.Errorf("Error was not nil, expected nil")
+	}
+
+	err = audit.Write(req)
+	if err != nil {
+		t.Errorf("Error was not nil, expected nil")
+	}
+
 	audit.Close()
 
 	// re-read and check the audit log
