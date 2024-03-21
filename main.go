@@ -290,9 +290,12 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	if len(conf.AuditLog) > 0 {
 		job.AuditLogger, err = output.NewAuditLogger(conf.AuditLog)
 		if err != nil {
-			errs.Add(err) // double check that this complains at the user if perm denied on the audit log file or whatever
+			errs.Add(err)
 		} else {
-			job.AuditLogger.Write(conf) // check error
+			err = job.AuditLogger.Write(conf)
+			if err != nil {
+				errs.Add(err)
+			}
 		}
 	}
 

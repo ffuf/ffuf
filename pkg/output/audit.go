@@ -32,7 +32,7 @@ func (logger *AuditLogger) Write(data interface{}) error {
 	defer logger.lock.Unlock()
 
 	d := struct {
-		Name string
+		Type string
 		Data interface{}
 	}{
 		reflect.TypeOf(data).String(),
