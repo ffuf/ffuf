@@ -4,6 +4,7 @@
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix panic when setting rate to 0 in the interactive console
+    - Fix greedy recursion strategy,do not fuzz recursively on filename matches such as /index.php
   
 - v2.1.0
   - New
