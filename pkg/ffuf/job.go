@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"regexp"
 )
 
 // Job ties together Config, Runner, Input and Output
@@ -47,6 +48,7 @@ type QueueJob struct {
 	depth int
 	req   Request
 }
+var fileExtensions = regexp.MustCompile(`\.[a-zA-Z0-9]+$`)
 
 func NewJob(conf *Config) *Job {
 	var j Job
@@ -520,19 +522,11 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 // handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
 // not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
-	recUrl := resp.Request.Url + "/" + "FUZZ"
-	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
+	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) || fileExtensions.MatchString(resp.Request.Url) {
 		// Not a directory, return early
 		return
 	}
-	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
-		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
-		j.queuejobs = append(j.queuejobs, newJob)
-		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
-	} else {
-		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
-	}
+	j.handleGreedyRecursionJob(resp)
 }
 
 // CheckStop stops the job if stopping conditions are met
