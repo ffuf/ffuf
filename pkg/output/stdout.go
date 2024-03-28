@@ -334,7 +334,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		RedirectLocation: resp.GetRedirectLocation(false),
 		ScraperData:      resp.ScraperData,
 		Url:              resp.Request.Url,
-		Duration:         resp.Time,
+		Duration:         resp.Duration,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}

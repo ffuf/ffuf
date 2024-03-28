@@ -79,6 +79,13 @@ type OutputProvider interface {
 	Cycle()
 }
 
+// AuditLogger is responsible for providing auditing output of every request/response
+// sent and recieved by FFUF
+type AuditLogger interface {
+	Close()
+	Write(data interface{}) error
+}
+
 type Scraper interface {
 	Execute(resp *Response, matched bool) []ScraperResult
 	AppendFromFile(path string) error

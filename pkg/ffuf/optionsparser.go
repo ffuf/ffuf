@@ -87,6 +87,7 @@ type InputOptions struct {
 }
 
 type OutputOptions struct {
+	AuditLog            string `json:"audit_log"`
 	DebugLog            string `json:"debug_log"`
 	OutputDirectory     string `json:"output_directory"`
 	OutputFile          string `json:"output_file"`
@@ -173,6 +174,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Status = "200-299,301,302,307,401,403,405,500"
 	c.Matcher.Time = ""
 	c.Matcher.Words = ""
+	c.Output.AuditLog = ""
 	c.Output.DebugLog = ""
 	c.Output.OutputDirectory = ""
 	c.Output.OutputFile = ""
@@ -512,6 +514,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.InputNum = parseOpts.Input.InputNum
 
 	conf.InputShell = parseOpts.Input.InputShell
+	conf.AuditLog = parseOpts.Output.AuditLog
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.OutputSkipEmptyFile = parseOpts.Output.OutputSkipEmptyFile

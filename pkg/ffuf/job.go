@@ -13,6 +13,7 @@ import (
 
 // Job ties together Config, Runner, Input and Output
 type Job struct {
+	AuditLogger          AuditLogger
 	Config               *Config
 	ErrorMutex           sync.Mutex
 	Input                InputProvider
@@ -395,6 +396,8 @@ func (j *Job) ffufHash(pos int) []byte {
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	basereq := j.queuejobs[j.queuepos-1].req
 	req, err := j.Runner.Prepare(input, &basereq)
+	req.Timestamp = time.Now()
+
 	req.Position = position
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
@@ -403,7 +406,16 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		return
 	}
 
+	// Audit the request prior to sending to the runner
+	if j.AuditLogger != nil {
+		err = j.AuditLogger.Write(&req)
+		if err != nil {
+			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", err))
+		}
+	}
+
 	resp, err := j.Runner.Execute(&req)
+
 	if err != nil {
 		if retried {
 			j.incError()
@@ -435,6 +447,15 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 		return
 	}
+
+	// audit the response after the error handling
+	if j.AuditLogger != nil {
+		err = j.AuditLogger.Write(&resp)
+		if err != nil {
+			j.Output.Error(fmt.Sprintf("Encountered error while writing response audit log: %s\n", err))
+		}
+	}
+
 	if j.SpuriousErrorCounter > 0 {
 		j.resetSpuriousErrors()
 	}

@@ -155,6 +155,8 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		return ffuf.Response{}, err
 	}
 
+	req.Timestamp = start
+
 	resp := ffuf.NewResponse(httpresp, req)
 	defer httpresp.Body.Close()
 
@@ -205,7 +207,9 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	linesSize := len(strings.Split(string(resp.Data), "\n"))
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
-	resp.Time = firstByteTime
+	resp.Duration = firstByteTime
+	resp.Timestamp = start.Add(firstByteTime)
+
 	return resp, nil
 }
 
