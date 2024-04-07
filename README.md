@@ -85,6 +85,12 @@ This is a very straightforward operation, again by using the `FUZZ` keyword. Thi
 ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" -u https://target/login.php -fc 401
 ```
 
+ffuf won't set the `Content-Type` header, if the header is required it can be set with `-H`.
+
+```
+ffuf -w /path/to/postdata.txt -X POST -d "username=admin\&password=FUZZ" -H 'Content-Type: application/x-www-form-urlencoded' -u https://target/login.php -fc 401
+```
+
 ### Maximum execution time
 
 If you don't want ffuf to run indefinitely, you can use the `-maxtime`. This stops __the entire__ process after a given time (in seconds).
