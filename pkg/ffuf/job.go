@@ -406,15 +406,15 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		return
 	}
 
-	// Audit the request prior to sending to the runner
+	resp, err := j.Runner.Execute(&req)
+
+	// Audit the request after sending to the runner so we get any changes
 	if j.AuditLogger != nil {
 		err = j.AuditLogger.Write(&req)
 		if err != nil {
 			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", err))
 		}
 	}
-
-	resp, err := j.Runner.Execute(&req)
 
 	if err != nil {
 		if retried {

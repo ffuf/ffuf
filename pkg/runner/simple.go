@@ -146,8 +146,9 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		httpreq.Header.Set(k, v)
 	}
 
-	if len(r.config.OutputDirectory) > 0 {
+	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
+		req.Raw = string(rawreq)
 	}
 
 	httpresp, err := r.client.Do(httpreq)
@@ -170,7 +171,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		}
 	}
 
-	if len(r.config.OutputDirectory) > 0 {
+	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawresp, _ := httputil.DumpResponse(httpresp, true)
 		resp.Request.Raw = string(rawreq)
 		resp.Raw = string(rawresp)
