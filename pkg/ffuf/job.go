@@ -234,7 +234,14 @@ func (j *Job) startExecution() {
 	// Print the base URL when starting a new recursion or sniper queue job
 	if j.queuepos > 1 {
 		if j.Config.InputMode == "sniper" {
-			j.Output.Info(fmt.Sprintf("Starting queued sniper job (%d of %d) on target: %s", j.queuepos, len(j.queuejobs), j.Config.Url))
+			j.Output.Info(
+				fmt.Sprintf(
+					"Starting queued sniper job (%d of %d) on target: %s",
+					j.queuepos,
+					len(j.queuejobs),
+					j.Config.Url,
+				),
+			)
 		} else {
 			j.Output.Info(fmt.Sprintf("Starting queued job on target: %s", j.Config.Url))
 		}
@@ -531,7 +538,12 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 		j.queuejobs = append(j.queuejobs, newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
-		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
+		j.Output.Warning(
+			fmt.Sprintf(
+				"Directory found, but recursion depth exceeded. Ignoring: %s",
+				resp.GetRedirectLocation(true),
+			),
+		)
 	}
 }
 
@@ -587,6 +599,9 @@ func (j *Job) CheckStop() {
 func (j *Job) Stop() {
 	j.Running = false
 	j.Config.Cancel()
+	j.Runner = nil
+	j.Output = nil
+	j.Input = nil
 }
 
 // Stop current, resume to next
