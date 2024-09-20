@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"net/http/httputil"
-	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -89,8 +88,8 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
 		headers := make(map[string]string, len(req.Headers))
 		for h, v := range req.Headers {
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
-			headers[CanonicalHeader] = strings.ReplaceAll(v, keyword, string(inputitem))
+			var header string = strings.ReplaceAll(h, keyword, string(inputitem))
+			headers[header] = strings.ReplaceAll(v, keyword, string(inputitem))
 		}
 		req.Headers = headers
 		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
@@ -143,7 +142,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	for k, v := range req.Headers {
-		httpreq.Header.Set(k, v)
+		httpreq.Header[k] = []string{v}
 	}
 
 	if len(r.config.OutputDirectory) > 0 {

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -377,28 +376,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	for _, v := range parseOpts.HTTP.Headers {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
-			// trim and make canonical
-			// except if used in custom defined header
-			var CanonicalNeeded = true
-			for _, a := range conf.CommandKeywords {
-				if strings.Contains(hs[0], a) {
-					CanonicalNeeded = false
-				}
-			}
-			// check if part of InputProviders
-			if CanonicalNeeded {
-				for _, b := range conf.InputProviders {
-					if strings.Contains(hs[0], b.Keyword) {
-						CanonicalNeeded = false
-					}
-				}
-			}
-			if CanonicalNeeded {
-				var CanonicalHeader = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
-				conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
-			} else {
-				conf.Headers[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
-			}
+			conf.Headers[strings.TrimSpace(hs[0])] = hs[1]
 		} else {
 			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
