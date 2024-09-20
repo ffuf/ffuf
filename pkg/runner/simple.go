@@ -146,14 +146,17 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		httpreq.Header.Set(k, v)
 	}
 
-	if len(r.config.OutputDirectory) > 0 {
+	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
+		req.Raw = string(rawreq)
 	}
 
 	httpresp, err := r.client.Do(httpreq)
 	if err != nil {
 		return ffuf.Response{}, err
 	}
+
+	req.Timestamp = start
 
 	resp := ffuf.NewResponse(httpresp, req)
 	defer httpresp.Body.Close()
@@ -168,7 +171,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		}
 	}
 
-	if len(r.config.OutputDirectory) > 0 {
+	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawresp, _ := httputil.DumpResponse(httpresp, true)
 		resp.Request.Raw = string(rawreq)
 		resp.Raw = string(rawresp)
@@ -205,7 +208,9 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	linesSize := len(strings.Split(string(resp.Data), "\n"))
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
-	resp.Time = firstByteTime
+	resp.Duration = firstByteTime
+	resp.Timestamp = start.Add(firstByteTime)
+
 	return resp, nil
 }
 
