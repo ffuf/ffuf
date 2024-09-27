@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -375,32 +374,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.ClientKey = parseOpts.HTTP.ClientKey
 	}
 
-	//Prepare headers and make canonical
+	//Prepare headers
 	for _, v := range parseOpts.HTTP.Headers {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
-			// trim and make canonical
-			// except if used in custom defined header
-			var CanonicalNeeded = true
-			for _, a := range conf.CommandKeywords {
-				if strings.Contains(hs[0], a) {
-					CanonicalNeeded = false
-				}
-			}
-			// check if part of InputProviders
-			if CanonicalNeeded {
-				for _, b := range conf.InputProviders {
-					if strings.Contains(hs[0], b.Keyword) {
-						CanonicalNeeded = false
-					}
-				}
-			}
-			if CanonicalNeeded {
-				var CanonicalHeader = textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(hs[0]))
-				conf.Headers[CanonicalHeader] = strings.TrimSpace(hs[1])
-			} else {
-				conf.Headers[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
-			}
+			conf.Headers[hs[0]] = append(conf.Headers[hs[0]], strings.TrimSpace(hs[1]))
 		} else {
 			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
@@ -662,7 +640,7 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 			continue
 		}
 
-		conf.Headers[strings.TrimSpace(p[0])] = strings.TrimSpace(p[1])
+		conf.Headers[p[0]] = append(conf.Headers[p[0]], p[1])
 	}
 
 	// Handle case with the full http url in path. In that case,
@@ -673,10 +651,10 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 			return fmt.Errorf("could not parse request URL: %s", err)
 		}
 		conf.Url = parts[1]
-		conf.Headers["Host"] = parsed.Host
+		conf.Headers["Host"] = append(conf.Headers["Host"], parsed.Host)
 	} else {
-		// Build the request URL from the request
-		conf.Url = parseOpts.Input.RequestProto + "://" + conf.Headers["Host"] + parts[1]
+		// Build the request URL from the request, use the first host header
+		conf.Url = parseOpts.Input.RequestProto + "://" + conf.Headers["Host"][0] + parts[1]
 	}
 
 	// Set the request body
@@ -707,12 +685,15 @@ func keywordPresent(keyword string, conf *Config) bool {
 	if strings.Contains(conf.Data, keyword) {
 		return true
 	}
+
 	for k, v := range conf.Headers {
 		if strings.Contains(k, keyword) {
 			return true
 		}
-		if strings.Contains(v, keyword) {
-			return true
+		for _, value := range v {
+			if strings.Contains(value, keyword) {
+				return true
+			}
 		}
 	}
 	return false
@@ -747,11 +728,13 @@ func templatePresent(template string, conf *Config) bool {
 			}
 			sane = true
 		}
-		if c := strings.Count(v, template); c > 0 {
-			if c%2 != 0 {
-				return false
+		for _, value := range v {
+			if c := strings.Count(value, template); c > 0 {
+				if c%2 != 0 {
+					return false
+				}
+				sane = true
 			}
-			sane = true
 		}
 	}
 

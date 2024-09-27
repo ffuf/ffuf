@@ -61,8 +61,13 @@ func RequestContainsKeyword(req Request, kw string) bool {
 		return true
 	}
 	for k, v := range req.Headers {
-		if strings.Contains(k, kw) || strings.Contains(v, kw) {
+		if strings.Contains(k, kw) {
 			return true
+		}
+		for _, value := range v {
+			if strings.Contains(value, kw) {
+				return true
+			}
 		}
 	}
 	return false
