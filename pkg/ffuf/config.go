@@ -5,6 +5,7 @@ import (
 )
 
 type Config struct {
+	AuditLog                  string                `json:"auditlog"`
 	AutoCalibration           bool                  `json:"autocalibration"`
 	AutoCalibrationKeyword    string                `json:"autocalibration_keyword"`
 	AutoCalibrationPerHost    bool                  `json:"autocalibration_perhost"`

@@ -20,7 +20,8 @@ type Response struct {
 	Raw           string
 	ResultFile    string
 	ScraperData   map[string][]string
-	Time          time.Duration
+	Duration      time.Duration
+	Timestamp     time.Time
 }
 
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response
