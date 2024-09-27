@@ -24,3 +24,78 @@ func TestUniqStringSlice(t *testing.T) {
 		t.Errorf("Length of slice was %d, was expecting %d", len(uniqSlice), expectedLength)
 	}
 }
+
+func TestKeyword(t *testing.T) {
+	testreq := Request{Method: "FUZZ",
+		Url:  "http://example.com/aaaa?param=lemony",
+		Data: []byte("line=mnrrrrr"),
+	}
+
+	if !RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword in method not found")
+	}
+
+	testreq = Request{Method: "POST",
+		Url:  "http://example.com/FUZZ?param=lemony",
+		Data: []byte("line=mnrrrrr"),
+	}
+
+	if !RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword in URL not found")
+	}
+
+	testreq = Request{Method: "POST",
+		Url:  "http://example.com/aaaa?param=lemony",
+		Host: "FUZZ.com",
+		Data: []byte("line=mnrrrrr"),
+	}
+
+	if !RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword in Host not found")
+	}
+
+	testreq = Request{Method: "POST",
+		Url:  "http://example.com/aaaa?param=lemony",
+		Data: []byte("line=FUZZ"),
+	}
+
+	if !RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword in data not found")
+	}
+
+	testreq = Request{Method: "POST",
+		Url: "http://example.com/aaaa?param=lemony",
+		Headers: map[string][]string{
+			"FUZZ": {"bar"},
+		},
+		Data: []byte("line=wehhh"),
+	}
+
+	if !RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword in header key not found")
+	}
+
+	testreq = Request{Method: "POST",
+		Url: "http://example.com/aaaa?param=lemony",
+		Headers: map[string][]string{
+			"bar": {"FUZZ"},
+		},
+		Data: []byte("line=To live life you need problems."),
+	}
+
+	if !RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword in header value not found")
+	}
+
+	testreq = Request{Method: "POST",
+		Url: "http://example.com/aaaa?param=lemony",
+		Headers: map[string][]string{
+			"bar": {"foo"},
+		},
+		Data: []byte("line=To live life you need problems."),
+	}
+
+	if RequestContainsKeyword(testreq, "FUZZ") {
+		t.Errorf("FUZZ keyword found when not expected")
+	}
+}

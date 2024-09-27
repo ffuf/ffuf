@@ -83,15 +83,17 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 
 func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (ffuf.Request, error) {
 	req := ffuf.CopyRequest(basereq)
-
 	for keyword, inputitem := range input {
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
-		headers := make(map[string]string, len(req.Headers))
 		for h, v := range req.Headers {
-			var header string = strings.ReplaceAll(h, keyword, string(inputitem))
-			headers[header] = strings.ReplaceAll(v, keyword, string(inputitem))
+			if strings.Contains(h, keyword) {
+				req.Headers[strings.ReplaceAll(h, keyword, string(inputitem))] = v
+				delete(req.Headers, h)
+			}
+			for index, value := range v {
+				v[index] = strings.ReplaceAll(value, keyword, string(inputitem))
+			}
 		}
-		req.Headers = headers
 		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
 		req.Data = []byte(strings.ReplaceAll(string(req.Data), keyword, string(inputitem)))
 	}
@@ -126,12 +128,12 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
+		req.Headers["User-Agent"] = append(req.Headers["User-Agent"], fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version()))
 	}
 
 	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
-		httpreq.Host = req.Headers["Host"]
+		httpreq.Host = req.Headers["Host"][0]
 	}
 
 	req.Host = httpreq.Host
@@ -141,9 +143,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		httpreq.URL.Opaque = req.Url
 	}
 
-	for k, v := range req.Headers {
-		httpreq.Header[k] = []string{v}
-	}
+	httpreq.Header = req.Headers
 
 	if len(r.config.OutputDirectory) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
@@ -219,17 +219,15 @@ func (r *SimpleRunner) Dump(req *ffuf.Request) ([]byte, error) {
 
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
+		req.Headers["User-Agent"][0] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
 	}
 
 	// Handle Go http.Request special cases
 	if _, ok := req.Headers["Host"]; ok {
-		httpreq.Host = req.Headers["Host"]
+		httpreq.Host = req.Headers["Host"][0]
 	}
 
 	req.Host = httpreq.Host
-	for k, v := range req.Headers {
-		httpreq.Header.Set(k, v)
-	}
+	httpreq.Header = req.Headers
 	return httputil.DumpRequestOut(httpreq, true)
 }

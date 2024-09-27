@@ -24,7 +24,7 @@ type Config struct {
 	Extensions                []string              `json:"extensions"`
 	FilterMode                string                `json:"fmode"`
 	FollowRedirects           bool                  `json:"follow_redirects"`
-	Headers                   map[string]string     `json:"headers"`
+	Headers                   map[string][]string   `json:"headers"`
 	IgnoreBody                bool                  `json:"ignorebody"`
 	IgnoreWordlistComments    bool                  `json:"ignore_wordlist_comments"`
 	InputMode                 string                `json:"inputmode"`
@@ -93,7 +93,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Extensions = make([]string, 0)
 	conf.FilterMode = "or"
 	conf.FollowRedirects = false
-	conf.Headers = make(map[string]string)
+	conf.Headers = make(map[string][]string)
 	conf.IgnoreWordlistComments = false
 	conf.InputMode = "clusterbomb"
 	conf.InputNum = 0
