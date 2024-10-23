@@ -14,6 +14,7 @@
 * [Daviey](https://github.com/Daviey)
 * [delic](https://github.com/delic)
 * [denandz](https://github.com/denandz)
+* [dr4g0n369](https://github.com/dr4g0n369)
 * [Ephex2](https://github.com/Ephex2)
 * [erbbysam](https://github.com/erbbysam)
 * [eur0pa](https://github.com/eur0pa)

@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - Added display for progress percentage
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix panic when setting rate to 0 in the interactive console
