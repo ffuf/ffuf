@@ -1,4 +1,4 @@
-module github.com/cyinnove/ffuf
+module github.com/ffuf/ffuf/v2
 
 go 1.17
 
