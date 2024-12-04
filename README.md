@@ -195,6 +195,7 @@ GENERAL OPTIONS:
   -search             Search for a FFUFHASH payload from ffuf history
   -sf                 Stop when > 95% of responses return 403 Forbidden (default: false)
   -t                  Number of concurrent threads. (default: 40)
+  -unique             Only show the first occurrence of responses with same size (default: false)
   -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:

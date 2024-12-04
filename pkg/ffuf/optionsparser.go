@@ -69,6 +69,7 @@ type GeneralOptions struct {
 	StopOnAll                 bool     `json:"stop_on_all"`
 	StopOnErrors              bool     `json:"stop_on_errors"`
 	Threads                   int      `json:"threads"`
+	UniqueSizes              bool     `json:"unique_sizes"`
 	Verbose                   bool     `json:"verbose"`
 }
 
@@ -143,6 +144,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOnAll = false
 	c.General.StopOnErrors = false
 	c.General.Threads = 40
+	c.General.UniqueSizes = false
 	c.General.Verbose = false
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false

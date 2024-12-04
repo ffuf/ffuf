@@ -59,6 +59,9 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "size" {
 		return NewSizeFilter(value)
 	}
+	if name == "uniquesize" {
+		return NewUniqueSizeFilter(), nil
+	}
 	if name == "word" {
 		return NewWordFilter(value)
 	}
