@@ -7,15 +7,13 @@ import (
 )
 
 type UniqueSizeFilter struct {
-	seenSizes map[int64]bool
+	seenSizes map[int64]string // maps size to first URL with that size
 	mutex     sync.Mutex
-	firstOccurrence map[int64]bool
 }
 
 func NewUniqueSizeFilter() ffuf.FilterProvider {
 	return &UniqueSizeFilter{
-		seenSizes: make(map[int64]bool),
-		firstOccurrence: make(map[int64]bool),
+		seenSizes: make(map[int64]string),
 	}
 }
 
@@ -25,19 +23,16 @@ func (f *UniqueSizeFilter) Filter(response *ffuf.Response) (bool, error) {
 
 	size := response.ContentLength
 	
-	if !f.seenSizes[size] {
+	if firstURL, seen := f.seenSizes[size]; !seen {
 		// First time seeing this size
-		f.seenSizes[size] = true
-		f.firstOccurrence[size] = true
+		f.seenSizes[size] = response.Request.Url
+		return false, nil
+	} else if firstURL == response.Request.Url {
+		// This is the first URL we saw with this size, keep it
 		return false, nil
 	}
 	
-	// If we've seen this size before, only allow it through if it's the first occurrence
-	if f.firstOccurrence[size] {
-		f.firstOccurrence[size] = false
-		return false, nil
-	}
-	
+	// Not the first URL with this size, filter it out
 	return true, nil
 }
 
