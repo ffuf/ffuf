@@ -147,8 +147,12 @@ func (s *Stdoutput) Reset() {
 
 // Cycle moves the CurrentResults to Results and resets the results slice
 func (s *Stdoutput) Cycle() {
-	s.Results = append(s.Results, s.CurrentResults...)
-	s.Reset()
+	if s.config.UniqueSizes {
+		s.Results = append(s.Results, FilterUniqueResults(s.CurrentResults)...)
+	} else {
+		s.Results = append(s.Results, s.CurrentResults...)
+	}
+	s.CurrentResults = make([]ffuf.Result, 0)
 }
 
 // GetResults returns the result slice
@@ -202,7 +206,7 @@ func (s *Stdoutput) Error(errstring string) {
 		fmt.Fprintf(os.Stderr, "%s", errstring)
 	} else {
 		if !s.config.Colors {
-			fmt.Fprintf(os.Stderr, "%s[ERR] %s\n", TERMINAL_CLEAR_LINE, errstring)
+			fmt.Fprintf(os.Stderr, "%s[ERR] %ss\n", TERMINAL_CLEAR_LINE, errstring)
 		} else {
 			fmt.Fprintf(os.Stderr, "%s[%sERR%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_RED, ANSI_CLEAR, errstring)
 		}
@@ -314,17 +318,8 @@ func (s *Stdoutput) Finalize() error {
 }
 
 func (s *Stdoutput) Result(resp ffuf.Response) {
-	// Do we want to write request and response to a file
-	if len(s.config.OutputDirectory) > 0 {
-		resp.ResultFile = s.writeResultToFile(resp)
-	}
-
-	inputs := make(map[string][]byte, len(resp.Request.Input))
-	for k, v := range resp.Request.Input {
-		inputs[k] = v
-	}
-	sResult := ffuf.Result{
-		Input:            inputs,
+	res := ffuf.Result{
+		Input:            resp.Request.Input,
 		Position:         resp.Request.Position,
 		StatusCode:       resp.StatusCode,
 		ContentLength:    resp.ContentLength,
@@ -332,15 +327,23 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ContentLines:     resp.ContentLines,
 		ContentType:      resp.ContentType,
 		RedirectLocation: resp.GetRedirectLocation(false),
-		ScraperData:      resp.ScraperData,
 		Url:              resp.Request.Url,
 		Duration:         resp.Time,
-		ResultFile:       resp.ResultFile,
+		ResultFile:       s.writeResultToFile(resp),
 		Host:             resp.Request.Host,
 	}
-	s.CurrentResults = append(s.CurrentResults, sResult)
-	// Output the result
-	s.PrintResult(sResult)
+
+	if s.config.UniqueSizes {
+		// For unique sizes, we'll print immediately if it's a new size
+		newResult := FilterUniqueResults(append(s.CurrentResults, res))
+		if len(newResult) > len(s.CurrentResults) {
+			// This is a new unique size, print it
+			s.PrintResult(res)
+		}
+	} else {
+		s.PrintResult(res)
+	}
+	s.CurrentResults = append(s.CurrentResults, res)
 }
 
 func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {

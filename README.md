@@ -20,6 +20,9 @@ A fast web fuzzer written in Go.
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
 
   _or_
+- To use the enhanced version with unique response filtering feature, download from [cyinnove's fork](https://github.com/cyinnove/ffuf/releases/tag/v1.0.0)
+  
+  _or_
 - If you are on macOS with [homebrew](https://brew.sh), ffuf can be installed with: `brew install ffuf`
   
   _or_
@@ -42,6 +45,16 @@ For more extensive documentation, with real life usage examples and tips, be sur
 Michael Skelton ([@codingo](https://github.com/codingo)).
 
 You can also practise your ffuf scans against a live host with different lessons and use cases either locally by using the docker container https://github.com/adamtlangley/ffufme or against the live hosted version at http://ffuf.me created by Adam Langley [@adamtlangley](https://twitter.com/adamtlangley).  
+
+### Filtering Duplicate Response Sizes
+
+Using the `-unique` flag, you can filter out responses with duplicate sizes, showing only the first occurrence of each unique size. This is useful for reducing noise and identifying distinct responses:
+
+```bash
+ffuf -w wordlist.txt -u https://example.org/FUZZ -unique
+```
+
+This will only show responses with unique content lengths, helping you focus on potentially interesting endpoints.
 
 ### Typical directory discovery
 
@@ -195,6 +208,7 @@ GENERAL OPTIONS:
   -search             Search for a FFUFHASH payload from ffuf history
   -sf                 Stop when > 95% of responses return 403 Forbidden (default: false)
   -t                  Number of concurrent threads. (default: 40)
+  -unique             Only show the first occurrence of responses with same size (default: false)
   -v                  Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
 
 MATCHER OPTIONS:

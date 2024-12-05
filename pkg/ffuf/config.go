@@ -62,6 +62,7 @@ type Config struct {
 	Threads                   int                   `json:"threads"`
 	Timeout                   int                   `json:"timeout"`
 	Url                       string                `json:"url"`
+	UniqueSizes              bool                  `json:"unique_sizes"`
 	Verbose                   bool                  `json:"verbose"`
 	Wordlists                 []string              `json:"wordlists"`
 	Http2                     bool                  `json:"http2"`
