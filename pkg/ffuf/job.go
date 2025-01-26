@@ -30,6 +30,8 @@ type Job struct {
 	Paused               bool
 	Count403             int
 	Count429             int
+	ConnCount            int
+	NewConn              bool
 	Error                string
 	Rate                 *RateThrottle
 	startTime            time.Time
@@ -52,6 +54,8 @@ func NewJob(conf *Config) *Job {
 	var j Job
 	j.Config = conf
 	j.Counter = 0
+	j.ConnCount = 0
+	j.NewConn = false
 	j.ErrorCounter = 0
 	j.SpuriousErrorCounter = 0
 	j.Running = false
@@ -403,7 +407,17 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		return
 	}
 
-	resp, err := j.Runner.Execute(&req)
+	//make no more 50 http-requests in one TCP connection
+	//if j.NewConn set - pass it to Runner.Execute
+	newConn := false
+	if j.ConnCount > j.Config.TCPAggr || j.NewConn {
+		newConn = true
+		j.ConnCount = 0
+		j.NewConn = false
+	}
+
+	resp, err := j.Runner.Execute(&req, newConn)
+	j.ConnCount++
 	if err != nil {
 		if retried {
 			j.incError()
@@ -464,6 +478,11 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 
 	if j.isMatch(resp) {
+		//if NTLM i set  and HTTP code is not 401 set j.NewConn flag
+		if j.Config.Ntlm != "" && resp.StatusCode != 401 {
+			j.NewConn = true
+		}
+
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
 			replayreq, err := j.ReplayRunner.Prepare(input, &basereq)
@@ -473,7 +492,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				j.incError()
 				log.Printf("%s", err)
 			} else {
-				_, _ = j.ReplayRunner.Execute(&replayreq)
+				_, _ = j.ReplayRunner.Execute(&replayreq, false)
 			}
 		}
 		j.Output.Result(resp)
