@@ -13,6 +13,7 @@ import (
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -68,7 +69,7 @@ func NewHttpClient(conf *ffuf.Config, replay bool) *http.Client {
 				MaxIdleConns:        1000,
 				MaxIdleConnsPerHost: 500,
 				MaxConnsPerHost:     500,
-				IdleConnTimeout:     5 * time.Second,
+				//IdleConnTimeout:     5 * time.Second,
 				///DisableKeepAlives:   true,
 
 				DialContext: (&net.Dialer{
@@ -172,6 +173,121 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 
 	req.Input = input
 	return req, nil
+}
+
+func (r *SimpleRunner) GetCSRF(req *ffuf.Request) []string {
+	var csrf []string
+	var httpreq *http.Request
+	var err error
+	var prebodyReader io.ReadCloser
+
+	httpreq, err = http.NewRequestWithContext(r.config.Context, http.MethodGet, r.config.Preflight, nil)
+	//httpreq, err = http.NewRequest(http.MethodGet, r.config.Preflight, nil)
+
+	//set basic/ntlm auth
+	if req.Auth != "" && len(strings.Split(req.Auth, ":")) > 1 {
+		httpreq.SetBasicAuth(strings.SplitN(req.Auth, ":", 2)[0], strings.SplitN(req.Auth, ":", 2)[1])
+	}
+
+	// set default User-Agent header if not present
+	if _, ok := req.Headers["User-Agent"]; !ok {
+		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
+	}
+
+	// Handle Go http.Request special cases
+	if _, ok := req.Headers["Host"]; ok {
+		httpreq.Host = req.Headers["Host"]
+	}
+
+	req.Host = httpreq.Host
+	//httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
+
+	if r.config.Raw {
+		httpreq.URL.Opaque = req.Url
+	}
+
+	for k, v := range req.Headers {
+		httpreq.Header.Set(k, v)
+	}
+
+	for k, v := range r.config.PreflightHeader {
+		httpreq.Header.Set(k, v)
+	}
+
+	prehttpresp, err := r.client.Do(httpreq)
+	if err != nil {
+		return csrf
+	}
+
+	resp := ffuf.NewResponse(prehttpresp, req)
+	defer prehttpresp.Body.Close()
+
+	if err == nil {
+
+		if prehttpresp.Header.Get("Content-Encoding") == "gzip" {
+			prebodyReader, err = gzip.NewReader(prehttpresp.Body)
+			if err != nil {
+				// fallback to raw data
+				prebodyReader = prehttpresp.Body
+			}
+		} else if prehttpresp.Header.Get("Content-Encoding") == "br" {
+			prebodyReader = io.NopCloser(brotli.NewReader(prehttpresp.Body))
+			if err != nil {
+				// fallback to raw data
+				prebodyReader = prehttpresp.Body
+			}
+		} else if prehttpresp.Header.Get("Content-Encoding") == "deflate" {
+			prebodyReader = flate.NewReader(prehttpresp.Body)
+			if err != nil {
+				// fallback to raw data
+				prebodyReader = prehttpresp.Body
+			}
+		} else {
+			prebodyReader = prehttpresp.Body
+		}
+
+		respbody, err := io.ReadAll(prebodyReader)
+		if err == nil {
+			resp.ContentLength = int64(len(string(respbody)))
+			resp.Data = respbody
+		}
+
+		//if err == nil {
+		for _, elem := range r.config.Capregex {
+			if len(strings.Split(elem, ":")) > 1 {
+				val := strings.Split(elem, ":")
+				elem = strings.Join(val[:len(val)-1], ":")
+				r := regexp.MustCompile(elem)
+				//looking in body
+				matches := r.FindAllSubmatch(resp.Data, -1)
+				if len(matches) > 0 {
+					if len(matches[0]) > 1 {
+						csrf = append(csrf, strings.Trim(string(matches[0][1]), "\r\n"))
+					} else {
+						csrf = append(csrf, strings.Trim(string(matches[0][0]), "\r\n"))
+					}
+				} else {
+					//looking in raw response w/o body (status, headers, cookies)
+					rawresp, _ := httputil.DumpResponse(prehttpresp, false)
+					matches = r.FindAllSubmatch(rawresp, -1)
+					if len(matches) > 0 {
+						if len(matches[0]) > 1 {
+							csrf = append(csrf, strings.Trim(string(matches[0][1]), "\r\n"))
+						} else {
+							csrf = append(csrf, strings.Trim(string(matches[0][0]), "\r\n"))
+						}
+					} else {
+						csrf = append(csrf, "")
+					}
+				}
+			} else {
+				csrf = append(csrf, "")
+			}
+		}
+
+	}
+
+	return csrf
 }
 
 func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, error) {
@@ -288,11 +404,6 @@ func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, 
 	resp.ContentLines = int64(linesSize)
 	resp.Time = firstByteTime
 
-	/*
-		if resp.StatusCode == 500 {
-			time.Sleep(5 * time.Second)
-		}
-	*/
 	return resp, nil
 }
 

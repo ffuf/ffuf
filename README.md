@@ -145,6 +145,32 @@ parameter.
   <img width="250" src="_img/ffuf_juggling_250.png">
 </p>
 
+### CSRF tokens and preflight requests
+To use preflight request set `-preflight-request` and `-capture-regex` parameters. 
+First parameter is a URL to get CSRF tokens. Second is a regex with keywords for yor tokens and cookies. 
+Keywords must be REGEXNN (REGEX1, REGEX2, REGEX3 ...)
+
+Additionally, there is optional parameter `-preflight-header` to use only in preflight request.
+
+Example: 
+```
+ffuf -c -w /temp/wordlist.txt:FUZZ -u https://ffuf.io.fi/login 
+     -preflight-request https://ffuf.io.fi/ -capture-regex 'Set-Cookie: BruteCookie=(.*); SameSite':REGEX1
+     -H "Cookie: BruteCookie=REGEX1"
+     -H "Foo: bar"
+     -capture-regex 'csrftoken=(.*) blablahtml':REGEX2
+     -preflight-header "Cookie: BruteCookie=Empty"
+     -preflight-header "FirstVisit: 1"
+     -d "csrf=REGEX2&login=user&password=FUZZ"
+```
+In this example ffuf will do:
+ - send GET request to https://ffuf.io.fi/ with additional headers (Header Foo: bar will be present also), and analyze response
+ - search for cookie with regexp `Set-Cookie: BruteCookie=(.*); SameSite`
+ - search for csrf token with regexp `csrftoken=(.*) blablahtml`
+ - replace in original POST request REGEX1 with found cookie and REGEX2 with found csrf token
+ - send POST request to https://ffuf.io.fi/login with updated `Cookie: BruteCookie=....`, original header `Foo: bar` and   
+   updated csrf token in POST data `csrf=.....`
+
 ## Usage
 
 To define the test case for ffuf, use the keyword `FUZZ` anywhere in the URL (`-u`), headers (`-H`), or POST data (`-d`).

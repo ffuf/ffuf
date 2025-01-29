@@ -47,6 +47,9 @@ type HTTPOptions struct {
 	TCPAggr           int      `json:"tcpaggr"`
 	ClientCert        string   `json:"client-cert"`
 	ClientKey         string   `json:"client-key"`
+	Preflight         string   `json:"preflight"`
+	Capregex          []string `json:"capregex"`
+	PreflightHeader   []string `json:"preflightheader"`
 }
 
 type GeneralOptions struct {
@@ -163,6 +166,9 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Basic = ""
 	c.HTTP.Ntlm = ""
 	c.HTTP.Http2 = false
+	c.HTTP.Preflight = ""
+	c.HTTP.Capregex = []string{}
+	c.HTTP.PreflightHeader = []string{}
 	c.Input.DirSearchCompat = false
 	c.Input.Encoders = []string{}
 	c.Input.Extensions = ""
@@ -351,6 +357,24 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errs.Add(fmt.Errorf("Either -w or --input-cmd flag is required"))
 	}
 
+	if len(parseOpts.HTTP.Capregex) > 0 && parseOpts.HTTP.Preflight != "" {
+		for _, elem := range parseOpts.HTTP.Capregex {
+			ss := strings.Split(elem, ":")
+			kwvar := ss[len(ss)-1]
+			valuevar := ""
+			for _, sss := range ss[:len(ss)-1] {
+				valuevar += sss + ":"
+			}
+			valuevar = strings.TrimRight(valuevar, ":")
+			newp := InputProviderConfig{
+				Name:    "csrf",
+				Value:   valuevar,
+				Keyword: kwvar,
+			}
+			conf.InputProviders = append(conf.InputProviders, newp)
+		}
+	}
+
 	// Prepare the request using body
 	if parseOpts.Input.Request != "" {
 		err := parseRawRequest(parseOpts, &conf)
@@ -379,6 +403,16 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 	if parseOpts.HTTP.TCPAggr != 0 {
 		conf.TCPAggr = parseOpts.HTTP.TCPAggr
+	}
+	if parseOpts.HTTP.Preflight != "" && len(parseOpts.HTTP.Capregex) > 0 {
+		conf.Preflight = parseOpts.HTTP.Preflight
+		conf.Capregex = parseOpts.HTTP.Capregex
+		for _, elem := range parseOpts.HTTP.PreflightHeader {
+			ss := strings.SplitN(elem, ":", 2)
+			if len(ss) > 1 {
+				conf.PreflightHeader[ss[0]] = ss[1]
+			}
+		}
 	}
 
 	// prepare cert

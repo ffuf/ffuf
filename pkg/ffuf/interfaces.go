@@ -31,6 +31,7 @@ type RunnerProvider interface {
 	Prepare(input map[string][]byte, basereq *Request) (Request, error)
 	Execute(req *Request, newConn bool) (Response, error)
 	Dump(req *Request) ([]byte, error)
+	GetCSRF(req *Request) []string
 }
 
 // InputProvider interface handles the input data for RunnerProvider

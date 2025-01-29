@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -31,6 +32,7 @@ type Job struct {
 	Count403             int
 	Count429             int
 	ConnCount            int
+	Csrf                 []string
 	NewConn              bool
 	Error                string
 	Rate                 *RateThrottle
@@ -66,6 +68,7 @@ func NewJob(conf *Config) *Job {
 	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
 	j.skipQueue = false
+	j.Csrf = []string{}
 	return &j
 }
 
@@ -398,6 +401,17 @@ func (j *Job) ffufHash(pos int) []byte {
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	basereq := j.queuejobs[j.queuepos-1].req
+	if j.Config.Preflight != "" && len(j.Config.Capregex) > 0 {
+		//if csrf url and capture regex are set make preflight request, extract CSRF values and replace them in input map
+		j.Csrf = j.Runner.GetCSRF(&basereq)
+		csrfind := 0
+		for regexkey, _ := range input {
+			if strings.Contains(regexkey, "REGEX") {
+				input[regexkey] = []byte(j.Csrf[csrfind])
+				csrfind++
+			}
+		}
+	}
 	req, err := j.Runner.Prepare(input, &basereq)
 	req.Position = position
 	if err != nil {
@@ -407,7 +421,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		return
 	}
 
-	//make no more 50 http-requests in one TCP connection
+	//make no more that j.Config.TCPAggr http-requests in one TCP connection
 	//if j.NewConn set - pass it to Runner.Execute
 	newConn := false
 	if j.ConnCount > j.Config.TCPAggr || j.NewConn {

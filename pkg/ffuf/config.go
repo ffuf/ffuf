@@ -62,6 +62,9 @@ type Config struct {
 	Threads                   int                   `json:"threads"`
 	Timeout                   int                   `json:"timeout"`
 	TCPAggr                   int                   `json:"tcpaggr"`
+	Preflight                 string                `json:"preflight"`
+	PreflightHeader           map[string]string     `json:"preflightheader"`
+	Capregex                  []string              `json:"capregex"`
 	Url                       string                `json:"url"`
 	Verbose                   bool                  `json:"verbose"`
 	Wordlists                 []string              `json:"wordlists"`
@@ -110,6 +113,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Noninteractive = false
 	conf.ProgressFrequency = 125
 	conf.ProxyURL = ""
+	conf.PreflightHeader = make(map[string]string)
 	conf.Quiet = false
 	conf.Rate = 0
 	conf.Raw = false
