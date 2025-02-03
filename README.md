@@ -1,4 +1,4 @@
-![ffuf mascot](_img/ffuf_run_logo_600.png)
+![ffuf mascot](_img/ffuf_run_logo_600.svg)
 # ffuf - Fuzz Faster U Fool
 
 A fast web fuzzer written in Go.
@@ -45,7 +45,7 @@ You can also practise your ffuf scans against a live host with different lessons
 
 ### Typical directory discovery
 
-[![asciicast](https://asciinema.org/a/211350.png)](https://asciinema.org/a/211350)
+[![asciicast](https://asciinema.org/a/211350.svg)](https://asciinema.org/a/211350)
 
 By using the FUZZ keyword at the end of URL (`-u`):
 
@@ -55,7 +55,7 @@ ffuf -w /path/to/wordlist -u https://target/FUZZ
 
 ### Virtual host discovery (without DNS records)
 
-[![asciicast](https://asciinema.org/a/211360.png)](https://asciinema.org/a/211360)
+[![asciicast](https://asciinema.org/a/211360.svg)](https://asciinema.org/a/211360)
 
 Assuming that the default virtualhost response size is 4242 bytes, we can filter out all the responses of that size (`-fs 4242`)while fuzzing the Host - header:
 
