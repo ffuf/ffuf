@@ -17,6 +17,7 @@ func TestToCSV(t *testing.T) {
 		ContentWords:     4,
 		ContentLines:     5,
 		ContentType:      "application/json",
+        PayloadResponseDelta: 1,
 		RedirectLocation: "http://no.pe",
 		Url:              "http://as.df",
 		Duration:         time.Duration(123),
@@ -36,6 +37,7 @@ func TestToCSV(t *testing.T) {
 		"4",
 		"5",
 		"application/json",
+        "1",
 		"123ns",
 		"resultfile",
 		"A"}) {
