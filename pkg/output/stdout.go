@@ -320,23 +320,32 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	}
 
 	inputs := make(map[string][]byte, len(resp.Request.Input))
+	inputLength := 0
+
 	for k, v := range resp.Request.Input {
 		inputs[k] = v
+
+        // calculate the sum of all input payloads, excluding the FFUFHASH input
+        if k != "FFUFHASH" {
+		    inputLength = inputLength + len(v)
+        }
 	}
+
 	sResult := ffuf.Result{
-		Input:            inputs,
-		Position:         resp.Request.Position,
-		StatusCode:       resp.StatusCode,
-		ContentLength:    resp.ContentLength,
-		ContentWords:     resp.ContentWords,
-		ContentLines:     resp.ContentLines,
-		ContentType:      resp.ContentType,
-		RedirectLocation: resp.GetRedirectLocation(false),
-		ScraperData:      resp.ScraperData,
-		Url:              resp.Request.Url,
-		Duration:         resp.Duration,
-		ResultFile:       resp.ResultFile,
-		Host:             resp.Request.Host,
+		Input:                inputs,
+		Position:             resp.Request.Position,
+		StatusCode:           resp.StatusCode,
+		ContentLength:        resp.ContentLength,
+		ContentWords:         resp.ContentWords,
+		ContentLines:         resp.ContentLines,
+		ContentType:          resp.ContentType,
+		PayloadResponseDelta: resp.ContentLength - int64(inputLength),
+		RedirectLocation:     resp.GetRedirectLocation(false),
+		ScraperData:          resp.ScraperData,
+		Url:                  resp.Request.Url,
+		Duration:             resp.Duration,
+		ResultFile:           resp.ResultFile,
+		Host:                 resp.Request.Host,
 	}
 	s.CurrentResults = append(s.CurrentResults, sResult)
 	// Output the result
@@ -446,7 +455,7 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Δ: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.PayloadResponseDelta, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 
