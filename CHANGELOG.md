@@ -1,6 +1,89 @@
 ## Changelog
 - master
   - New
+<<<<<<< Updated upstream
+=======
+  - Changed
+    - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
+<<<<<<< HEAD
+=======
+    - Fix panic when setting rate to 0 in the interactive console
+>>>>>>> master
+  
+- v2.1.0
+  - New
+    - autocalibration-strategy refactored to support extensible strategy configuration
+    - New cli flag `-raw` to omit urlencoding for URIs
+    - New cli flags `-ck` and `-cc` to enable the use of client side certificate authentication
+    - Integration with `github.com/ffuf/pencode` library, added `-enc` cli flag to do various in-fly encodings for input data
+  - Changed
+    - Fix multiline output
+    - Explicitly allow TLS1.0 
+    - Fix markdown output file format
+    - Fix csv output file format
+    - Fixed divide by 0 error when setting rate limit to 0 manually.
+    - Automatic brotli and deflate decompression
+    - Report if request times out when a time based matcher or filter is active
+    - All 2XX status codes are now matched
+    - Allow adding "unused" wordlists in config file
+
+- v2.0.0
+  - New
+    - Added a new, dynamic keyword `FFUFHASH` that generates hash from job configuration and wordlist position to map blind payloads back to the initial request.
+    - New command line parameter for searching a hash: `-search FFUFHASH`
+    - Data scraper functionality
+    - Requests per second rate can be configured in the interactive mode
+  - Changed
+    - Multiline output prints out alphabetically sorted by keyword
+    - Default configuration directories now follow `XDG_CONFIG_HOME` variable (less spam in your home directory)
+    - Fixed issue with autocalibration of line & words filter
+    - Rate doesn't have initial burst anymore and is more robust in general
+    - Sniper mode template parsing fixes
+    - Time-based matcher now works properly
+    - Proxy URLs are verified to avoid hard to debug issues
+    - Made JSON (`-json`) output format take precedence over quiet output mode, to allow JSON output without the banner etc
+
+  
+- v1.5.0
+  - New
+    - New autocalibration options: `-ach`, `-ack` and `-acs`. Revamped the whole autocalibration process
+    - Configurable modes for matchers and filters (CLI flags: `fmode` and `mmode`): "and" and "or"
+  - Changed
+  
+- v1.4.1
+  - New
+  - Changed
+    - Fixed a bug with recursion, introduced in the 1.4.0 release
+    - Recursion now works better with multiple wordlists, disabling unnecessary wordlists for queued jobs where needed
+  
+- v1.4.0
+  - New
+    - Added response time logging and filtering
+    - Added a CLI flag to specify TLS SNI value
+    - Added full line colors
+    - Added `-json` to emit newline delimited JSON output
+    - Added 500 Internal Server Error to list of status codes matched by default
+  - Changed
+    - Fixed an issue where output file was created regardless of `-or`
+    - Fixed an issue where output (often a lot of it) would be printed after entering interactive mode
+    - Fixed an issue when reading wordlist files from ffufrc
+    - Fixed an issue where `-of all` option only creates one output file (instead of all formats) 
+    - Fixed an issue where redirection to the same domain in recursive mode dropped port info from URL
+    - Added HTTP2 support
+
+- v1.3.1
+  - New
+    - Added a CLI flag to disable the interactive mode
+  - Changed
+    - Do not read the last newline in the end of the raw request file when using -request
+    - Fixed an issue with storing the matches for recursion jobs
+    - Fixed the way the "size" is calculated, it should match content-length now
+    - Fixed an issue with header canonicalization when a keyword was just a part of the header name  
+    - Fixed output writing so it doesn't silently fail if it needs to create directories recursively
+
+- v1.3.0
+  - New
+>>>>>>> Stashed changes
      - All output file formats now include the `Content-Type`.
   - Changed
   
