@@ -24,6 +24,16 @@ type Response struct {
 	Timestamp     time.Time
 }
 
+// ResponseStatistics is a reduced struct containing information used to calculate run statistics
+// A copy of this struct will exist for every response in memory
+type ResponseStatistics struct {
+	StatusCode           int64
+	ContentLength        int64
+	Duration             time.Duration
+	PayloadResponseDelta int64
+	Input                map[string][]byte
+}
+
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response
 func (resp *Response) GetRedirectLocation(absolute bool) string {
 
@@ -90,4 +100,27 @@ func NewResponse(httpresp *http.Response, req *Request) Response {
 	resp.ResultFile = ""
 	resp.ScraperData = make(map[string][]string)
 	return resp
+}
+
+func GetResponseStats(resp *Response) ResponseStatistics {
+	var respStats ResponseStatistics
+	respStats.StatusCode = resp.StatusCode
+	respStats.Duration = resp.Duration
+	respStats.ContentLength = resp.ContentLength
+	respStats.Input = resp.Request.Input
+
+	inputs := make(map[string][]byte, len(resp.Request.Input))
+	inputLength := 0
+
+	for k, v := range resp.Request.Input {
+		inputs[k] = v
+
+		// calculate the sum of all input payloads, excluding the FFUFHASH input
+		if k != "FFUFHASH" {
+			inputLength = inputLength + len(v)
+		}
+	}
+	respStats.PayloadResponseDelta = resp.ContentLength - int64(inputLength)
+
+	return respStats
 }
