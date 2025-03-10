@@ -30,6 +30,7 @@ type ResponseStatistics struct {
 	StatusCode           int64
 	ContentLength        int64
 	Duration             time.Duration
+	Timestamp            time.Time
 	PayloadResponseDelta int64
 	Input                map[string][]byte
 }
@@ -108,6 +109,7 @@ func GetResponseStats(resp *Response) ResponseStatistics {
 	respStats.Duration = resp.Duration
 	respStats.ContentLength = resp.ContentLength
 	respStats.Input = resp.Request.Input
+	respStats.Timestamp = resp.Timestamp
 
 	inputs := make(map[string][]byte, len(resp.Request.Input))
 	inputLength := 0
