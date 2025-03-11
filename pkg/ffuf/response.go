@@ -108,21 +108,23 @@ func GetResponseStats(resp *Response) ResponseStatistics {
 	respStats.StatusCode = resp.StatusCode
 	respStats.Duration = resp.Duration
 	respStats.ContentLength = resp.ContentLength
-	respStats.Input = resp.Request.Input
 	respStats.Timestamp = resp.Timestamp
 
-	inputs := make(map[string][]byte, len(resp.Request.Input))
-	inputLength := 0
+	if resp.Request != nil {
+		respStats.Input = resp.Request.Input
+		inputs := make(map[string][]byte, len(resp.Request.Input))
+		inputLength := 0
 
-	for k, v := range resp.Request.Input {
-		inputs[k] = v
+		for k, v := range resp.Request.Input {
+			inputs[k] = v
 
-		// calculate the sum of all input payloads, excluding the FFUFHASH input
-		if k != "FFUFHASH" {
-			inputLength = inputLength + len(v)
+			// calculate the sum of all input payloads, excluding the FFUFHASH input
+			if k != "FFUFHASH" {
+				inputLength = inputLength + len(v)
+			}
 		}
+		respStats.PayloadResponseDelta = resp.ContentLength - int64(inputLength)
 	}
-	respStats.PayloadResponseDelta = resp.ContentLength - int64(inputLength)
 
 	return respStats
 }
