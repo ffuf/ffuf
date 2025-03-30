@@ -410,9 +410,9 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 
 	// Audit the request after sending to the runner so we get any changes
 	if j.AuditLogger != nil {
-		err = j.AuditLogger.Write(&req)
-		if err != nil {
-			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", err))
+		e := j.AuditLogger.Write(&req)
+		if e != nil {
+			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", e))
 		}
 	}
 
