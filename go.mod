@@ -5,15 +5,16 @@ go 1.22.0
 toolchain go1.22.3
 
 require (
+	github.com/NimbleMarkets/ntcharts v0.3.1
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adrg/xdg v0.4.0
 	github.com/andybalholm/brotli v1.0.5
 	github.com/ffuf/pencode v0.0.0-20230421231718-2cea7e60a693
 	github.com/pelletier/go-toml v1.9.5
+	golang.org/x/term v0.5.0
 )
 
 require (
-	github.com/NimbleMarkets/ntcharts v0.3.1 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/bubbles v0.20.0 // indirect
