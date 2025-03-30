@@ -36,6 +36,7 @@ func (s *Stdoutput) PrintSummary(r []ffuf.ResponseStatistics) {
 		var maxDuration int64
 		var sumDuration int64
 
+		minLength = r[0].ContentLength
 		minDuration = r[0].Duration.Milliseconds()
 		maxDuration = 0
 		sumDuration = 0
