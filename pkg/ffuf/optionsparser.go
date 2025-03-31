@@ -60,6 +60,7 @@ type GeneralOptions struct {
 	MaxTimeJob                int      `json:"maxtime_job"`
 	Noninteractive            bool     `json:"noninteractive"`
 	Quiet                     bool     `json:"quiet"`
+	RandomAgent               string   `json:"random-agent"`
 	Rate                      int      `json:"rate"`
 	ScraperFile               string   `json:"scraperfile"`
 	Scrapers                  string   `json:"scrapers"`
@@ -134,6 +135,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.MaxTimeJob = 0
 	c.General.Noninteractive = false
 	c.General.Quiet = false
+	c.General.RandomAgent = ""
 	c.General.Rate = 0
 	c.General.Searchhash = ""
 	c.General.ScraperFile = ""
@@ -476,6 +478,15 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	// Using -acs implies -ac
 	if len(parseOpts.General.AutoCalibrationStrategies) > 0 {
 		conf.AutoCalibration = true
+	}
+
+	// Checking the random-agent config
+	if parseOpts.General.RandomAgent != "" {
+		if !FileExists(parseOpts.General.RandomAgent) {
+			errs.Add(fmt.Errorf("the user-agent wordlist %s does not exist", parseOpts.General.RandomAgent))
+		} else {
+			conf.RandomAgent = parseOpts.General.RandomAgent
+		}
 	}
 
 	if parseOpts.General.Rate < 0 {
