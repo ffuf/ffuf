@@ -72,6 +72,7 @@ type OutputProvider interface {
 	Warning(warnstring string)
 	Result(resp Response)
 	PrintResult(res Result)
+	PrintSummary(rs []ResponseStatistics)
 	SaveFile(filename, format string) error
 	GetCurrentResults() []Result
 	SetCurrentResults(results []Result)

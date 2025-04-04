@@ -41,6 +41,8 @@ type Job struct {
 	currentDepth         int
 	calibMutex           sync.Mutex
 	pauseWg              sync.WaitGroup
+	StatsMutex           sync.Mutex
+	ResponseStats        []ResponseStatistics
 }
 
 type QueueJob struct {
@@ -149,6 +151,12 @@ func (j *Job) Start() {
 	if err != nil {
 		j.Output.Error(err.Error())
 	}
+
+	// print stats if requested
+	if j.Config.OutputSummary {
+		j.Output.PrintSummary(j.ResponseStats)
+	}
+
 }
 
 // Reset resets the counters and wordlist position for a job
@@ -454,6 +462,13 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		if err != nil {
 			j.Output.Error(fmt.Sprintf("Encountered error while writing response audit log: %s\n", err))
 		}
+	}
+
+	// log response statistics
+	if j.Config.OutputSummary {
+		j.StatsMutex.Lock()
+		j.ResponseStats = append(j.ResponseStats, GetResponseStats(&resp))
+		j.StatsMutex.Unlock()
 	}
 
 	if j.SpuriousErrorCounter > 0 {

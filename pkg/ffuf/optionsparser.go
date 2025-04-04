@@ -92,6 +92,7 @@ type OutputOptions struct {
 	OutputFile          string `json:"output_file"`
 	OutputFormat        string `json:"output_format"`
 	OutputSkipEmptyFile bool   `json:"output_skip_empty"`
+	Summary             bool   `json:"summary"`
 }
 
 type FilterOptions struct {
@@ -179,6 +180,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Output.OutputFile = ""
 	c.Output.OutputFormat = "json"
 	c.Output.OutputSkipEmptyFile = false
+	c.Output.Summary = false
 	return c
 }
 
@@ -441,6 +443,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	// Check if a stats summary has been requested
+	if parseOpts.Output.Summary {
+		conf.OutputSummary = true
+	}
+
 	// Auto-calibration strings
 	if len(parseOpts.General.AutoCalibrationStrings) > 0 {
 		conf.AutoCalibrationStrings = parseOpts.General.AutoCalibrationStrings
@@ -598,6 +605,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.General.Verbose && parseOpts.General.Json {
 		errs.Add(fmt.Errorf("Cannot have -json and -v"))
 	}
+
 	return &conf, errs.ErrorOrNil()
 }
 
