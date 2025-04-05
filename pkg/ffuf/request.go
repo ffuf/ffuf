@@ -15,6 +15,7 @@ type Request struct {
 	Input     map[string][]byte
 	Position  int
 	Raw       string
+	Error     string
 	Timestamp time.Time
 }
 

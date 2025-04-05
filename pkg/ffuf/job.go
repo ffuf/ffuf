@@ -407,6 +407,9 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 
 	resp, err := j.Runner.Execute(&req)
+	if err != nil {
+		req.Error = err.Error()
+	}
 
 	// Audit the request after sending to the runner so we get any changes
 	if j.AuditLogger != nil {
