@@ -27,7 +27,6 @@ func (o *NullOutput) GetCurrentResults() []Result            { return o.Results 
 func (o *NullOutput) SetCurrentResults(results []Result)     { o.Results = results }
 func (o *NullOutput) Reset()                                 {}
 func (o *NullOutput) Cycle()                                 {}
-func (o *NullOutput) PrintSummary(r []ResponseStatistics) {}
 
 func TestAutoCalibrationStrings(t *testing.T) {
 	// Create a temporary directory for the test

@@ -8,10 +8,10 @@ import (
 func TestTemplatePresent(t *testing.T) {
 	template := "§"
 
-	headers := make(map[string][]string)
-	headers["foo"] = append(headers["foo"], "§bar§")
-	headers["omg"] = append(headers["omg"], "bbq", "§baz§")
-	headers["§world§"] = append(headers["§world§"], "Ooo")
+	headers := make(map[string]string)
+	headers["foo"] = "§bar§"
+	headers["omg"] = "bbq"
+	headers["§world§"] = "Ooo"
 
 	goodConf := Config{
 		Url:     "https://example.com/fooo/bar?test=§value§&order[§0§]=§foo§",
@@ -57,7 +57,7 @@ func TestTemplatePresent(t *testing.T) {
 		t.Errorf("Expected-bad config (Data) failed validation")
 	}
 
-	headers["kingdom"] = append(headers["kingdom"], "§candy")
+	headers["kingdom"] = "§candy"
 
 	badConfHeaderValue := Config{
 		Url:     "https://example.com/fooo/bar?test=§value§&order[§0§]=§foo§",
@@ -70,8 +70,8 @@ func TestTemplatePresent(t *testing.T) {
 		t.Errorf("Expected-bad config (Header value) failed validation")
 	}
 
-	headers["kingdom"] = append(headers["kingdom"], "candy")
-	headers["§kingdom"] = append(headers["§kingdom"], "candy")
+	headers["kingdom"] = "candy"
+	headers["§kingdom"] = "candy"
 
 	badConfHeaderKey := Config{
 		Url:     "https://example.com/fooo/bar?test=§value§&order[§0§]=§foo§",

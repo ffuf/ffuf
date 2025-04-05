@@ -55,10 +55,10 @@ func TestAuditLogWrite(t *testing.T) {
 {"Type":"ffuf.Request","Data":{"Method":"POST","Host":"","Url":"http://example.com/aaaa","Headers":{"Content-Type":"application/json","baz":"wibble","foo":"bar"},"Data":"eyJxdW90ZSI6IkknbGwgc3RpbGwgYmUgaGVyZSB0b21vcnJvdyB0byBoaWdoIGZpdmUgeW91IHllc3RlcmRheSwgbXkgZnJpZW5kLiBQZWFjZS4ifQ==","Input":null,"Position":0,"Raw":"","Error":"","Timestamp":"0001-01-01T00:00:00Z"}}
 `
 
-	headers := make(map[string][]string)
-	headers["foo"] = append(headers["foo"], "bar")
-	headers["baz"] = append(headers["baz"], "wibble")
-	headers["Content-Type"] = append(headers["Content-Type"], "application/json")
+	headers := make(map[string]string)
+	headers["foo"] = "bar"
+	headers["baz"] = "wibble"
+	headers["Content-Type"] = "application/json"
 
 	data := "{\"quote\":\"I'll still be here tomorrow to high five you yesterday, my friend. Peace.\"}"
 

@@ -10,22 +10,21 @@ import (
 )
 
 type htmlResult struct {
-	Input                map[string]string
-	Position             int
-	StatusCode           int64
-	ContentLength        int64
-	ContentWords         int64
-	ContentLines         int64
-	ContentType          string
-	PayloadResponseDelta int64
-	RedirectLocation     string
-	ScraperData          string
-	Duration             time.Duration
-	ResultFile           string
-	Url                  string
-	Host                 string
-	HTMLColor            string
-	FfufHash             string
+	Input            map[string]string
+	Position         int
+	StatusCode       int64
+	ContentLength    int64
+	ContentWords     int64
+	ContentLines     int64
+	ContentType      string
+	RedirectLocation string
+	ScraperData      string
+	Duration         time.Duration
+	ResultFile       string
+	Url              string
+	Host             string
+	HTMLColor        string
+	FfufHash         string
 }
 
 type htmlFileOutput struct {
@@ -97,7 +96,6 @@ const (
               <th>Words</th>
 			  <th>Lines</th>
 			  <th>Type</th>
-              <th>Payload Response Delta</th>
               <th>Duration</th>
 			  <th>Resultfile</th>
               <th>Scraper data</th>
@@ -108,7 +106,7 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.PayloadResponseDelta }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{ $result.HTMLColor }};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
@@ -122,7 +120,6 @@ const (
                     <td>{{ $result.ContentWords }}</td>
 					<td>{{ $result.ContentLines }}</td>
 					<td>{{ $result.ContentType }}</td>
-					<td>{{ $result.PayloadResponseDelta }}</td>
 					<td>{{ $result.Duration }}</td>
                     <td>{{ $result.ResultFile }}</td>
 					<td>{{ $result.ScraperData }}</td>
@@ -240,22 +237,21 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 			}
 		}
 		hres := htmlResult{
-			Input:                strinput,
-			Position:             r.Position,
-			StatusCode:           r.StatusCode,
-			ContentLength:        r.ContentLength,
-			ContentWords:         r.ContentWords,
-			ContentLines:         r.ContentLines,
-			ContentType:          r.ContentType,
-			PayloadResponseDelta: r.PayloadResponseDelta,
-			RedirectLocation:     r.RedirectLocation,
-			ScraperData:          strscraper,
-			Duration:             r.Duration,
-			ResultFile:           r.ResultFile,
-			Url:                  r.Url,
-			Host:                 r.Host,
-			HTMLColor:            r.HTMLColor,
-			FfufHash:             ffufhash,
+			Input:            strinput,
+			Position:         r.Position,
+			StatusCode:       r.StatusCode,
+			ContentLength:    r.ContentLength,
+			ContentWords:     r.ContentWords,
+			ContentLines:     r.ContentLines,
+			ContentType:      r.ContentType,
+			RedirectLocation: r.RedirectLocation,
+			ScraperData:      strscraper,
+			Duration:         r.Duration,
+			ResultFile:       r.ResultFile,
+			Url:              r.Url,
+			Host:             r.Host,
+			HTMLColor:        r.HTMLColor,
+			FfufHash:         ffufhash,
 		}
 		htmlResults = append(htmlResults, hres)
 	}

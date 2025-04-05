@@ -6,11 +6,10 @@ import (
 )
 
 func TestBaseRequest(t *testing.T) {
-	headers := map[string][]string{
-		"foo":          {"bar"},
-		"baz":          {"wibble"},
-		"Content-Type": {"application/json"},
-	}
+	headers := make(map[string]string)
+	headers["foo"] = "bar"
+	headers["baz"] = "wibble"
+	headers["Content-Type"] = "application/json"
 
 	data := "{\"quote\":\"I'll still be here tomorrow to high five you yesterday, my friend. Peace.\"}"
 
@@ -25,10 +24,9 @@ func TestBaseRequest(t *testing.T) {
 }
 
 func TestCopyRequest(t *testing.T) {
-	headers := map[string][]string{
-		"foo": {"bar"},
-		"omg": {"bbq"},
-	}
+	headers := make(map[string]string)
+	headers["foo"] = "bar"
+	headers["omg"] = "bbq"
 
 	data := "line=Is+that+where+creativity+comes+from?+From+sad+biz?"
 
@@ -53,10 +51,9 @@ func TestCopyRequest(t *testing.T) {
 }
 
 func TestSniperRequests(t *testing.T) {
-	headers := map[string][]string{
-		"foo":   {"§bar§"},
-		"§omg§": {"bbq"},
-	}
+	headers := make(map[string]string)
+	headers["foo"] = "§bar§"
+	headers["§omg§"] = "bbq"
 
 	testreq := Request{
 		Method:  "§POST§",
@@ -68,13 +65,12 @@ func TestSniperRequests(t *testing.T) {
 	requests := SniperRequests(&testreq, "§")
 
 	if len(requests) != 5 {
-		t.Errorf("SniperRequests returned an incorrect number of requests - %d", len(requests))
+		t.Errorf("SniperRequests returned an incorrect number of requests")
 	}
 
-	headers = map[string][]string{
-		"foo": {"bar"},
-		"omg": {"bbq"},
-	}
+	headers = make(map[string]string)
+	headers["foo"] = "bar"
+	headers["omg"] = "bbq"
 
 	var expected Request
 	expected = Request{ // Method
@@ -131,10 +127,9 @@ func TestSniperRequests(t *testing.T) {
 		t.Errorf("SniperRequests does not return expected values (Data)")
 	}
 
-	headers = map[string][]string{
-		"foo": {"FUZZ"},
-		"omg": {"bbq"},
-	}
+	headers = make(map[string]string)
+	headers["foo"] = "FUZZ"
+	headers["omg"] = "bbq"
 
 	expected = Request{ // Header value
 		Method:  "POST",
@@ -154,10 +149,9 @@ func TestSniperRequests(t *testing.T) {
 		t.Errorf("SniperRequests does not return expected values (Header value)")
 	}
 
-	headers = map[string][]string{
-		"foo":  {"bar"},
-		"FUZZ": {"bbq"},
-	}
+	headers = make(map[string]string)
+	headers["foo"] = "bar"
+	headers["FUZZ"] = "bbq"
 
 	expected = Request{ // Header key
 		Method:  "POST",
@@ -241,10 +235,9 @@ func TestInjectKeyword(t *testing.T) {
 }
 
 func TestScrubTemplates(t *testing.T) {
-	headers := map[string][]string{
-		"foo":   {"§bar§"},
-		"§omg§": {"bbq"},
-	}
+	headers := make(map[string]string)
+	headers["foo"] = "§bar§"
+	headers["§omg§"] = "bbq"
 
 	testreq := Request{Method: "§POST§",
 		Url:     "http://example.com/aaaa?param=§lemony§",
@@ -252,10 +245,9 @@ func TestScrubTemplates(t *testing.T) {
 		Data:    []byte("line=§yo yo, it's grease§"),
 	}
 
-	headers = map[string][]string{
-		"foo": {"bar"},
-		"omg": {"bbq"},
-	}
+	headers = make(map[string]string)
+	headers["foo"] = "bar"
+	headers["omg"] = "bbq"
 
 	expectedreq := Request{Method: "POST",
 		Url:     "http://example.com/aaaa?param=lemony",

@@ -28,7 +28,7 @@ A fast web fuzzer written in Go.
   _or_
 - `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
 
-Ffuf depends on Go 1.22 or greater.
+Ffuf depends on Go 1.16 or greater.
 
 ## Example usage
 

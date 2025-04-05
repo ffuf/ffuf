@@ -23,7 +23,7 @@ func NewRequest(conf *Config) Request {
 	var req Request
 	req.Method = conf.Method
 	req.Url = conf.Url
-	req.Headers = make(map[string][]string)
+	req.Headers = make(map[string]string)
 	return req
 }
 
@@ -49,12 +49,9 @@ func CopyRequest(basereq *Request) Request {
 	req.Host = basereq.Host
 	req.Url = basereq.Url
 
-	req.Headers = make(map[string][]string)
+	req.Headers = make(map[string]string, len(basereq.Headers))
 	for h, v := range basereq.Headers {
-		values := make([]string, len(v))
-		copy(values, v)
-
-		req.Headers[h] = values
+		req.Headers[h] = v
 	}
 
 	req.Data = make([]byte, len(basereq.Data))
@@ -120,7 +117,6 @@ func SniperRequests(basereq *Request, template string) []Request {
 	}
 
 	for k, v := range basereq.Headers {
-
 		if c := strings.Count(k, template); c > 0 {
 			if c%2 == 0 {
 				tokens := templateLocations(template, k)
@@ -134,19 +130,15 @@ func SniperRequests(basereq *Request, template string) []Request {
 				}
 			}
 		}
+		if c := strings.Count(v, template); c > 0 {
+			if c%2 == 0 {
+				tokens := templateLocations(template, v)
 
-		for valueIndex, value := range v {
-			println(value)
-			if c := strings.Count(value, template); c > 0 {
-				if c%2 == 0 {
-					tokens := templateLocations(template, value)
-
-					for i := 0; i < len(tokens); i = i + 2 {
-						newreq := CopyRequest(basereq)
-						newreq.Headers[k][valueIndex] = injectKeyword(value, keyword, tokens[i], tokens[i+1])
-						scrubTemplates(&newreq, template)
-						reqs = append(reqs, newreq)
-					}
+				for i := 0; i < len(tokens); i = i + 2 {
+					newreq := CopyRequest(basereq)
+					newreq.Headers[k] = injectKeyword(v, keyword, tokens[i], tokens[i+1])
+					scrubTemplates(&newreq, template)
+					reqs = append(reqs, newreq)
 				}
 			}
 		}
@@ -204,11 +196,9 @@ func scrubTemplates(req *Request, template string) {
 				req.Headers[strings.Join(strings.Split(k, template), "")] = v
 			}
 		}
-		for valueIndex, value := range v {
-			if c := strings.Count(value, template); c > 0 {
-				if c%2 == 0 {
-					v[valueIndex] = strings.Join(strings.Split(value, template), "")
-				}
+		if c := strings.Count(v, template); c > 0 {
+			if c%2 == 0 {
+				req.Headers[k] = strings.Join(strings.Split(v, template), "")
 			}
 		}
 	}
