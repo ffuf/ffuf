@@ -144,3 +144,32 @@ func mergeMaps(m1 map[string][]string, m2 map[string][]string) map[string][]stri
 	}
 	return merged
 }
+
+// getRandomLine returns a random line from a given file.
+func GetRandomLine(filePath string) (string, error) {
+
+	// Read the entire file into memory
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	// Split the content into lines
+	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
+
+	// Remove empty lines
+	nonEmptyLines := make([]string, 0, len(lines))
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			nonEmptyLines = append(nonEmptyLines, trimmed)
+		}
+	}
+
+	if len(nonEmptyLines) == 0 {
+		return "", fmt.Errorf("no lines found in file")
+	}
+
+	// Pick a random line
+	return nonEmptyLines[rand.Intn(len(nonEmptyLines))], nil
+}
