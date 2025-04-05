@@ -415,7 +415,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	if j.AuditLogger != nil {
 		e := j.AuditLogger.Write(&req)
 		if e != nil {
-			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", err))
+			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", e))
 		}
 	}
 
