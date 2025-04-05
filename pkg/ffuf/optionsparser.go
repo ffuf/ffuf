@@ -44,6 +44,7 @@ type HTTPOptions struct {
 	Http2             bool     `json:"http2"`
 	ClientCert        string   `json:"client-cert"`
 	ClientKey         string   `json:"client-key"`
+	TLSVersion        string   `json:"tls_version"`
 }
 
 type GeneralOptions struct {
@@ -373,6 +374,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 	if parseOpts.HTTP.ClientKey != "" {
 		conf.ClientKey = parseOpts.HTTP.ClientKey
+	}
+
+	// Prepare TLS version
+	if parseOpts.HTTP.TLSVersion != "" {
+		conf.TLSVersion = parseOpts.HTTP.TLSVersion
 	}
 
 	//Prepare headers and make canonical

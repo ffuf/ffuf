@@ -74,7 +74,7 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	return nil, fmt.Errorf("Could not create filter with name %s", name)
 }
 
-//AddFilter adds a new filter to MatcherManager
+// AddFilter adds a new filter to MatcherManager
 func (f *MatcherManager) AddFilter(name string, option string, replace bool) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -94,7 +94,7 @@ func (f *MatcherManager) AddFilter(name string, option string, replace bool) err
 	return err
 }
 
-//AddPerDomainFilter adds a new filter to PerDomainFilter configuration
+// AddPerDomainFilter adds a new filter to PerDomainFilter configuration
 func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option string) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -121,14 +121,14 @@ func (f *MatcherManager) AddPerDomainFilter(domain string, name string, option s
 	return err
 }
 
-//RemoveFilter removes a filter of a given type
+// RemoveFilter removes a filter of a given type
 func (f *MatcherManager) RemoveFilter(name string) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
 	delete(f.Filters, name)
 }
 
-//AddMatcher adds a new matcher to Config
+// AddMatcher adds a new matcher to Config
 func (f *MatcherManager) AddMatcher(name string, option string) error {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()

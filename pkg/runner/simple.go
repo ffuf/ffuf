@@ -30,6 +30,21 @@ type SimpleRunner struct {
 	client *http.Client
 }
 
+func getTLSVersion(version string) uint16 {
+	switch version {
+	case "1.0":
+		return tls.VersionTLS10
+	case "1.1":
+		return tls.VersionTLS11
+	case "1.2":
+		return tls.VersionTLS12
+	case "1.3":
+		return tls.VersionTLS13
+	default:
+		return tls.VersionTLS13
+	}
+}
+
 func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	var simplerunner SimpleRunner
 	proxyURL := http.ProxyFromEnvironment
@@ -46,17 +61,20 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			proxyURL = http.ProxyURL(pu)
 		}
 	}
-	cert := []tls.Certificate{}
 
+	cert := []tls.Certificate{}
 	if conf.ClientCert != "" && conf.ClientKey != "" {
 		tmp, _ := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
 		cert = []tls.Certificate{tmp}
 	}
 
+	// Get TLS version from config
+	tlsVersion := getTLSVersion(conf.TLSVersion)
+
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
+		Timeout:       time.Duration(conf.Timeout) * time.Second,
 		Transport: &http.Transport{
 			ForceAttemptHTTP2:   conf.Http2,
 			Proxy:               proxyURL,
@@ -64,17 +82,18 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 			MaxIdleConnsPerHost: 500,
 			MaxConnsPerHost:     500,
 			DialContext: (&net.Dialer{
-				Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
+				Timeout: time.Duration(conf.Timeout) * time.Second,
 			}).DialContext,
-			TLSHandshakeTimeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
+			TLSHandshakeTimeout: time.Duration(conf.Timeout) * time.Second,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
-				MinVersion:         tls.VersionTLS10,
+				MinVersion:         tlsVersion,
 				Renegotiation:      tls.RenegotiateOnceAsClient,
 				ServerName:         conf.SNI,
 				Certificates:       cert,
 			},
-		}}
+		},
+	}
 
 	if conf.FollowRedirects {
 		simplerunner.client.CheckRedirect = nil

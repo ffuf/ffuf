@@ -169,6 +169,7 @@ HTTP OPTIONS:
   -replay-proxy       Replay matched requests using this proxy.
   -sni                Target TLS SNI, does not support FUZZ keyword
   -timeout            HTTP request timeout in seconds. (default: 10)
+  -tls-version        Set the TLS version to use. Options: TLS1.0, TLS1.1, TLS1.2, TLS1.3 (default: TLS1.3)
   -u                  Target URL
   -x                  Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080
 
