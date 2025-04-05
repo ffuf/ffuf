@@ -61,8 +61,13 @@ func RequestContainsKeyword(req Request, kw string) bool {
 		return true
 	}
 	for k, v := range req.Headers {
-		if strings.Contains(k, kw) || strings.Contains(v, kw) {
+		if strings.Contains(k, kw) {
 			return true
+		}
+		for _, value := range v {
+			if strings.Contains(value, kw) {
+				return true
+			}
 		}
 	}
 	return false
@@ -70,7 +75,11 @@ func RequestContainsKeyword(req Request, kw string) bool {
 
 // HostURLFromRequest gets a host + path without the filename or last part of the URL path
 func HostURLFromRequest(req Request) string {
-	u, _ := url.Parse(req.Url)
+	u, err := url.Parse(req.Url)
+	if err != nil {
+		return ""
+	}
+
 	u.Host = req.Host
 	pathparts := strings.Split(u.Path, "/")
 	trimpath := strings.TrimSpace(strings.Join(pathparts[:len(pathparts)-1], "/"))

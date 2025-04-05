@@ -9,7 +9,7 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
-var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "duration", "resultfile", "Ffufhash"}
+var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "payload_response_delta", "duration", "resultfile", "Ffufhash"}
 
 func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) error {
 	header := make([]string, 0)
@@ -69,6 +69,7 @@ func toCSV(r ffuf.Result) []string {
 	res = append(res, strconv.FormatInt(r.ContentWords, 10))
 	res = append(res, strconv.FormatInt(r.ContentLines, 10))
 	res = append(res, r.ContentType)
+	res = append(res, strconv.FormatInt(r.PayloadResponseDelta, 10))
 	res = append(res, r.Duration.String())
 	res = append(res, r.ResultFile)
 	res = append(res, ffufhash)

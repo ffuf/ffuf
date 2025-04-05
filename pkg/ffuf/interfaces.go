@@ -72,6 +72,7 @@ type OutputProvider interface {
 	Warning(warnstring string)
 	Result(resp Response)
 	PrintResult(res Result)
+	PrintSummary(rs []ResponseStatistics)
 	SaveFile(filename, format string) error
 	GetCurrentResults() []Result
 	SetCurrentResults(results []Result)
@@ -99,18 +100,19 @@ type ScraperResult struct {
 }
 
 type Result struct {
-	Input            map[string][]byte   `json:"input"`
-	Position         int                 `json:"position"`
-	StatusCode       int64               `json:"status"`
-	ContentLength    int64               `json:"length"`
-	ContentWords     int64               `json:"words"`
-	ContentLines     int64               `json:"lines"`
-	ContentType      string              `json:"content-type"`
-	RedirectLocation string              `json:"redirectlocation"`
-	Url              string              `json:"url"`
-	Duration         time.Duration       `json:"duration"`
-	ScraperData      map[string][]string `json:"scraper"`
-	ResultFile       string              `json:"resultfile"`
-	Host             string              `json:"host"`
-	HTMLColor        string              `json:"-"`
+	Input                map[string][]byte   `json:"input"`
+	Position             int                 `json:"position"`
+	StatusCode           int64               `json:"status"`
+	ContentLength        int64               `json:"length"`
+	ContentWords         int64               `json:"words"`
+	ContentLines         int64               `json:"lines"`
+	ContentType          string              `json:"content-type"`
+	PayloadResponseDelta int64               `json:"pr-delta"`
+	RedirectLocation     string              `json:"redirectlocation"`
+	Url                  string              `json:"url"`
+	Duration             time.Duration       `json:"duration"`
+	ScraperData          map[string][]string `json:"scraper"`
+	ResultFile           string              `json:"resultfile"`
+	Host                 string              `json:"host"`
+	HTMLColor            string              `json:"-"`
 }
