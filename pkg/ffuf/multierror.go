@@ -20,7 +20,7 @@ func (m *Multierror) Add(err error) {
 func (m *Multierror) ErrorOrNil() error {
 	var errString string
 	if len(m.errors) > 0 {
-		errString += fmt.Sprintf("%d errors occured.\n", len(m.errors))
+		errString += fmt.Sprintf("%d errors occurred.\n", len(m.errors))
 		for _, e := range m.errors {
 			errString += fmt.Sprintf("\t* %s\n", e)
 		}
