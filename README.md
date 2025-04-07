@@ -41,7 +41,7 @@ For more extensive documentation, with real life usage examples and tips, be sur
 "[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
 Michael Skelton ([@codingo](https://github.com/codingo)).
 
-You can also practise your ffuf scans against a live host with different lessons and use cases either locally by using the docker container https://github.com/adamtlangley/ffufme or against the live hosted version at http://ffuf.me created by Adam Langley [@adamtlangley](https://twitter.com/adamtlangley).  
+You can also practice your ffuf scans against a live host with different lessons and use cases either locally by using the docker container https://github.com/adamtlangley/ffufme or against the live hosted version at http://ffuf.me created by Adam Langley [@adamtlangley](https://twitter.com/adamtlangley).  
 
 ### Typical directory discovery
 
