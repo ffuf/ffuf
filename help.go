@@ -54,7 +54,7 @@ func Usage() {
 		Description:   "Options controlling the HTTP request and its parts.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"cc", "ck", "H", "X", "b", "d", "r", "u", "raw", "recursion", "recursion-depth", "recursion-strategy", "replay-proxy", "timeout", "ignore-body", "x", "sni", "http2"},
+		ExpectedFlags: []string{"cc", "ck", "H", "X", "b", "d", "r", "u", "raw", "recursion", "recursion-depth", "recursion-strategy", "replay-proxy", "timeout", "ignore-body", "x", "sni", "nohttp2"},
 	}
 	u_general := UsageSection{
 		Name:          "GENERAL OPTIONS",

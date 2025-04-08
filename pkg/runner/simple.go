@@ -53,12 +53,20 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 		cert = []tls.Certificate{tmp}
 	}
 
+	var tlsNextProto map[string]func(string, *tls.Conn) http.RoundTripper
+	tryHTTP2 := true
+
+	if conf.NoHttp2 {
+		tlsNextProto = make(map[string]func(authority string, c *tls.Conn) http.RoundTripper)
+		tryHTTP2 = false
+	}
+
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
-			ForceAttemptHTTP2:   conf.Http2,
+			ForceAttemptHTTP2:   tryHTTP2,
 			Proxy:               proxyURL,
 			MaxIdleConns:        1000,
 			MaxIdleConnsPerHost: 500,
@@ -74,6 +82,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 				ServerName:         conf.SNI,
 				Certificates:       cert,
 			},
+			TLSNextProto: tlsNextProto,
 		}}
 
 	if conf.FollowRedirects {
