@@ -74,6 +74,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.Input.RequestProto = c.RequestProto
 	o.Input.Wordlists = c.Wordlists
 
+	o.Output.AuditLog = c.AuditLog
 	o.Output.DebugLog = c.Debuglog
 	o.Output.OutputDirectory = c.OutputDirectory
 	o.Output.OutputFile = c.OutputFile

@@ -44,12 +44,12 @@ func (f *TimeFilter) MarshalJSON() ([]byte, error) {
 
 func (f *TimeFilter) Filter(response *ffuf.Response) (bool, error) {
 	if f.gt {
-		if response.Time.Milliseconds() > f.ms {
+		if response.Duration.Milliseconds() > f.ms {
 			return true, nil
 		}
 
 	} else if f.lt {
-		if response.Time.Milliseconds() < f.ms {
+		if response.Duration.Milliseconds() < f.ms {
 			return true, nil
 		}
 	}

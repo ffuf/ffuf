@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"strings"
+	"time"
 )
 
 // Request holds the meaningful data that is passed for runner for making the query
@@ -15,6 +16,8 @@ type Request struct {
 	Position int
 	Raw      string
 	Auth     string
+	Error     string
+	Timestamp time.Time
 }
 
 func NewRequest(conf *Config) Request {
