@@ -20,6 +20,7 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 
 	"github.com/andybalholm/brotli"
+	"github.com/virusvfv/go-ntlmssp"
 )
 
 // Download results < 5MB
@@ -30,8 +31,7 @@ type SimpleRunner struct {
 	client *http.Client
 }
 
-func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
-	var simplerunner SimpleRunner
+func NewHttpClient(conf *ffuf.Config, replay bool) *http.Client {
 	proxyURL := http.ProxyFromEnvironment
 	customProxy := ""
 
@@ -53,28 +53,46 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 		cert = []tls.Certificate{tmp}
 	}
 
-	simplerunner.config = conf
-	simplerunner.client = &http.Client{
+	if conf.ClientCert != "" && conf.ClientKey != "" {
+		tmp, _ := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
+		cert = []tls.Certificate{tmp}
+	}
+
+	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
-		Transport: &http.Transport{
-			ForceAttemptHTTP2:   conf.Http2,
-			Proxy:               proxyURL,
-			MaxIdleConns:        1000,
-			MaxIdleConnsPerHost: 500,
-			MaxConnsPerHost:     500,
-			DialContext: (&net.Dialer{
-				Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
-			}).DialContext,
-			TLSHandshakeTimeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-				MinVersion:         tls.VersionTLS10,
-				Renegotiation:      tls.RenegotiateOnceAsClient,
-				ServerName:         conf.SNI,
-				Certificates:       cert,
+		Transport: ntlmssp.Negotiator{
+			RoundTripper: &http.Transport{
+				ForceAttemptHTTP2:   false,
+				Proxy:               proxyURL,
+				MaxIdleConns:        1000,
+				MaxIdleConnsPerHost: 500,
+				MaxConnsPerHost:     500,
+				IdleConnTimeout:     5 * time.Second,
+				///DisableKeepAlives:   true,
+
+				DialContext: (&net.Dialer{
+					Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
+					//KeepAlive: 5 * time.Second,
+				}).DialContext,
+				TLSHandshakeTimeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+					MinVersion:         tls.VersionTLS10,
+					Renegotiation:      tls.RenegotiateOnceAsClient,
+					ServerName:         conf.SNI,
+					Certificates:       cert,
+				},
 			},
 		}}
+	return client
+}
+
+func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
+	var simplerunner SimpleRunner
+
+	simplerunner.config = conf
+	simplerunner.client = NewHttpClient(conf, replay)
 
 	if conf.FollowRedirects {
 		simplerunner.client.CheckRedirect = nil
@@ -94,6 +112,7 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 		}
 		req.Headers = headers
 		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
+		req.Auth = strings.ReplaceAll(req.Auth, keyword, string(inputitem))
 		req.Data = []byte(strings.ReplaceAll(string(req.Data), keyword, string(inputitem)))
 	}
 
@@ -101,7 +120,7 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 	return req, nil
 }
 
-func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
+func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, error) {
 	var httpreq *http.Request
 	var err error
 	var rawreq []byte
@@ -123,6 +142,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 
 	if err != nil {
 		return ffuf.Response{}, err
+	}
+
+	if req.Auth != "" && len(strings.Split(req.Auth, ":")) > 1 {
+		httpreq.SetBasicAuth(strings.SplitN(req.Auth, ":", 2)[0], strings.SplitN(req.Auth, ":", 2)[1])
 	}
 
 	// set default User-Agent header if not present
@@ -149,6 +172,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
 		req.Raw = string(rawreq)
+	}
+
+	if newConn {
+		r.client = NewHttpClient(r.config, false)
 	}
 
 	httpresp, err := r.client.Do(httpreq)
@@ -211,7 +238,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	resp.Duration = firstByteTime
 	resp.Timestamp = start.Add(firstByteTime)
 
-	return resp, nil
+  return resp, nil
 }
 
 func (r *SimpleRunner) Dump(req *ffuf.Request) ([]byte, error) {
