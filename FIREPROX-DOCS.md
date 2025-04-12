@@ -88,9 +88,3 @@ The IP rotation happens automatically through the AWS API Gateway. AWS maintains
 - If you need to manually clean up resources, you can use the AWS Console to delete API Gateway instances.
 - Use the `-v` flag to verify that your requests are actually going through the AWS API Gateway.
 - For more detailed logs, add the `-fireprox-debug` flag.
-
-### Common Issues
-
-1. **"AWS proxy isn't being used"**: If you suspect your traffic isn't using the API Gateway, run with `-v` (verbose) to see the actual AWS URLs being used. You should see both the original URL and the AWS Gateway URL in the output.
-
-2. **Status code 403 from API Gateway**: This is normal for many sites, especially those with WAF protection. The request is still successfully proxied through AWS, but the target site may reject it based on other factors.
