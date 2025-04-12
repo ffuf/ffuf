@@ -11,6 +11,7 @@ A fast web fuzzer written in Go.
     - [POST data fuzzing](https://github.com/ffuf/ffuf#post-data-fuzzing)
     - [Using external mutator](https://github.com/ffuf/ffuf#using-external-mutator-to-produce-test-cases)
     - [Configuration files](https://github.com/ffuf/ffuf#configuration-files)
+    - [IP Rotation via AWS](FIREPROX-DOCS.md)
 - [Help](https://github.com/ffuf/ffuf#usage)
     - [Interactive mode](https://github.com/ffuf/ffuf#interactive-mode)
 
