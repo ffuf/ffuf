@@ -40,7 +40,7 @@ The following options are available:
 
 You can also configure FireProx in your ffufrc configuration file:
 
-```toml
+```
 [fireprox]
     # Enable FireProx integration for IP rotation through AWS API Gateway
     enable = true
