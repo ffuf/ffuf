@@ -86,3 +86,17 @@
     status = "200,204,301,302,307,401,403,405,500"
     time = ""
     words = ""
+
+[fireprox]
+    # Enable FireProx integration for IP rotation through AWS API Gateway
+    enable = false
+    # AWS Region for the API Gateway
+    region = "us-east-1"
+    # AWS Access Key ID (or use environment variable AWS_ACCESS_KEY_ID)
+    # access_key = "YOUR_AWS_ACCESS_KEY"
+    # AWS Secret Access Key (or use environment variable AWS_SECRET_ACCESS_KEY)
+    # secret_key = "YOUR_AWS_SECRET_KEY"
+    # AWS Session Token (optional)
+    # session_token = ""
+    # Enable debug output for FireProx operations
+    debug = false

@@ -63,6 +63,13 @@ func Usage() {
 		Hidden:        false,
 		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
+	u_fireprox := UsageSection{
+		Name:          "FIREPROX OPTIONS",
+		Description:   "Options related to the FireProx integration for IP rotation via AWS API Gateway.",
+		Flags:         make([]UsageFlag, 0),
+		Hidden:        false,
+		ExpectedFlags: []string{"fireprox", "fireprox-region", "fireprox-access-key", "fireprox-secret-key", "fireprox-session-token", "fireprox-debug"},
+	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
 		Description:   "Options to ensure compatibility with other pieces of software.",
@@ -98,7 +105,7 @@ func Usage() {
 		Hidden:        false,
 		ExpectedFlags: []string{"audit-log", "debug-log", "o", "of", "od", "or"},
 	}
-	sections := []UsageSection{u_http, u_general, u_compat, u_matcher, u_filter, u_input, u_output}
+	sections := []UsageSection{u_http, u_general, u_fireprox, u_compat, u_matcher, u_filter, u_input, u_output}
 
 	// Populate the flag sections
 	max_length := 0

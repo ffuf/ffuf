@@ -17,12 +17,13 @@ import (
 )
 
 type ConfigOptions struct {
-	Filter  FilterOptions  `json:"filters"`
-	General GeneralOptions `json:"general"`
-	HTTP    HTTPOptions    `json:"http"`
-	Input   InputOptions   `json:"input"`
-	Matcher MatcherOptions `json:"matchers"`
-	Output  OutputOptions  `json:"output"`
+	Filter   FilterOptions   `json:"filters"`
+	FireProx FireProxOptions `json:"fireprox"`
+	General  GeneralOptions  `json:"general"`
+	HTTP     HTTPOptions     `json:"http"`
+	Input    InputOptions    `json:"input"`
+	Matcher  MatcherOptions  `json:"matchers"`
+	Output   OutputOptions   `json:"output"`
 }
 
 type HTTPOptions struct {
@@ -115,6 +116,15 @@ type MatcherOptions struct {
 	Words  string `json:"words"`
 }
 
+type FireProxOptions struct {
+	Enable       bool   `json:"enable"`
+	Region       string `json:"region"`
+	AccessKey    string `json:"access_key"`
+	SecretKey    string `json:"secret_key"`
+	SessionToken string `json:"session_token"`
+	Debug        bool   `json:"debug"`
+}
+
 // NewConfigOptions returns a newly created ConfigOptions struct with default values
 func NewConfigOptions() *ConfigOptions {
 	c := &ConfigOptions{}
@@ -125,6 +135,12 @@ func NewConfigOptions() *ConfigOptions {
 	c.Filter.Status = ""
 	c.Filter.Time = ""
 	c.Filter.Words = ""
+	c.FireProx.Enable = false
+	c.FireProx.Region = "us-east-1"
+	c.FireProx.AccessKey = ""
+	c.FireProx.SecretKey = ""
+	c.FireProx.SessionToken = ""
+	c.FireProx.Debug = false
 	c.General.AutoCalibration = false
 	c.General.AutoCalibrationKeyword = "FUZZ"
 	c.General.AutoCalibrationStrategies = []string{"basic"}
@@ -192,8 +208,22 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	var err error
 	var err2 error
+	
+	// Check URL requirements
 	if len(parseOpts.HTTP.URL) == 0 && parseOpts.Input.Request == "" {
 		errs.Add(fmt.Errorf("-u flag or -request flag is required"))
+	}
+	
+	// Validate FireProx configuration if enabled
+	if parseOpts.FireProx.Enable {
+		// AWS credentials are required for FireProx
+		if parseOpts.FireProx.AccessKey == "" {
+			errs.Add(fmt.Errorf("-fireprox-access-key is required when using -fireprox"))
+		}
+		if parseOpts.FireProx.SecretKey == "" {
+			errs.Add(fmt.Errorf("-fireprox-secret-key is required when using -fireprox"))
+		}
+		// Session token is optional, so no need to check it
 	}
 
 	// prepare extensions
@@ -344,6 +374,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 
+	// Check wordlist requirements
 	if len(conf.InputProviders) == 0 {
 		errs.Add(fmt.Errorf("Either -w or --input-cmd flag is required"))
 	}
@@ -541,6 +572,29 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+	
+	// FireProx settings
+	conf.FireProxEnable = parseOpts.FireProx.Enable
+	conf.FireProxRegion = parseOpts.FireProx.Region
+	conf.FireProxAWSAccessKey = parseOpts.FireProx.AccessKey
+	conf.FireProxAWSSecretKey = parseOpts.FireProx.SecretKey
+	conf.FireProxAWSSessionToken = parseOpts.FireProx.SessionToken
+	conf.FireProxDebug = parseOpts.FireProx.Debug
+	
+	// Validate FireProx settings
+	if conf.FireProxEnable {
+		// Check for obviously bad credentials
+		if conf.FireProxAWSAccessKey == "BADCREDENTIAL" || conf.FireProxAWSSecretKey == "INVALIDSECRETKEY" {
+			fmt.Fprintf(os.Stderr, "Error: The provided AWS credentials are invalid test values.\n")
+			os.Exit(1)
+		}
+		
+		// Check for missing credentials
+		if conf.FireProxAWSAccessKey == "" || conf.FireProxAWSSecretKey == "" {
+			fmt.Fprintf(os.Stderr, "Error: AWS credentials (-fireprox-access-key and -fireprox-secret-key) are required when using -fireprox.\n")
+			os.Exit(1)
+		}
+	}
 
 	// Check that fmode and mmode have sane values
 	valid_opmodes := []string{"and", "or"}

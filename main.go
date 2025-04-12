@@ -7,7 +7,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -17,6 +19,7 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/output"
 	"github.com/ffuf/ffuf/v2/pkg/runner"
 	"github.com/ffuf/ffuf/v2/pkg/scraper"
+	"github.com/ffuf/ffuf/v2/pkg/fireprox"
 )
 
 type multiStringFlag []string
@@ -83,6 +86,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.BoolVar(&opts.HTTP.Http2, "http2", opts.HTTP.Http2, "Use HTTP2 protocol")
 	flag.BoolVar(&opts.Input.DirSearchCompat, "D", opts.Input.DirSearchCompat, "DirSearch wordlist compatibility mode. Used in conjunction with -e flag.")
 	flag.BoolVar(&opts.Input.IgnoreWordlistComments, "ic", opts.Input.IgnoreWordlistComments, "Ignore wordlist comments")
+	flag.BoolVar(&opts.FireProx.Enable, "fireprox", opts.FireProx.Enable, "Enable AWS API Gateway proxy for IP rotation")
+	flag.BoolVar(&opts.FireProx.Debug, "fireprox-debug", opts.FireProx.Debug, "Enable verbose debug output for FireProx operations")
 	flag.IntVar(&opts.General.MaxTime, "maxtime", opts.General.MaxTime, "Maximum running time in seconds for entire process.")
 	flag.IntVar(&opts.General.MaxTimeJob, "maxtime-job", opts.General.MaxTimeJob, "Maximum running time in seconds per job.")
 	flag.IntVar(&opts.General.Rate, "rate", opts.General.Rate, "Rate of requests per second")
@@ -104,6 +109,10 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Filter.Time, "ft", opts.Filter.Time, "Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
 	flag.StringVar(&opts.Filter.Words, "fw", opts.Filter.Words, "Filter by amount of words in response. Comma separated list of word counts and ranges")
 	flag.StringVar(&opts.General.Delay, "p", opts.General.Delay, "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
+	flag.StringVar(&opts.FireProx.Region, "fireprox-region", opts.FireProx.Region, "AWS Region for creating API Gateway proxy")
+	flag.StringVar(&opts.FireProx.AccessKey, "fireprox-access-key", opts.FireProx.AccessKey, "AWS Access Key for FireProx")
+	flag.StringVar(&opts.FireProx.SecretKey, "fireprox-secret-key", opts.FireProx.SecretKey, "AWS Secret Key for FireProx")
+	flag.StringVar(&opts.FireProx.SessionToken, "fireprox-session-token", opts.FireProx.SessionToken, "AWS Session Token for FireProx (optional)")
 	flag.StringVar(&opts.General.Searchhash, "search", opts.General.Searchhash, "Search for a FFUFHASH payload from ffuf history")
 	flag.StringVar(&opts.HTTP.Data, "d", opts.HTTP.Data, "POST data")
 	flag.StringVar(&opts.HTTP.Data, "data", opts.HTTP.Data, "POST data (alias of -d)")
@@ -280,6 +289,41 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	// TODO: implement error handling for runnerprovider and outputprovider
 	// We only have http runner right now
 	job.Runner = runner.NewRunnerByName("http", conf, false)
+	
+	// Initialize FireProx if enabled
+	if conf.FireProxEnable {
+		// Display a message showing the credentials we're using (masked)
+		if conf.FireProxDebug {
+			fmt.Printf("Using AWS credentials - Access Key: %s, Secret Key: %s\n", 
+				maskCredential(conf.FireProxAWSAccessKey), 
+				maskCredential(conf.FireProxAWSSecretKey))
+		}
+
+		// Import the fireprox package
+		fpRunner, err := fireprox.NewFireProxRunner(conf, false, job.Runner)
+		if err != nil {
+			// If there's a credential error, it's a critical failure
+			log.Printf("FireProx initialization error: %v", err)
+			fmt.Printf("Error: FireProx initialization failed. %v\n", err)
+			os.Exit(1)
+		} else {
+			job.Runner = fpRunner
+			
+			// Register a cleanup handler for FireProx
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+			go func() {
+				<-c
+				fmt.Println("\nInterrupt received, cleaning up FireProx resources...")
+					// Use type assertion to call Cleanup method
+					if fpCleanup, ok := fpRunner.(*fireprox.FireProxRunner); ok {
+						fpCleanup.Cleanup()
+					}
+				os.Exit(1)
+			}()
+		}
+	}
+	
 	if len(conf.ReplayProxyURL) > 0 {
 		job.ReplayRunner = runner.NewRunnerByName("http", conf, true)
 	}
@@ -413,6 +457,14 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
 	}
 	return errs.ErrorOrNil()
+}
+
+// maskCredential masks a credential to show only first and last few characters
+func maskCredential(cred string) string {
+	if len(cred) <= 8 {
+		return strings.Repeat("*", len(cred))
+	}
+	return cred[:4] + strings.Repeat("*", len(cred)-8) + cred[len(cred)-4:]
 }
 
 func printSearchResults(conf *ffuf.Config, pos int, exectime time.Time, hash string) {

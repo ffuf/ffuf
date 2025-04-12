@@ -109,6 +109,11 @@ func (s *Stdoutput) Banner() {
 	if len(s.config.ReplayProxyURL) > 0 {
 		printOption([]byte("ReplayProxy"), []byte(s.config.ReplayProxyURL))
 	}
+	// FireProx
+	if s.config.FireProxEnable {
+		printOption([]byte("FireProx"), []byte("Enabled"))
+		printOption([]byte("AWS Region"), []byte(s.config.FireProxRegion))
+	}
 
 	// Timeout
 	timeout := fmt.Sprintf("%d", s.config.Timeout)
@@ -337,6 +342,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		Duration:         resp.Duration,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
+		FireProxURL:      resp.FireProxURL,
 	}
 	s.CurrentResults = append(s.CurrentResults, sResult)
 	// Output the result
@@ -417,6 +423,10 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	reslines := ""
 	if s.config.Verbose {
 		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
+		// Display FireProx URL if available (means request went through AWS API Gateway)
+		if s.config.FireProxEnable && res.FireProxURL != "" {
+			reslines = fmt.Sprintf("%s%s| AWS | %s\n", reslines, TERMINAL_CLEAR_LINE, res.FireProxURL)
+		}
 		redirectLocation := res.RedirectLocation
 		if redirectLocation != "" {
 			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)

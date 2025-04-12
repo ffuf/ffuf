@@ -22,6 +22,7 @@ type Response struct {
 	ScraperData   map[string][]string
 	Duration      time.Duration
 	Timestamp     time.Time
+	FireProxURL   string  // URL used for FireProx requests (API Gateway URL)
 }
 
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response

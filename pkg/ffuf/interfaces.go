@@ -112,5 +112,6 @@ type Result struct {
 	ScraperData      map[string][]string `json:"scraper"`
 	ResultFile       string              `json:"resultfile"`
 	Host             string              `json:"host"`
+	FireProxURL      string              `json:"fireproxurl,omitempty"`
 	HTMLColor        string              `json:"-"`
 }
