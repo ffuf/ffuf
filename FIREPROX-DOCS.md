@@ -1,4 +1,4 @@
-# FireProx Integration for ffuf
+# FireProx IP rotation for ffuf
 
 ## Overview
 
