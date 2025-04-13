@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+ awsconfig 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/apigateway"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
@@ -324,11 +324,15 @@ func (pm *ProxyManager) Cleanup() error {
 		return nil
 	}
 	
+	// Create a new background context for cleanup that won't be canceled
+	cleanupCtx := context.Background()
+	
 	input := &apigateway.DeleteRestApiInput{
 		RestApiId: &pm.proxy.ID,
 	}
 	
-	_, err := pm.client.DeleteRestApi(pm.ctx, input)
+	// Use the AWS SDK withContext option to override the client's context
+	_, err := pm.client.DeleteRestApi(cleanupCtx, input)
 	if err != nil {
 		if pm.config.Debug {
 			log.Printf("[FireProx] Failed to delete API Gateway %s: %v", pm.proxy.ID, err)

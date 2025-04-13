@@ -28,6 +28,7 @@ type Job struct {
 	Total                int
 	Running              bool
 	RunningJob           bool
+	cleanupTasks         []func() // List of cleanup functions to be executed when the job ends
 	Paused               bool
 	Count403             int
 	Count429             int
@@ -63,6 +64,7 @@ func NewJob(conf *Config) *Job {
 	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
 	j.skipQueue = false
+	j.cleanupTasks = make([]func(), 0)
 	return &j
 }
 
@@ -128,6 +130,7 @@ func (j *Job) Start() {
 	}
 
 	rand.Seed(time.Now().UnixNano())
+	// Stop will run cleanup tasks before canceling the context
 	defer j.Stop()
 
 	j.Running = true
@@ -297,6 +300,14 @@ func (j *Job) interruptMonitor() {
 			j.Stop()
 		}
 	}()
+}
+
+// AddCleanupTask adds a function to be called when the job ends
+func (j *Job) AddCleanupTask(task func()) {
+	if j.cleanupTasks == nil {
+		j.cleanupTasks = make([]func(), 0)
+	}
+	j.cleanupTasks = append(j.cleanupTasks, task)
 }
 
 func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
@@ -610,6 +621,20 @@ func (j *Job) CheckStop() {
 // Stop the execution of the Job
 func (j *Job) Stop() {
 	j.Running = false
+	
+	// First run cleanup tasks (like AWS resource cleanup)
+	// This needs to happen before we cancel the context
+	if j.cleanupTasks != nil {
+		for _, task := range j.cleanupTasks {
+			if task != nil {
+				task()
+			}
+		}
+		// Clear the tasks to avoid running them twice
+		j.cleanupTasks = nil
+	}
+	
+	// Now cancel the context
 	j.Config.Cancel()
 }
 

@@ -88,7 +88,7 @@
     words = ""
 
 [fireprox]
-    # Enable FireProx integration for IP rotation through AWS API Gateway
+    # Enable FireProx for IP rotation through AWS API Gateway
     enable = false
     # AWS Region for the API Gateway
     region = "us-east-1"
@@ -98,5 +98,5 @@
     # secret_key = "YOUR_AWS_SECRET_KEY"
     # AWS Session Token (optional)
     # session_token = ""
-    # Enable debug output for FireProx operations
+    # Enable debug output for FireProx
     debug = false

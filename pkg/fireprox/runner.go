@@ -95,7 +95,7 @@ func (r *FireProxRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		// Check if the URL starts with a scheme
 		if len(originalURL) > 8 && (originalURL[:7] == "http://" || originalURL[:8] == "https://") {
 			// Find the third slash which marks the beginning of the path
-			doubleSlashIdx := -1
+			var doubleSlashIdx int
 			if originalURL[:7] == "http://" {
 				doubleSlashIdx = 6
 			} else {
@@ -173,7 +173,7 @@ func (r *FireProxRunner) Dump(req *ffuf.Request) ([]byte, error) {
 		// Check if the URL starts with a scheme
 		if len(originalURL) > 8 && (originalURL[:7] == "http://" || originalURL[:8] == "https://") {
 			// Find the third slash which marks the beginning of the path
-			doubleSlashIdx := -1
+			var doubleSlashIdx int
 			if originalURL[:7] == "http://" {
 				doubleSlashIdx = 6
 			} else {

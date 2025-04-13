@@ -7,9 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -309,18 +307,18 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 		} else {
 			job.Runner = fpRunner
 			
-			// Register a cleanup handler for FireProx
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-			go func() {
-				<-c
-				fmt.Println("\nInterrupt received, cleaning up FireProx resources...")
-					// Use type assertion to call Cleanup method
-					if fpCleanup, ok := fpRunner.(*fireprox.FireProxRunner); ok {
-						fpCleanup.Cleanup()
+			// Register a cleanup handler for FireProx with our improved job system
+			job.AddCleanupTask(func() {
+				fmt.Println("Cleaning up FireProx resources...")
+				if fpCleanup, ok := fpRunner.(*fireprox.FireProxRunner); ok {
+					if err := fpCleanup.Cleanup(); err != nil {
+						fmt.Fprintf(os.Stderr, "Error during FireProx cleanup: %v\n", err)
+					} else {
+						fmt.Println("FireProx resources cleaned up successfully")
 					}
-				os.Exit(1)
-			}()
+				}
+				return
+			})
 		}
 	}
 	
