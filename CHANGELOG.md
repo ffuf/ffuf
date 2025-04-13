@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+		- Added IP rotation option using AWS API Gateway
     - Added audit logging functionality
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
