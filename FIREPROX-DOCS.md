@@ -4,6 +4,10 @@
 
 FireProx integration allows ffuf to dynamically create and manage AWS API Gateway instances that act as proxies to target websites. This helps in bypassing IP-based rate limiting and blocking by rotating through multiple AWS-owned IP addresses during scanning.
 
+## Credit for the concept
+
+https://github.com/ustayready/fireprox
+
 ## Features
 
 - Creates and manages an AWS API Gateway proxy dynamically
