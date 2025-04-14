@@ -182,7 +182,27 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	percentage := float64(status.ReqCount) / float64(status.ReqTotal) * 100
+
+	barLength := 50 // Length of the progress bar
+	completed := int(float64(barLength) * (percentage / 100))
+	progressBar := "[" + strings.Repeat("=", completed) + strings.Repeat(" ", barLength-completed) + "]"
+
+	fmt.Fprintf(os.Stderr, "%s:: Progress: %s %.2f%% (%d/%d) :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::%s",
+		TERMINAL_CLEAR_LINE,
+		progressBar,
+		percentage,
+		status.ReqCount,
+		status.ReqTotal,
+		status.QueuePos,
+		status.QueueTotal,
+		reqRate,
+		hours,
+		mins,
+		secs,
+		status.ErrorCount,
+		"\r",
+	)
 }
 
 func (s *Stdoutput) Info(infostring string) {
