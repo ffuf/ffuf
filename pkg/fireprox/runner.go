@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -86,37 +87,20 @@ func (r *FireProxRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		proxyURLBase = proxyURLBase[:len(proxyURLBase)-1]
 	}
 	
-	// Extract the path from the original URL
+	// Extract the path from the original URL using the standard library
 	path := ""
 	if len(originalURL) > 0 {
-		// Find where the path begins (after the third slash or after the host)
-		pathStartIdx := len(originalURL)
-		
-		// Check if the URL starts with a scheme
-		if len(originalURL) > 8 && (originalURL[:7] == "http://" || originalURL[:8] == "https://") {
-			// Find the third slash which marks the beginning of the path
-			var doubleSlashIdx int
-			if originalURL[:7] == "http://" {
-				doubleSlashIdx = 6
-			} else {
-				doubleSlashIdx = 7
-			}
+		parsedURL, err := url.Parse(originalURL)
+		if err == nil && parsedURL != nil {
+			path = parsedURL.Path
 			
-			thirdSlashIdx := -1
-			for i := doubleSlashIdx + 1; i < len(originalURL); i++ {
-				if originalURL[i] == '/' {
-					thirdSlashIdx = i
-					break
-				}
+			// Include query parameters and fragment if present
+			if parsedURL.RawQuery != "" {
+				path += "?" + parsedURL.RawQuery
 			}
-			
-			if thirdSlashIdx != -1 {
-				pathStartIdx = thirdSlashIdx
+			if parsedURL.Fragment != "" {
+				path += "#" + parsedURL.Fragment
 			}
-		}
-		
-		if pathStartIdx < len(originalURL) {
-			path = originalURL[pathStartIdx:]
 		}
 	}
 	
@@ -164,37 +148,20 @@ func (r *FireProxRunner) Dump(req *ffuf.Request) ([]byte, error) {
 		proxyURLBase = proxyURLBase[:len(proxyURLBase)-1]
 	}
 	
-	// Extract the path from the original URL
+	// Extract the path from the original URL using the standard library
 	path := ""
 	if len(originalURL) > 0 {
-		// Find where the path begins (after the third slash or after the host)
-		pathStartIdx := len(originalURL)
-		
-		// Check if the URL starts with a scheme
-		if len(originalURL) > 8 && (originalURL[:7] == "http://" || originalURL[:8] == "https://") {
-			// Find the third slash which marks the beginning of the path
-			var doubleSlashIdx int
-			if originalURL[:7] == "http://" {
-				doubleSlashIdx = 6
-			} else {
-				doubleSlashIdx = 7
-			}
+		parsedURL, err := url.Parse(originalURL)
+		if err == nil && parsedURL != nil {
+			path = parsedURL.Path
 			
-			thirdSlashIdx := -1
-			for i := doubleSlashIdx + 1; i < len(originalURL); i++ {
-				if originalURL[i] == '/' {
-					thirdSlashIdx = i
-					break
-				}
+			// Include query parameters and fragment if present
+			if parsedURL.RawQuery != "" {
+				path += "?" + parsedURL.RawQuery
 			}
-			
-			if thirdSlashIdx != -1 {
-				pathStartIdx = thirdSlashIdx
+			if parsedURL.Fragment != "" {
+				path += "#" + parsedURL.Fragment
 			}
-		}
-		
-		if pathStartIdx < len(originalURL) {
-			path = originalURL[pathStartIdx:]
 		}
 	}
 	
