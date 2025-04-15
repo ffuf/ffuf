@@ -101,6 +101,12 @@ ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime-job 60 -recursion -rec
 
 It is also possible to combine both flags limiting the per job maximum execution time as well as the overall execution time. If you do not use recursion then both flags behave equally.
 
+### Pausing on error codes
+
+Many servers have fail2ban or some else defences. So after many requests it can responses with 403-code. You can set `-pausecode` and `-pausetime` parameters to avoid this. So after get 5 pausecode ffuf will pause for pausetime of seconds.
+Pausecode can be single code and list or sequence of values (ex: 403 or 403,429 or 500-550). Pausetime also can be not just one value but comma-separated set of values (ex: `-pausetime 60,90,120,180,300`). So first pause will be 60 sec, second - 90 sec, etc. Fifth, six and other pauses  will be 300 seconds. 
+
+
 ### Using external mutator to produce test cases
 
 For this example, we'll fuzz JSON data that's sent over POST. [Radamsa](https://gitlab.com/akihe/radamsa) is used as the mutator.

@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -32,6 +34,8 @@ type Job struct {
 	Count403             int
 	Count429             int
 	ConnCount            int
+	CountPause           int
+	PauseTime            int
 	NewConn              bool
 	Error                string
 	Rate                 *RateThrottle
@@ -62,6 +66,8 @@ func NewJob(conf *Config) *Job {
 	j.Running = false
 	j.RunningJob = false
 	j.Paused = false
+	j.CountPause = 0
+	j.PauseTime = 0
 	j.queuepos = 0
 	j.queuejobs = make([]QueueJob, 0)
 	j.currentDepth = 0
@@ -90,6 +96,13 @@ func (j *Job) inc429() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.Count429++
+}
+
+// incPauseCounter increments the puseCounter
+func (j *Job) incPauseCounter() {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	j.CountPause++
 }
 
 // resetSpuriousErrors resets the spurious error counter
@@ -225,9 +238,9 @@ func (j *Job) Pause() {
 // Resume resumes the job process
 func (j *Job) Resume() {
 	if j.Paused {
-		j.Paused = false
 		j.Output.Info("------ RESUMING -----")
 		j.pauseWg.Done()
+		j.Paused = false
 	}
 }
 
@@ -249,8 +262,9 @@ func (j *Job) startExecution() {
 	threadlimiter := make(chan bool, j.Config.Threads)
 
 	for j.Input.Next() && !j.skipQueue {
-		// Check if we should stop the process
+		// Check if we should stop or pause the process
 		j.CheckStop()
+		j.CheckPause()
 
 		if !j.Running {
 			defer j.Output.Warning(j.Error)
@@ -295,7 +309,8 @@ func (j *Job) interruptMonitor() {
 			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
 			// resume if paused
 			if j.Paused {
-				j.pauseWg.Done()
+				//j.pauseWg.Done()
+				j.Resume()
 			}
 			// Stop the job
 			j.Stop()
@@ -488,6 +503,33 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc429()
 		}
 	}
+	if j.Config.PauseCode != "" {
+		if strings.Contains(j.Config.PauseCode, "-") && len(strings.Split(j.Config.PauseCode, "-")) > 1 {
+			minpcode, _ := strconv.Atoi(strings.Split(j.Config.PauseCode, "-")[0]) //f@cking Jetbrains. this code was written by AI, although all AI was disabled in preferences. They are laing to us
+			maxpcode, _ := strconv.Atoi(strings.Split(j.Config.PauseCode, "-")[1]) //f@cking Jetbrains. this code was written by AI, although all AI was disabled in preferences
+
+			if int(resp.StatusCode) >= minpcode && int(resp.StatusCode) <= maxpcode {
+				j.incPauseCounter()
+			}
+
+		} else if strings.Contains(j.Config.PauseCode, ",") {
+			pcodes := strings.Split(j.Config.PauseCode, ",") //fucking Jetbrains. this code was written by AI, although all AI was disabled in preferences
+			for _, elem := range pcodes {
+				pcode, err := strconv.Atoi(elem)
+				if (int(resp.StatusCode) == pcode) && err == nil {
+					j.incPauseCounter()
+					break
+				}
+			}
+
+		} else {
+			// increment pause counter if the response code is pausecode
+			pcode, err := strconv.Atoi(j.Config.PauseCode)
+			if (int(resp.StatusCode) == pcode) && err == nil {
+				j.incPauseCounter()
+			}
+		}
+	}
 	j.pauseWg.Wait()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
@@ -579,6 +621,69 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 }
 
 // CheckStop stops the job if stopping conditions are met
+func (j *Job) CheckPause() {
+	if j.Counter > 10 {
+		// We have enough samples
+		if j.Config.PauseCode != "" {
+			if j.CountPause > 5 {
+				j.Pause()
+				time.Sleep(500 * time.Millisecond)
+				// Got at least 5 resp code are pauseCode
+				if strings.Contains(j.Config.PauseTime, ",") {
+					//if pausetime stirng is a slice if values:  5,10,30,60,90...
+					pslice := strings.Split(j.Config.PauseTime, ",")
+					if j.PauseTime == 0 {
+						ptime, err := strconv.Atoi(pslice[0])
+						if err == nil {
+							j.PauseTime = ptime
+						} else {
+							j.PauseTime = 30
+						}
+					} else {
+						for elemind, elem := range pslice {
+							if elem == strconv.Itoa(j.PauseTime) {
+								//need next elem if it exists
+								if elemind == len(pslice)-1 {
+									ptime, err := strconv.Atoi(pslice[elemind])
+									if err == nil {
+										j.PauseTime = ptime
+									} else {
+										j.PauseTime = 30
+									}
+								} else {
+									ptime, err := strconv.Atoi(pslice[elemind+1])
+									if err == nil {
+										j.PauseTime = ptime
+									} else {
+										j.PauseTime = 30
+									}
+								}
+								break
+							}
+						}
+						if j.PauseTime == 0 {
+							j.PauseTime = 30
+						}
+					}
+				} else {
+					//if pausetime stirng is just a single value
+					ptime, err := strconv.Atoi(j.Config.PauseTime)
+					if err == nil {
+						j.PauseTime = ptime
+					} else {
+						j.PauseTime = 30
+					}
+				}
+				j.Output.Info(fmt.Sprintf("Get at laest 5 of %s responses. Pausing for %d seconds", j.Config.PauseCode, j.PauseTime))
+				time.Sleep(time.Duration(j.PauseTime) * time.Second)
+				j.CountPause = 0
+				j.Resume()
+			}
+		}
+	}
+}
+
+// CheckStop stops the job if stopping conditions are met
 func (j *Job) CheckStop() {
 	if j.Counter > 50 {
 		// We have enough samples
@@ -587,6 +692,7 @@ func (j *Job) CheckStop() {
 				// Over 95% of requests are 403
 				j.Error = "Getting an unusual amount of 403 responses, exiting."
 				j.Stop()
+
 			}
 		}
 		if j.Config.StopOnErrors || j.Config.StopOnAll {

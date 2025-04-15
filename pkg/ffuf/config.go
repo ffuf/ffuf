@@ -71,6 +71,8 @@ type Config struct {
 	ClientKey                 string                `json:"client-key"`
 	Basic                     string                `json:"basic"`
 	Ntlm                      string                `json:"ntlm"`
+	PauseCode                 string                `json:"pausecode"`
+	PauseTime                 string                `json:"pausetime"`
 }
 
 type InputProviderConfig struct {
