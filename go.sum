@@ -22,6 +22,8 @@ github.com/virusvfv/go-ntlmssp v0.0.0-20221128193559-754e69321358 h1:yxcft0/UAsu
 github.com/virusvfv/go-ntlmssp v0.0.0-20221128193559-754e69321358/go.mod h1:W+6mEbp0dcxW59pPepFV7CQb/Z/94qkXNzl9giJw2r4=
 github.com/virusvfv/go-ntlmssp v0.0.0-20250126162905-8973e0bbab20 h1:Fi068xJ2SgLCYXiQBxH3veYujxOLnyIooPFBZIZYOcI=
 github.com/virusvfv/go-ntlmssp v0.0.0-20250126162905-8973e0bbab20/go.mod h1:W+6mEbp0dcxW59pPepFV7CQb/Z/94qkXNzl9giJw2r4=
+github.com/virusvfv/go-ntlmssp v0.0.0-20250126173705-7d5679bde1de h1:KHcCIiL/aLISoVNfd4RyQ/yNa5sW/C7TZvvFnBSwDrI=
+github.com/virusvfv/go-ntlmssp v0.0.0-20250126173705-7d5679bde1de/go.mod h1:W+6mEbp0dcxW59pPepFV7CQb/Z/94qkXNzl9giJw2r4=
 golang.org/x/crypto v0.32.0 h1:euUpcYgM8WcP71gNpTqQCn6rC2t6ULUPiOzfWaXVVfc=
 golang.org/x/crypto v0.32.0/go.mod h1:ZnnJkOaASj8g0AjIduWNlq2NRxL0PlBrbKVyZ6V/Ugc=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=

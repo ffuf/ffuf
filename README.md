@@ -152,19 +152,20 @@ parameter.
 </p>
 
 ### CSRF tokens and preflight requests
-To use preflight request set `-preflight-request` and `-capture-regex` parameters. 
-First parameter is a URL to get CSRF tokens. Second is a regex with keywords for yor tokens and cookies. 
-Keywords must be REGEXNN (REGEX1, REGEX2, REGEX3 ...)
+To use so-called "preflight request" you can obtain csrf  tokens or cookie to send it in base request. To do this set `-preflight-request` and `-capture-regex` parameters. 
+First parameter is a URL to get tokens. Second is a regex with keywords for yor tokens and cookies. 
+Keywords must be only REGEXNN (REGEX1, REGEX2, REGEX3 ...)
 
-Additionally, there is optional parameter `-preflight-header` to use only in preflight request.
+Additionally, there is an optional parameter `-preflight-header` to use only in preflight request.
 
 Example: 
 ```
 ffuf -c -w /temp/wordlist.txt:FUZZ -u https://ffuf.io.fi/login 
-     -preflight-request https://ffuf.io.fi/ -capture-regex 'Set-Cookie: BruteCookie=(.*); SameSite':REGEX1
+     -preflight-request https://ffuf.io.fi/ 
+     -capture-regex 'Set-Cookie: BruteCookie=(.*); SameSite':REGEX1
+     -capture-regex 'csrftoken=(.*) blablahtml':REGEX2
      -H "Cookie: BruteCookie=REGEX1"
      -H "Foo: bar"
-     -capture-regex 'csrftoken=(.*) blablahtml':REGEX2
      -preflight-header "Cookie: BruteCookie=Empty"
      -preflight-header "FirstVisit: 1"
      -d "csrf=REGEX2&login=user&password=FUZZ"
