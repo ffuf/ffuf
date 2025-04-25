@@ -94,6 +94,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
 	flag.IntVar(&opts.HTTP.TCPAggr, "tcpaggr", opts.HTTP.TCPAggr, "max HTTP request in one TCP connection. Default 50. Set it to 1 to switch proxies")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.StringVar(&opts.General.PauseCode, "pausecode", "", "If got 5 response code then pausing for pausetime seconds (ex: 403 or 403,429 or 401-429)")
+	flag.StringVar(&opts.General.PauseTime, "pausetime", "30", "Pause seconds. Can be just single(ex: 30) or slice for 1st,2nd,3rd,etc pausing(2,10,30,90)")
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
 	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
 	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
@@ -134,6 +136,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Matcher.Status, "mc", opts.Matcher.Status, "Match HTTP status codes, or \"all\" for everything.")
 	flag.StringVar(&opts.Matcher.Time, "mt", opts.Matcher.Time, "Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
 	flag.StringVar(&opts.Matcher.Words, "mw", opts.Matcher.Words, "Match amount of words in response")
+	flag.StringVar(&opts.Output.AuditLog, "audit-log", opts.Output.AuditLog, "Write audit log containing all requests, responses and config")
 	flag.StringVar(&opts.Output.DebugLog, "debug-log", opts.Output.DebugLog, "Write all of the internal logging to the specified file.")
 	flag.StringVar(&opts.Output.OutputDirectory, "od", opts.Output.OutputDirectory, "Directory path to store matched results to.")
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
@@ -252,6 +255,10 @@ func main() {
 	}
 
 	job, err := prepareJob(conf)
+
+	if job.AuditLogger != nil {
+		defer job.AuditLogger.Close()
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Encountered error(s): %s\n", err)
 		Usage()
@@ -291,6 +298,19 @@ func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
 	}
 	// We only have stdout outputprovider right now
 	job.Output = output.NewOutputProviderByName("stdout", conf)
+
+	// Initialize the audit logger if specified
+	if len(conf.AuditLog) > 0 {
+		job.AuditLogger, err = output.NewAuditLogger(conf.AuditLog)
+		if err != nil {
+			errs.Add(err)
+		} else {
+			err = job.AuditLogger.Write(conf)
+			if err != nil {
+				errs.Add(err)
+			}
+		}
+	}
 
 	// Initialize scraper
 	newscraper, scraper_err := scraper.FromDir(ffuf.SCRAPERDIR, conf.Scrapers)

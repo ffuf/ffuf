@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -14,6 +15,7 @@ import (
 
 // Job ties together Config, Runner, Input and Output
 type Job struct {
+	AuditLogger          AuditLogger
 	Config               *Config
 	ErrorMutex           sync.Mutex
 	Input                InputProvider
@@ -32,6 +34,8 @@ type Job struct {
 	Count403             int
 	Count429             int
 	ConnCount            int
+	CountPause           int
+	PauseTime            int
 	Csrf                 []string
 	NewConn              bool
 	Error                string
@@ -63,6 +67,8 @@ func NewJob(conf *Config) *Job {
 	j.Running = false
 	j.RunningJob = false
 	j.Paused = false
+	j.CountPause = 0
+	j.PauseTime = 0
 	j.queuepos = 0
 	j.queuejobs = make([]QueueJob, 0)
 	j.currentDepth = 0
@@ -92,6 +98,13 @@ func (j *Job) inc429() {
 	j.ErrorMutex.Lock()
 	defer j.ErrorMutex.Unlock()
 	j.Count429++
+}
+
+// incPauseCounter increments the puseCounter
+func (j *Job) incPauseCounter() {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	j.CountPause++
 }
 
 // resetSpuriousErrors resets the spurious error counter
@@ -227,9 +240,9 @@ func (j *Job) Pause() {
 // Resume resumes the job process
 func (j *Job) Resume() {
 	if j.Paused {
-		j.Paused = false
 		j.Output.Info("------ RESUMING -----")
 		j.pauseWg.Done()
+		j.Paused = false
 	}
 }
 
@@ -251,8 +264,9 @@ func (j *Job) startExecution() {
 	threadlimiter := make(chan bool, j.Config.Threads)
 
 	for j.Input.Next() && !j.skipQueue {
-		// Check if we should stop the process
+		// Check if we should stop or pause the process
 		j.CheckStop()
+		j.CheckPause()
 
 		if !j.Running {
 			defer j.Output.Warning(j.Error)
@@ -297,7 +311,8 @@ func (j *Job) interruptMonitor() {
 			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
 			// resume if paused
 			if j.Paused {
-				j.pauseWg.Done()
+				//j.pauseWg.Done()
+				j.Resume()
 			}
 			// Stop the job
 			j.Stop()
@@ -413,6 +428,8 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 	req, err := j.Runner.Prepare(input, &basereq)
+	req.Timestamp = time.Now()
+
 	req.Position = position
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
@@ -432,6 +449,18 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 
 	resp, err := j.Runner.Execute(&req, newConn)
 	j.ConnCount++
+	if err != nil {
+		req.Error = err.Error()
+	}
+
+	// Audit the request after sending to the runner so we get any changes
+	if j.AuditLogger != nil {
+		e := j.AuditLogger.Write(&req)
+		if e != nil {
+			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", e))
+		}
+	}
+
 	if err != nil {
 		if retried {
 			j.incError()
@@ -463,6 +492,15 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 		return
 	}
+
+	// audit the response after the error handling
+	if j.AuditLogger != nil {
+		err = j.AuditLogger.Write(&resp)
+		if err != nil {
+			j.Output.Error(fmt.Sprintf("Encountered error while writing response audit log: %s\n", err))
+		}
+	}
+
 	if j.SpuriousErrorCounter > 0 {
 		j.resetSpuriousErrors()
 	}
@@ -476,6 +514,33 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		// increment 429 counter if the response code is 429
 		if resp.StatusCode == 429 {
 			j.inc429()
+		}
+	}
+	if j.Config.PauseCode != "" {
+		if strings.Contains(j.Config.PauseCode, "-") && len(strings.Split(j.Config.PauseCode, "-")) > 1 {
+			minpcode, _ := strconv.Atoi(strings.Split(j.Config.PauseCode, "-")[0]) //f@cking Jetbrains. this code was written by AI, although all AI was disabled in preferences. They are laing to us
+			maxpcode, _ := strconv.Atoi(strings.Split(j.Config.PauseCode, "-")[1]) //f@cking Jetbrains. this code was written by AI, although all AI was disabled in preferences
+
+			if int(resp.StatusCode) >= minpcode && int(resp.StatusCode) <= maxpcode {
+				j.incPauseCounter()
+			}
+
+		} else if strings.Contains(j.Config.PauseCode, ",") {
+			pcodes := strings.Split(j.Config.PauseCode, ",") //fucking Jetbrains. this code was written by AI, although all AI was disabled in preferences
+			for _, elem := range pcodes {
+				pcode, err := strconv.Atoi(elem)
+				if (int(resp.StatusCode) == pcode) && err == nil {
+					j.incPauseCounter()
+					break
+				}
+			}
+
+		} else {
+			// increment pause counter if the response code is pausecode
+			pcode, err := strconv.Atoi(j.Config.PauseCode)
+			if (int(resp.StatusCode) == pcode) && err == nil {
+				j.incPauseCounter()
+			}
 		}
 	}
 	j.pauseWg.Wait()
@@ -565,6 +630,69 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
 		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
+	}
+}
+
+// CheckStop stops the job if stopping conditions are met
+func (j *Job) CheckPause() {
+	if j.Counter > 10 {
+		// We have enough samples
+		if j.Config.PauseCode != "" {
+			if j.CountPause > 5 {
+				j.Pause()
+				time.Sleep(500 * time.Millisecond)
+				// Got at least 5 resp code are pauseCode
+				if strings.Contains(j.Config.PauseTime, ",") {
+					//if pausetime stirng is a slice if values:  5,10,30,60,90...
+					pslice := strings.Split(j.Config.PauseTime, ",")
+					if j.PauseTime == 0 {
+						ptime, err := strconv.Atoi(pslice[0])
+						if err == nil {
+							j.PauseTime = ptime
+						} else {
+							j.PauseTime = 30
+						}
+					} else {
+						for elemind, elem := range pslice {
+							if elem == strconv.Itoa(j.PauseTime) {
+								//need next elem if it exists
+								if elemind == len(pslice)-1 {
+									ptime, err := strconv.Atoi(pslice[elemind])
+									if err == nil {
+										j.PauseTime = ptime
+									} else {
+										j.PauseTime = 30
+									}
+								} else {
+									ptime, err := strconv.Atoi(pslice[elemind+1])
+									if err == nil {
+										j.PauseTime = ptime
+									} else {
+										j.PauseTime = 30
+									}
+								}
+								break
+							}
+						}
+						if j.PauseTime == 0 {
+							j.PauseTime = 30
+						}
+					}
+				} else {
+					//if pausetime stirng is just a single value
+					ptime, err := strconv.Atoi(j.Config.PauseTime)
+					if err == nil {
+						j.PauseTime = ptime
+					} else {
+						j.PauseTime = 30
+					}
+				}
+				j.Output.Info(fmt.Sprintf("Get at laest 5 of %s responses. Pausing for %d seconds", j.Config.PauseCode, j.PauseTime))
+				time.Sleep(time.Duration(j.PauseTime) * time.Second)
+				j.CountPause = 0
+				j.Resume()
+			}
+		}
 	}
 }
 

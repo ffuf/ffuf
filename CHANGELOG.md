@@ -1,6 +1,8 @@
 ## Changelog
 - master
   - New
+    - Added audit logging functionality
+    - Added pausing when get five 403 (or specified) respones code 
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix panic when setting rate to 0 in the interactive console

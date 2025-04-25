@@ -91,63 +91,9 @@ func NewHttpClient(conf *ffuf.Config, replay bool) *http.Client {
 
 func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	var simplerunner SimpleRunner
-	/*
-		proxyURL := http.ProxyFromEnvironment
-		customProxy := ""
-
-		if replay {
-			customProxy = conf.ReplayProxyURL
-		} else {
-			customProxy = conf.ProxyURL
-		}
-		if len(customProxy) > 0 {
-			pu, err := url.Parse(customProxy)
-			if err == nil {
-				proxyURL = http.ProxyURL(pu)
-			}
-		}
-		cert := []tls.Certificate{}
-
-		if conf.ClientCert != "" && conf.ClientKey != "" {
-			tmp, _ := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
-			cert = []tls.Certificate{tmp}
-		}
-
-	*/
 
 	simplerunner.config = conf
 	simplerunner.client = NewHttpClient(conf, replay)
-
-	/*
-		simplerunner.client = &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-			Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
-			Transport: ntlmssp.Negotiator{
-				RoundTripper: &http.Transport{
-					ForceAttemptHTTP2:   false,
-					Proxy:               proxyURL,
-					MaxIdleConns:        1000,
-					MaxIdleConnsPerHost: 500,
-					MaxConnsPerHost:     500,
-					IdleConnTimeout:     5 * time.Second,
-					///DisableKeepAlives:   true,
-
-					DialContext: (&net.Dialer{
-						Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
-						//KeepAlive: 5 * time.Second,
-					}).DialContext,
-					TLSHandshakeTimeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
-					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: true,
-						MinVersion:         tls.VersionTLS10,
-						Renegotiation:      tls.RenegotiateOnceAsClient,
-						ServerName:         conf.SNI,
-						Certificates:       cert,
-					},
-				},
-			}}
-
-	*/
 
 	if conf.FollowRedirects {
 		simplerunner.client.CheckRedirect = nil
@@ -339,8 +285,9 @@ func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, 
 		httpreq.Header.Set(k, v)
 	}
 
-	if len(r.config.OutputDirectory) > 0 {
+	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawreq, _ = httputil.DumpRequestOut(httpreq, true)
+		req.Raw = string(rawreq)
 	}
 
 	if newConn {
@@ -351,6 +298,8 @@ func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, 
 	if err != nil {
 		return ffuf.Response{}, err
 	}
+
+	req.Timestamp = start
 
 	resp := ffuf.NewResponse(httpresp, req)
 	defer httpresp.Body.Close()
@@ -365,7 +314,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, 
 		}
 	}
 
-	if len(r.config.OutputDirectory) > 0 {
+	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawresp, _ := httputil.DumpResponse(httpresp, true)
 		resp.Request.Raw = string(rawreq)
 		resp.Raw = string(rawresp)
@@ -402,9 +351,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request, newConn bool) (ffuf.Response, 
 	linesSize := len(strings.Split(string(resp.Data), "\n"))
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
-	resp.Time = firstByteTime
+	resp.Duration = firstByteTime
+	resp.Timestamp = start.Add(firstByteTime)
 
-	return resp, nil
+  return resp, nil
 }
 
 func (r *SimpleRunner) Dump(req *ffuf.Request) ([]byte, error) {

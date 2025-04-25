@@ -61,7 +61,7 @@ func Usage() {
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "pausecode", "pausetime", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf", "t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -96,7 +96,7 @@ func Usage() {
 		Description:   "Options for output. Output file formats, file names and debug file locations.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"debug-log", "o", "of", "od", "or"},
+		ExpectedFlags: []string{"audit-log", "debug-log", "o", "of", "od", "or"},
 	}
 	sections := []UsageSection{u_http, u_general, u_compat, u_matcher, u_filter, u_input, u_output}
 

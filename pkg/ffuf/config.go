@@ -5,6 +5,7 @@ import (
 )
 
 type Config struct {
+	AuditLog                  string                `json:"auditlog"`
 	AutoCalibration           bool                  `json:"autocalibration"`
 	AutoCalibrationKeyword    string                `json:"autocalibration_keyword"`
 	AutoCalibrationPerHost    bool                  `json:"autocalibration_perhost"`
@@ -73,6 +74,8 @@ type Config struct {
 	ClientKey                 string                `json:"client-key"`
 	Basic                     string                `json:"basic"`
 	Ntlm                      string                `json:"ntlm"`
+	PauseCode                 string                `json:"pausecode"`
+	PauseTime                 string                `json:"pausetime"`
 }
 
 type InputProviderConfig struct {
