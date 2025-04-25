@@ -35,6 +35,7 @@
 * [Kiblyn11](https://github.com/Kiblyn11)
 * [l4yton](https://github.com/l4yton)
 * [lc](https://github.com/lc)
+* [Mojo8898](https://github.com/Mojo8898)
 * [mprencipe](https://github.com/mprencipe)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)

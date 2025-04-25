@@ -592,8 +592,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			}
 		} else {
 			if !keywordPresent(provider.Keyword, &conf) {
-				errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-				_, _ = fmt.Fprintf(os.Stderr, "%s\n", fmt.Errorf(errmsg))
+				// Warning suppressed
 			} else {
 				newInputProviders = append(newInputProviders, provider)
 			}
