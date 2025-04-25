@@ -62,12 +62,20 @@ type Config struct {
 	StopOnErrors              bool                  `json:"stop_errors"`
 	Threads                   int                   `json:"threads"`
 	Timeout                   int                   `json:"timeout"`
+	TCPAggr                   int                   `json:"tcpaggr"`
+	Preflight                 string                `json:"preflight"`
+	PreflightHeader           map[string]string     `json:"preflightheader"`
+	Capregex                  []string              `json:"capregex"`
 	Url                       string                `json:"url"`
 	Verbose                   bool                  `json:"verbose"`
 	Wordlists                 []string              `json:"wordlists"`
 	Http2                     bool                  `json:"http2"`
 	ClientCert                string                `json:"client-cert"`
 	ClientKey                 string                `json:"client-key"`
+	Basic                     string                `json:"basic"`
+	Ntlm                      string                `json:"ntlm"`
+	PauseCode                 string                `json:"pausecode"`
+	PauseTime                 string                `json:"pausetime"`
 }
 
 type InputProviderConfig struct {
@@ -108,6 +116,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Noninteractive = false
 	conf.ProgressFrequency = 125
 	conf.ProxyURL = ""
+	conf.PreflightHeader = make(map[string]string)
 	conf.Quiet = false
 	conf.Rate = 0
 	conf.Raw = false
@@ -117,6 +126,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.RequestFile = ""
 	conf.RequestProto = "https"
 	conf.SNI = ""
+	conf.TCPAggr = 50
 	conf.ScraperFile = ""
 	conf.Scrapers = "all"
 	conf.StopOn403 = false
@@ -127,6 +137,8 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Verbose = false
 	conf.Wordlists = []string{}
 	conf.Http2 = false
+	conf.Basic = ""
+	conf.Ntlm = ""
 	return conf
 }
 

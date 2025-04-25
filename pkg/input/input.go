@@ -40,6 +40,11 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 }
 
 func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error {
+	if provider.Name == "csrf" {
+		newcsrf, _ := NewCsrfInput(provider.Keyword, provider.Value, i.Config)
+		i.Providers = append(i.Providers, newcsrf)
+		return nil
+	}
 	if provider.Name == "command" {
 		newcomm, _ := NewCommandInput(provider.Keyword, provider.Value, i.Config)
 		i.Providers = append(i.Providers, newcomm)
@@ -253,4 +258,3 @@ func (i *MainInputProvider) Total() int {
 	}
 	return count
 }
-

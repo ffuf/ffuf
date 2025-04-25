@@ -21,6 +21,7 @@ import (
 
 type multiStringFlag []string
 type wordlistFlag []string
+type CapregexFlag []string
 
 func (m *multiStringFlag) String() string {
 	return ""
@@ -52,7 +53,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 
 	var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
-	var wordlists, encoders wordlistFlag
+	var wordlists, encoders, capregex, preflightheader wordlistFlag
 
 	cookies = opts.HTTP.Cookies
 	autocalibrationstrings = opts.General.AutoCalibrationStrings
@@ -60,6 +61,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	inputcommands = opts.Input.Inputcommands
 	wordlists = opts.Input.Wordlists
 	encoders = opts.Input.Encoders
+	capregex = opts.HTTP.Capregex
+	preflightheader = opts.HTTP.PreflightHeader
 
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
@@ -89,7 +92,10 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.IntVar(&opts.General.Threads, "t", opts.General.Threads, "Number of concurrent threads.")
 	flag.IntVar(&opts.HTTP.RecursionDepth, "recursion-depth", opts.HTTP.RecursionDepth, "Maximum recursion depth.")
 	flag.IntVar(&opts.HTTP.Timeout, "timeout", opts.HTTP.Timeout, "HTTP request timeout in seconds.")
+	flag.IntVar(&opts.HTTP.TCPAggr, "tcpaggr", opts.HTTP.TCPAggr, "max HTTP request in one TCP connection. Default 50. Set it to 1 to switch proxies")
 	flag.IntVar(&opts.Input.InputNum, "input-num", opts.Input.InputNum, "Number of inputs to test. Used in conjunction with --input-cmd.")
+	flag.StringVar(&opts.General.PauseCode, "pausecode", "", "If got 5 response code then pausing for pausetime seconds (ex: 403 or 403,429 or 401-429)")
+	flag.StringVar(&opts.General.PauseTime, "pausetime", "30", "Pause seconds. Can be just single(ex: 30) or slice for 1st,2nd,3rd,etc pausing(2,10,30,90)")
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
 	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
 	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
@@ -115,6 +121,9 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.HTTP.RecursionStrategy, "recursion-strategy", opts.HTTP.RecursionStrategy, "Recursion strategy: \"default\" for a redirect based, and \"greedy\" to recurse on all matches")
 	flag.StringVar(&opts.HTTP.URL, "u", opts.HTTP.URL, "Target URL")
 	flag.StringVar(&opts.HTTP.SNI, "sni", opts.HTTP.SNI, "Target TLS SNI, does not support FUZZ keyword")
+	flag.StringVar(&opts.HTTP.Basic, "basic", opts.HTTP.Basic, "Basic auth. Support FUZZ keyword. Ex: username:FUZZ  or FUZZ:password")
+	flag.StringVar(&opts.HTTP.Preflight, "preflight-request", opts.HTTP.Preflight, "Request URL to get CSRF tokens and cookies")
+	flag.StringVar(&opts.HTTP.Ntlm, "ntlm", opts.HTTP.Ntlm, "NTLM auth. Support pass-the-hash. Ex: username:FUZZ, FUZZ:password, user:11223344556677889900aadeeff")
 	flag.StringVar(&opts.Input.Extensions, "e", opts.Input.Extensions, "Comma separated list of extensions. Extends FUZZ keyword.")
 	flag.StringVar(&opts.Input.InputMode, "mode", opts.Input.InputMode, "Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper")
 	flag.StringVar(&opts.Input.InputShell, "input-shell", opts.Input.InputShell, "Shell to be used for running command")
@@ -140,6 +149,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Var(&inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.Var(&encoders, "enc", "Encoders for keywords, eg. 'FUZZ:urlencode b64encode'")
+	flag.Var(&capregex, "capture-regex", "RegEx to capture CSRF token. Can be multiple. See README")
+	flag.Var(&preflightheader, "preflight-header", "Additional headers for preflight request. Can be multiple")
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -155,6 +166,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
 	opts.Input.Encoders = encoders
+	opts.HTTP.Capregex = capregex
+	opts.HTTP.PreflightHeader = preflightheader
 	return opts
 }
 
