@@ -19,6 +19,7 @@ type ScraperRule struct {
 	Target       string `json:"target"`
 	compiledRule *regexp.Regexp
 	Type         string   `json:"type"`
+	QueryAttr		 string		`json:"query_attr"`
 	OnlyMatched  bool     `json:"onlymatched"`
 	Action       []string `json:"action"`
 }
@@ -149,9 +150,18 @@ func (r *ScraperRule) checkQuery(data string) []string {
 	if err != nil {
 		return []string{}
 	}
-	doc.Find(r.Rule).Each(func(i int, sel *goquery.Selection) {
-		val = append(val, sel.Text())
-	})
+	if r.QueryAttr == "" {
+		doc.Find(r.Rule).Each(func(i int, sel *goquery.Selection) {
+			val = append(val, sel.Text())
+		})
+	} else {
+		doc.Find(r.Rule).Each(func(i int, sel *goquery.Selection) {
+			text, exists := sel.Attr(r.QueryAttr)
+			if exists {
+				val = append(val, text)
+			}
+		})
+	}
 	return val
 }
 
