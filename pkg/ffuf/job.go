@@ -9,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"regexp"
 )
 
 // Job ties together Config, Runner, Input and Output
@@ -48,6 +49,8 @@ type QueueJob struct {
 	depth int
 	req   Request
 }
+// This is the regexp used to match endpoins with file extensions,such as /robots.txt
+var fileExtensions = regexp.MustCompile(`\.[a-zA-Z0-9]+$`)
 
 func NewJob(conf *Config) *Job {
 	var j Job
@@ -531,7 +534,7 @@ func (j *Job) handleScraperResult(resp *Response, sres ScraperResult) {
 // handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
 func (j *Job) handleGreedyRecursionJob(resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
-	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
+	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth && !fileExtensions.MatchString(resp.Request.Url) {
 		recUrl := resp.Request.Url + "/" + "FUZZ"
 		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
 		j.queuejobs = append(j.queuejobs, newJob)
@@ -544,19 +547,11 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 // handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
 // not been reached
 func (j *Job) handleDefaultRecursionJob(resp Response) {
-	recUrl := resp.Request.Url + "/" + "FUZZ"
 	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
 		// Not a directory, return early
 		return
 	}
-	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
-		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
-		j.queuejobs = append(j.queuejobs, newJob)
-		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
-	} else {
-		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
-	}
+	j.handleGreedyRecursionJob(resp)
 }
 
 // CheckStop stops the job if stopping conditions are met
