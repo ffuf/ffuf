@@ -46,6 +46,7 @@
 * [seblw](https://github.com/seblw)
 * [Serizao](https://github.com/Serizao)
 * [Shaked](https://github.com/Shaked)
+* [sitiom](https://github.com/sitiom)
 * [Skyehopper](https://github.com/Skyehopper)
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [TomNomNom](https://github.com/tomnomnom)

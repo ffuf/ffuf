@@ -20,6 +20,12 @@ A fast web fuzzer written in Go.
 - [Download](https://github.com/ffuf/ffuf/releases/latest) a prebuilt binary from [releases page](https://github.com/ffuf/ffuf/releases/latest), unpack and run!
 
   _or_
+- If you are on Windows with [Scoop](https://scoop.sh/), ffuf can be installed with: `scoop install ffuf`
+
+  _or_
+- If you are on Windows with [Winget](https://learn.microsoft.com/en-us/windows/package-manager/), ffuf can be installed with: `winget install ffuf.ffuf`
+
+  _or_
 - If you are on macOS with [homebrew](https://brew.sh), ffuf can be installed with: `brew install ffuf`
   
   _or_
