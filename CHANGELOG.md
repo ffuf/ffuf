@@ -1,8 +1,10 @@
 ## Changelog
 - master
   - New
+    - Added audit logging functionality
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
+    - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
   
 - v2.1.0
