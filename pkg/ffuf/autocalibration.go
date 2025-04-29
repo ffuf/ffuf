@@ -89,7 +89,7 @@ func (j *Job) calibrationRequest(inputs map[string][]byte) (Response, error) {
 		log.Printf("%s", err)
 		return Response{}, err
 	}
-	resp, err := j.Runner.Execute(&req)
+	resp, err := j.Runner.Execute(&req, false)
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while executing autocalibration request: %s\n", err))
 		j.incError()

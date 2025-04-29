@@ -7,14 +7,15 @@ import (
 
 // Request holds the meaningful data that is passed for runner for making the query
 type Request struct {
-	Method    string
-	Host      string
-	Url       string
-	Headers   map[string]string
-	Data      []byte
-	Input     map[string][]byte
-	Position  int
-	Raw       string
+	Method   string
+	Host     string
+	Url      string
+	Headers  map[string]string
+	Data     []byte
+	Input    map[string][]byte
+	Position int
+	Raw      string
+	Auth     string
 	Error     string
 	Timestamp time.Time
 }
@@ -23,6 +24,10 @@ func NewRequest(conf *Config) Request {
 	var req Request
 	req.Method = conf.Method
 	req.Url = conf.Url
+	req.Auth = conf.Basic
+	if conf.Ntlm != "" {
+		req.Auth = conf.Ntlm
+	}
 	req.Headers = make(map[string]string)
 	return req
 }
@@ -48,6 +53,7 @@ func CopyRequest(basereq *Request) Request {
 	req.Method = basereq.Method
 	req.Host = basereq.Host
 	req.Url = basereq.Url
+	req.Auth = basereq.Auth
 
 	req.Headers = make(map[string]string, len(basereq.Headers))
 	for h, v := range basereq.Headers {
