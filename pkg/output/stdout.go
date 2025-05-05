@@ -275,7 +275,7 @@ func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.
 // SaveFile saves the current results to a file of a given type
 func (s *Stdoutput) SaveFile(filename, format string) error {
 	var err error
-	if s.config.OutputSkipEmptyFile && len(s.Results) == 0 {
+	if s.config.OutputSkipEmptyFile && len(s.Results) == 0 && len(s.CurrentResults) == 0 {
 		s.Info("No results and -or defined, output file not written.")
 		return err
 	}
