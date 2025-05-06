@@ -26,7 +26,7 @@ A fast web fuzzer written in Go.
 - If you have recent go compiler installed: `go install github.com/ffuf/ffuf/v2@latest` (the same command works for updating)
   
   _or_
-- `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
+- `git clone https://github.com/ffuf/ffuf.git ; cd ffuf ; go get ; go build`
 
 Ffuf depends on Go 1.16 or greater.
 
