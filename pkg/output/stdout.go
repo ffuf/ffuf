@@ -338,7 +338,10 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}
-	s.CurrentResults = append(s.CurrentResults, sResult)
+
+	if !s.config.DontStoreResults {
+		s.CurrentResults = append(s.CurrentResults, sResult)
+	}
 	// Output the result
 	s.PrintResult(sResult)
 }

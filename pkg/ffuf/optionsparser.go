@@ -93,6 +93,7 @@ type OutputOptions struct {
 	OutputFile          string `json:"output_file"`
 	OutputFormat        string `json:"output_format"`
 	OutputSkipEmptyFile bool   `json:"output_skip_empty"`
+	DontStoreResults    bool   `json:"dont_store_results"`
 }
 
 type FilterOptions struct {
@@ -180,6 +181,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Output.OutputFile = ""
 	c.Output.OutputFormat = "json"
 	c.Output.OutputSkipEmptyFile = false
+	c.Output.DontStoreResults = false
 	return c
 }
 
@@ -518,6 +520,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory
 	conf.OutputSkipEmptyFile = parseOpts.Output.OutputSkipEmptyFile
+	conf.DontStoreResults = parseOpts.Output.DontStoreResults
 	conf.IgnoreBody = parseOpts.HTTP.IgnoreBody
 	conf.Quiet = parseOpts.General.Quiet
 	conf.ScraperFile = parseOpts.General.ScraperFile

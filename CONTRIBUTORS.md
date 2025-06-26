@@ -50,3 +50,4 @@
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [TomNomNom](https://github.com/tomnomnom)
 * [xfgusta](https://github.com/xfgusta)
+* [veids](https://github.com/veids)

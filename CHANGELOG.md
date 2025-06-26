@@ -2,6 +2,7 @@
 - master
   - New
     - Added audit logging functionality
+    - New output option: Don't store results in memory
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case

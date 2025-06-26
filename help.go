@@ -96,7 +96,7 @@ func Usage() {
 		Description:   "Options for output. Output file formats, file names and debug file locations.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"audit-log", "debug-log", "o", "of", "od", "or"},
+		ExpectedFlags: []string{"audit-log", "debug-log", "o", "of", "od", "or", "dontstoreresults"},
 	}
 	sections := []UsageSection{u_http, u_general, u_compat, u_matcher, u_filter, u_input, u_output}
 

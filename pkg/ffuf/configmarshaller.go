@@ -80,6 +80,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.Output.OutputFile = c.OutputFile
 	o.Output.OutputFormat = c.OutputFormat
 	o.Output.OutputSkipEmptyFile = c.OutputSkipEmptyFile
+	o.Output.DontStoreResults = c.DontStoreResults
 
 	o.Filter.Mode = c.FilterMode
 	o.Filter.Lines = ""
