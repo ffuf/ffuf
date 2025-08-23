@@ -442,7 +442,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf("Both proxy url (-x) and proxy list path (-xf) provided, only one can be used"))
 		} else {
 			pool, err := NewProxyPool(parseOpts.HTTP.ProxyListFile)
-			if err == nil {
+			if err != nil {
 				errs.Add(err)
 			} else {
 				conf.ProxyListFile = parseOpts.HTTP.ProxyListFile
