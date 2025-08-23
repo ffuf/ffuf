@@ -33,6 +33,7 @@ type HTTPOptions struct {
 	IgnoreBody        bool     `json:"ignore_body"`
 	Method            string   `json:"method"`
 	ProxyURL          string   `json:"proxy_url"`
+	ProxyListFile     string   `json:"proxy_list_file"`
 	Raw               bool     `json:"raw"`
 	Recursion         bool     `json:"recursion"`
 	RecursionDepth    int      `json:"recursion_depth"`
@@ -429,11 +430,24 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	// Verify proxy url format
 	if len(parseOpts.HTTP.ProxyURL) > 0 {
-		u, err := url.Parse(parseOpts.HTTP.ProxyURL)
-		if err != nil || u.Opaque != "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5") {
+		if _, isValid := parseProxyUrl(parseOpts.HTTP.ProxyURL); !isValid {
 			errs.Add(fmt.Errorf("Bad proxy url (-x) format. Expected http, https or socks5 url"))
 		} else {
 			conf.ProxyURL = parseOpts.HTTP.ProxyURL
+		}
+	}
+
+	if parseOpts.HTTP.ProxyListFile != "" {
+		if parseOpts.HTTP.ProxyURL != "" {
+			errs.Add(fmt.Errorf("Both proxy url (-x) and proxy list path (-xf) provided, only one can be used"))
+		} else {
+			pool, err := NewProxyPool(parseOpts.HTTP.ProxyListFile)
+			if err == nil {
+				errs.Add(err)
+			} else {
+				conf.ProxyListFile = parseOpts.HTTP.ProxyListFile
+				conf.ProxyPool = pool
+			}
 		}
 	}
 

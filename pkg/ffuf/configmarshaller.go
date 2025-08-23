@@ -18,6 +18,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.IgnoreBody = c.IgnoreBody
 	o.HTTP.Method = c.Method
 	o.HTTP.ProxyURL = c.ProxyURL
+	o.HTTP.ProxyListFile = c.ProxyListFile
 	o.HTTP.Raw = c.Raw
 	o.HTTP.Recursion = c.Recursion
 	o.HTTP.RecursionDepth = c.RecursionDepth

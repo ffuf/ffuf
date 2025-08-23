@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -108,6 +109,10 @@ func (s *Stdoutput) Banner() {
 	}
 	if len(s.config.ReplayProxyURL) > 0 {
 		printOption([]byte("ReplayProxy"), []byte(s.config.ReplayProxyURL))
+	}
+	if len(s.config.ProxyListFile) > 0 {
+		proxyListPath, _ := filepath.Abs(s.config.ProxyListFile) // Shouldn't ever fail, file is parsed and checked in options parser
+		printOption([]byte("Proxy List"), []byte(proxyListPath))
 	}
 
 	// Timeout

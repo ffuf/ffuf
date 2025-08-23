@@ -151,7 +151,20 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		req.Raw = string(rawreq)
 	}
 
-	httpresp, err := r.client.Do(httpreq)
+	// If we're using a proxy list, get a proxy url from the pool and set it as the transport's proxy
+	client := r.client
+	if r.config.ProxyPool != nil {
+		newClient := &*r.client
+		newTransport := &*r.client.Transport.(*http.Transport)
+
+		proxyUrl, _ := r.config.ProxyPool.Get()
+		newTransport.Proxy = proxyUrl
+
+		newClient.Transport = newTransport
+		client = newClient
+	}
+
+	httpresp, err := client.Do(httpreq)
 	if err != nil {
 		return ffuf.Response{}, err
 	}
