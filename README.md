@@ -53,6 +53,21 @@ By using the FUZZ keyword at the end of URL (`-u`):
 ffuf -w /path/to/wordlist -u https://target/FUZZ
 ```
 
+## Docker
+
+You can also run ffuf inside a Docker container without installing Go:
+
+### Build the Image
+```bash
+docker build -t ffuf .
+```
+
+### Example with wordlist
+```bash
+docker run --rm -v /path/to/wordlist:/ffuf/wordlist ffuf \
+  -w /ffuf/wordlist -u https://target/FUZZ
+```
+
 ### Virtual host discovery (without DNS records)
 
 [![asciicast](https://asciinema.org/a/211360.png)](https://asciinema.org/a/211360)
