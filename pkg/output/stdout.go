@@ -335,6 +335,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ScraperData:      resp.ScraperData,
 		Url:              resp.Request.Url,
 		Duration:         resp.Duration,
+		Timestamp:        resp.Timestamp,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}
@@ -413,7 +414,11 @@ func (s *Stdoutput) resultQuiet(res ffuf.Result) {
 func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	timestamp := ""
+	if s.config.ShowTimestamp && !res.Timestamp.IsZero() {
+		timestamp = fmt.Sprintf("[%s] ", res.Timestamp.Format("01/02/2006 03:04:05 PM"))
+	}
+	res_hdr = fmt.Sprintf("%s%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, timestamp, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	reslines := ""
 	if s.config.Verbose {
 		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
@@ -446,7 +451,11 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	timestamp := ""
+	if s.config.ShowTimestamp && !res.Timestamp.IsZero() {
+		timestamp = fmt.Sprintf("[%s] ", res.Timestamp.Format("01/02/2006 03:04:05 PM"))
+	}
+	resnormal := fmt.Sprintf("%s%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, timestamp, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 

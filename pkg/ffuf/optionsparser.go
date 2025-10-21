@@ -64,6 +64,7 @@ type GeneralOptions struct {
 	ScraperFile               string   `json:"scraperfile"`
 	Scrapers                  string   `json:"scrapers"`
 	Searchhash                string   `json:"-"`
+	ShowTimestamp             bool     `json:"show_timestamp"`
 	ShowVersion               bool     `toml:"-" json:"-"`
 	StopOn403                 bool     `json:"stop_on_403"`
 	StopOnAll                 bool     `json:"stop_on_all"`
@@ -139,6 +140,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Searchhash = ""
 	c.General.ScraperFile = ""
 	c.General.Scrapers = "all"
+	c.General.ShowTimestamp = false
 	c.General.ShowVersion = false
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
@@ -522,6 +524,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Quiet = parseOpts.General.Quiet
 	conf.ScraperFile = parseOpts.General.ScraperFile
 	conf.Scrapers = parseOpts.General.Scrapers
+	conf.ShowTimestamp = parseOpts.General.ShowTimestamp
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
