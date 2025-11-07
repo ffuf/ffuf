@@ -490,7 +490,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				}
 			}
 		}
-		return
+		//return
 	}
 
 	// audit the response after the error handling
@@ -687,7 +687,7 @@ func (j *Job) CheckPause() {
 						j.PauseTime = 30
 					}
 				}
-				j.Output.Info(fmt.Sprintf("Get at laest 5 of %s responses. Pausing for %d seconds", j.Config.PauseCode, j.PauseTime))
+				j.Output.Info(fmt.Sprintf("Get 5 errors of %s responses. Pausing for %d seconds because zero pausecode was given", j.Config.PauseCode, j.PauseTime))
 				time.Sleep(time.Duration(j.PauseTime) * time.Second)
 				j.CountPause = 0
 				j.Resume()
