@@ -490,7 +490,10 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 				}
 			}
 		}
-		//return
+		//return only if some other error but not connection error
+		if !strings.Contains(err.Error(), "connect:") {
+			return
+		}
 	}
 
 	// audit the response after the error handling
