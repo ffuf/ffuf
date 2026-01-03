@@ -52,6 +52,10 @@ type GeneralOptions struct {
 	AutoCalibrationPerHost    bool     `json:"autocalibration_per_host"`
 	AutoCalibrationStrategies []string `json:"autocalibration_strategies"`
 	AutoCalibrationStrings    []string `json:"autocalibration_strings"`
+	// Smart calibration - новые параметры
+	SmartCalibration          bool     `json:"smart_calibration"`
+	SmartCalibrationSamples   int      `json:"smart_calibration_samples"`
+	SmartCalibrationThreshold int      `json:"smart_calibration_threshold"`
 	Colors                    bool     `json:"colors"`
 	ConfigFile                string   `toml:"-" json:"config_file"`
 	Delay                     string   `json:"delay"`
@@ -128,6 +132,10 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.AutoCalibration = false
 	c.General.AutoCalibrationKeyword = "FUZZ"
 	c.General.AutoCalibrationStrategies = []string{"basic"}
+	// Smart calibration - значения по умолчанию
+	c.General.SmartCalibration = false
+	c.General.SmartCalibrationSamples = 100
+	c.General.SmartCalibrationThreshold = 90
 	c.General.Colors = false
 	c.General.Delay = ""
 	c.General.Json = false
@@ -533,6 +541,10 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
 	conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
+	// Smart calibration - копирование параметров
+	conf.SmartCalibration = parseOpts.General.SmartCalibration
+	conf.SmartCalibrationSamples = parseOpts.General.SmartCalibrationSamples
+	conf.SmartCalibrationThreshold = parseOpts.General.SmartCalibrationThreshold
 	conf.Threads = parseOpts.General.Threads
 	conf.Timeout = parseOpts.HTTP.Timeout
 	conf.MaxTime = parseOpts.General.MaxTime
