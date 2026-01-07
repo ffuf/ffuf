@@ -44,6 +44,36 @@ type HTTPOptions struct {
 	Http2             bool     `json:"http2"`
 	ClientCert        string   `json:"client-cert"`
 	ClientKey         string   `json:"client-key"`
+	// Header shortcuts
+	CTJSON        bool   `json:"ct_json"`
+	CTXML         bool   `json:"ct_xml"`
+	CTForm        bool   `json:"ct_form"`
+	CTFormData    bool   `json:"ct_formdata"`
+	CTText        bool   `json:"ct_text"`
+	CTHTML        bool   `json:"ct_html"`
+	CTCSV         bool   `json:"ct_csv"`
+	CTPDF         bool   `json:"ct_pdf"`
+	CTJPEG        bool   `json:"ct_jpeg"`
+	CTPNG         bool   `json:"ct_png"`
+	ACJSON        bool   `json:"ac_json"`
+	ACXML         bool   `json:"ac_xml"`
+	ACHTML        bool   `json:"ac_html"`
+	ACText        bool   `json:"ac_text"`
+	ACAny         bool   `json:"ac_any"`
+	ACImage       bool   `json:"ac_image"`
+	LgES          bool   `json:"lg_es"`
+	LgEN          bool   `json:"lg_en"`
+	LgFR          bool   `json:"lg_fr"`
+	LgDE          bool   `json:"lg_de"`
+	LgZH          bool   `json:"lg_zh"`
+	LgJA          bool   `json:"lg_ja"`
+	EncGzip       bool   `json:"enc_gzip"`
+	EncDeflate    bool   `json:"enc_deflate"`
+	EncBr         bool   `json:"enc_br"`
+	EncIdentity   bool   `json:"enc_identity"`
+	AuthBearer    string `json:"auth_bearer"`
+	AuthBasic     string `json:"auth_basic"`
+	AuthToken     string `json:"auth_token"`
 }
 
 type GeneralOptions struct {
@@ -84,6 +114,14 @@ type InputOptions struct {
 	Request                string   `json:"request_file"`
 	RequestProto           string   `json:"request_proto"`
 	Wordlists              []string `json:"wordlists"`
+	// Exclude options for wordlist lines
+	ExcludeCommentLines bool `json:"exclude_comment_lines"` // -xc-c: Exclude lines starting with #, ~, or /
+	ExcludeDotLines     bool `json:"exclude_dot_lines"`     // -xc-d: Exclude lines starting with .
+	ExcludeNumberLines  bool `json:"exclude_number_lines"`  // -xc-n: Exclude lines starting with numbers
+	ExcludeUppercase    bool `json:"exclude_uppercase"`     // -xc-upper: Exclude lines entirely uppercase
+	ExcludeLowercase    bool `json:"exclude_lowercase"`     // -xc-lower: Exclude lines entirely lowercase
+	ExcludeStartUpper   bool `json:"exclude_start_upper"`   // -xc-s-upper: Exclude lines starting with uppercase
+	ExcludeStartLower   bool `json:"exclude_start_lower"`   // -xc-s-lower: Exclude lines starting with lowercase
 }
 
 type OutputOptions struct {
@@ -159,6 +197,38 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.SNI = ""
 	c.HTTP.URL = ""
 	c.HTTP.Http2 = false
+	c.HTTP.ClientCert = ""
+	c.HTTP.ClientKey = ""
+	// Initialize header shortcut fields
+	c.HTTP.CTJSON = false
+	c.HTTP.CTXML = false
+	c.HTTP.CTForm = false
+	c.HTTP.CTFormData = false
+	c.HTTP.CTText = false
+	c.HTTP.CTHTML = false
+	c.HTTP.CTCSV = false
+	c.HTTP.CTPDF = false
+	c.HTTP.CTJPEG = false
+	c.HTTP.CTPNG = false
+	c.HTTP.ACJSON = false
+	c.HTTP.ACXML = false
+	c.HTTP.ACHTML = false
+	c.HTTP.ACText = false
+	c.HTTP.ACAny = false
+	c.HTTP.ACImage = false
+	c.HTTP.LgES = false
+	c.HTTP.LgEN = false
+	c.HTTP.LgFR = false
+	c.HTTP.LgDE = false
+	c.HTTP.LgZH = false
+	c.HTTP.LgJA = false
+	c.HTTP.EncGzip = false
+	c.HTTP.EncDeflate = false
+	c.HTTP.EncBr = false
+	c.HTTP.EncIdentity = false
+	c.HTTP.AuthBearer = ""
+	c.HTTP.AuthBasic = ""
+	c.HTTP.AuthToken = ""
 	c.Input.DirSearchCompat = false
 	c.Input.Encoders = []string{}
 	c.Input.Extensions = ""
@@ -167,6 +237,13 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.InputNum = 100
 	c.Input.Request = ""
 	c.Input.RequestProto = "https"
+	c.Input.ExcludeCommentLines = false
+	c.Input.ExcludeDotLines = false
+	c.Input.ExcludeNumberLines = false
+	c.Input.ExcludeUppercase = false
+	c.Input.ExcludeLowercase = false
+	c.Input.ExcludeStartUpper = false
+	c.Input.ExcludeStartLower = false
 	c.Matcher.Mode = "or"
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
@@ -202,9 +279,106 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.Extensions = extensions
 	}
 
-	// Convert cookies to a header
+	//Convert cookies to a header
 	if len(parseOpts.HTTP.Cookies) > 0 {
 		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Cookie: "+strings.Join(parseOpts.HTTP.Cookies, "; "))
+	}
+
+	// Process Content-Type shortcuts
+	if parseOpts.HTTP.CTJSON {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: application/json")
+	}
+	if parseOpts.HTTP.CTXML {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: application/xml")
+	}
+	if parseOpts.HTTP.CTForm {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: application/x-www-form-urlencoded")
+	}
+	if parseOpts.HTTP.CTFormData {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: multipart/form-data")
+	}
+	if parseOpts.HTTP.CTText {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: text/plain")
+	}
+	if parseOpts.HTTP.CTHTML {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: text/html")
+	}
+	if parseOpts.HTTP.CTCSV {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: text/csv")
+	}
+	if parseOpts.HTTP.CTPDF {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: application/pdf")
+	}
+	if parseOpts.HTTP.CTJPEG {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: image/jpeg")
+	}
+	if parseOpts.HTTP.CTPNG {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Content-Type: image/png")
+	}
+
+	// Process Accept shortcuts
+	if parseOpts.HTTP.ACJSON {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept: application/json")
+	}
+	if parseOpts.HTTP.ACXML {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept: application/xml")
+	}
+	if parseOpts.HTTP.ACHTML {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept: text/html")
+	}
+	if parseOpts.HTTP.ACText {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept: text/plain")
+	}
+	if parseOpts.HTTP.ACAny {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept: */*")
+	}
+	if parseOpts.HTTP.ACImage {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept: image/*")
+	}
+
+	// Process Language shortcuts
+	if parseOpts.HTTP.LgES {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Language: es-ES")
+	}
+	if parseOpts.HTTP.LgEN {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Language: en-US")
+	}
+	if parseOpts.HTTP.LgFR {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Language: fr-FR")
+	}
+	if parseOpts.HTTP.LgDE {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Language: de-DE")
+	}
+	if parseOpts.HTTP.LgZH {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Language: zh-CN")
+	}
+	if parseOpts.HTTP.LgJA {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Language: ja-JP")
+	}
+
+	// Process Encoding shortcuts
+	if parseOpts.HTTP.EncGzip {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Encoding: gzip")
+	}
+	if parseOpts.HTTP.EncDeflate {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Encoding: deflate")
+	}
+	if parseOpts.HTTP.EncBr {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Encoding: br")
+	}
+	if parseOpts.HTTP.EncIdentity {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Accept-Encoding: identity")
+	}
+
+	// Process Authorization shortcuts
+	if parseOpts.HTTP.AuthBearer != "" {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Authorization: Bearer "+parseOpts.HTTP.AuthBearer)
+	}
+	if parseOpts.HTTP.AuthBasic != "" {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Authorization: Basic "+parseOpts.HTTP.AuthBasic)
+	}
+	if parseOpts.HTTP.AuthToken != "" {
+		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Authorization: Token "+parseOpts.HTTP.AuthToken)
 	}
 
 	//Prepare inputproviders
@@ -509,6 +683,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	// Common stuff
 	conf.IgnoreWordlistComments = parseOpts.Input.IgnoreWordlistComments
+	conf.ExcludeCommentLines = parseOpts.Input.ExcludeCommentLines
+	conf.ExcludeDotLines = parseOpts.Input.ExcludeDotLines
+	conf.ExcludeNumberLines = parseOpts.Input.ExcludeNumberLines
+	conf.ExcludeUppercase = parseOpts.Input.ExcludeUppercase
+	conf.ExcludeLowercase = parseOpts.Input.ExcludeLowercase
+	conf.ExcludeStartUpper = parseOpts.Input.ExcludeStartUpper
+	conf.ExcludeStartLower = parseOpts.Input.ExcludeStartLower
 	conf.DirSearchCompat = parseOpts.Input.DirSearchCompat
 	conf.Colors = parseOpts.General.Colors
 	conf.InputNum = parseOpts.Input.InputNum

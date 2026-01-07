@@ -29,6 +29,13 @@ type Config struct {
 	IgnoreBody                bool                  `json:"ignorebody"`
 	IgnoreWordlistComments    bool                  `json:"ignore_wordlist_comments"`
 	InputMode                 string                `json:"inputmode"`
+	ExcludeCommentLines       bool                  `json:"exclude_comment_lines"`
+	ExcludeDotLines           bool                  `json:"exclude_dot_lines"`
+	ExcludeNumberLines        bool                  `json:"exclude_number_lines"`
+	ExcludeUppercase          bool                  `json:"exclude_uppercase"`
+	ExcludeLowercase          bool                  `json:"exclude_lowercase"`
+	ExcludeStartUpper         bool                  `json:"exclude_start_upper"`
+	ExcludeStartLower         bool                  `json:"exclude_start_lower"`
 	InputNum                  int                   `json:"cmd_inputnum"`
 	InputProviders            []InputProviderConfig `json:"inputproviders"`
 	InputShell                string                `json:"inputshell"`
@@ -97,6 +104,13 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Headers = make(map[string]string)
 	conf.IgnoreWordlistComments = false
 	conf.InputMode = "clusterbomb"
+	conf.ExcludeCommentLines = false
+	conf.ExcludeDotLines = false
+	conf.ExcludeNumberLines = false
+	conf.ExcludeUppercase = false
+	conf.ExcludeLowercase = false
+	conf.ExcludeStartUpper = false
+	conf.ExcludeStartLower = false
 	conf.InputNum = 0
 	conf.InputShell = ""
 	conf.InputProviders = make([]InputProviderConfig, 0)

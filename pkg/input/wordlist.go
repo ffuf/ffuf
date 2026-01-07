@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"regexp"
+	"unicode"
 	"strings"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -157,6 +158,12 @@ func (w *WordlistInput) readFile(path string) error {
 					continue
 				}
 			}
+
+			// Check if line should be excluded based on filter options
+			if shouldExcludeLine(text, w.config) {
+				continue
+			}
+
 			data = append(data, []byte(text))
 			if w.keyword == "FUZZ" && len(w.config.Extensions) > 0 {
 				for _, ext := range w.config.Extensions {
@@ -184,4 +191,90 @@ func stripComments(text string) (string, bool) {
 		return text, true
 	}
 	return text[:index], true
+}
+
+// shouldExcludeLine checks if a line should be excluded based on the filter options
+func shouldExcludeLine(text string, conf *ffuf.Config) bool {
+	trimmedText := strings.TrimSpace(text)
+
+	// Skip empty lines
+	if len(trimmedText) == 0 {
+		return true
+	}
+
+	// -xc-c: Exclude lines starting with #, ~, or /
+	if conf.ExcludeCommentLines {
+		if strings.HasPrefix(trimmedText, "#") || 
+		   strings.HasPrefix(trimmedText, "~") || 
+		   strings.HasPrefix(trimmedText, "/") {
+			return true
+		}
+	}
+
+	// -xc-d: Exclude lines starting with .
+	if conf.ExcludeDotLines {
+		if strings.HasPrefix(trimmedText, ".") {
+			return true
+		}
+	}
+
+	// -xc-n: Exclude lines starting with numbers
+	if conf.ExcludeNumberLines {
+		if len(trimmedText) > 0 {
+			firstChar := trimmedText[0]
+			if firstChar >= '0' && firstChar <= '9' {
+				return true
+			}
+		}
+	}
+
+	// -xc-upper: Exclude lines that are entirely uppercase
+	if conf.ExcludeUppercase {
+		isUpper := true
+		for _, r := range trimmedText {
+			if unicode.IsLetter(r) && !unicode.IsUpper(r) {
+				isUpper = false
+				break
+			}
+		}
+		if isUpper && len(trimmedText) > 0 {
+			return true
+		}
+	}
+
+	// -xc-lower: Exclude lines that are entirely lowercase
+	if conf.ExcludeLowercase {
+		isLower := true
+		for _, r := range trimmedText {
+			if unicode.IsLetter(r) && !unicode.IsLower(r) {
+				isLower = false
+				break
+			}
+		}
+		if isLower && len(trimmedText) > 0 {
+			return true
+		}
+	}
+
+	// -xc-s-upper: Exclude lines starting with uppercase letter
+	if conf.ExcludeStartUpper {
+		if len(trimmedText) > 0 {
+			firstRune := rune(trimmedText[0])
+			if unicode.IsUpper(firstRune) {
+				return true
+			}
+		}
+	}
+
+	// -xc-s-lower: Exclude lines starting with lowercase letter
+	if conf.ExcludeStartLower {
+		if len(trimmedText) > 0 {
+			firstRune := rune(trimmedText[0])
+			if unicode.IsLower(firstRune) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
