@@ -199,6 +199,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		bodyReader = httpresp.Body
 	}
 
+	// cscguochang fix: Ensure matchers see decompressed content even if headers manually set
 	if respbody, err := io.ReadAll(bodyReader); err == nil {
 		resp.ContentLength = int64(len(string(respbody)))
 		resp.Data = respbody
