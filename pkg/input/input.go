@@ -2,8 +2,10 @@ package input
 
 import (
 	"fmt"
-	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"strings"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+	"github.com/ffuf/ffuf/v2/pkg/payloadtamper"
 
 	"github.com/ffuf/pencode/pkg/pencode"
 )
@@ -11,6 +13,7 @@ import (
 type MainInputProvider struct {
 	Providers   []ffuf.InternalInputProvider
 	Encoders    map[string]*pencode.Chain
+	Tampers     map[string]*payloadtamper.PayloadTamper
 	Config      *ffuf.Config
 	position    int
 	msbIterator int
@@ -28,7 +31,12 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
 		return &MainInputProvider{}, errs
 	}
-	mainip := MainInputProvider{Config: conf, msbIterator: 0, Encoders: make(map[string]*pencode.Chain)}
+	mainip := MainInputProvider{
+		Config:      conf,
+		msbIterator: 0,
+		Encoders:    make(map[string]*pencode.Chain),
+		Tampers:     make(map[string]*payloadtamper.PayloadTamper),
+	}
 	// Initialize the correct inputprovider
 	for _, v := range conf.InputProviders {
 		err := mainip.AddProvider(v)
@@ -58,6 +66,23 @@ func (i *MainInputProvider) AddProvider(provider ffuf.InputProviderConfig) error
 			return err
 		}
 		i.Encoders[provider.Keyword] = chain
+	}
+
+	if len(provider.Tampers) > 0 {
+		tampers := strings.Split(strings.TrimSpace(provider.Tampers), " ")
+
+		payloadTamper, err := payloadtamper.New(payloadtamper.Config{
+			Directory: i.Config.TampersDirectory,
+			Tampers:   tampers,
+		})
+		if err != nil {
+			return err
+		}
+		err = payloadTamper.LoadTampers()
+		if err != nil {
+			return err
+		}
+		i.Tampers[provider.Keyword] = payloadTamper
 	}
 	return nil
 }
@@ -114,6 +139,8 @@ func (i *MainInputProvider) Value() map[string][]byte {
 	if i.Config.InputMode == "pitchfork" {
 		retval = i.pitchforkValue()
 	}
+
+	// Add the encoders to the payloads based on insert keyword
 	if len(i.Encoders) > 0 {
 		for key, val := range retval {
 			chain, ok := i.Encoders[key]
@@ -126,6 +153,17 @@ func (i *MainInputProvider) Value() map[string][]byte {
 			}
 		}
 	}
+
+	// Add the tampers to the payloads based on insert keyword
+	if len(i.Tampers) > 0 {
+		for key, val := range retval {
+			pt, ok := i.Tampers[key]
+			if ok {
+				retval[key] = []byte(pt.Execute(string(val)))
+			}
+		}
+	}
+
 	return retval
 }
 
@@ -253,4 +291,3 @@ func (i *MainInputProvider) Total() int {
 	}
 	return count
 }
-

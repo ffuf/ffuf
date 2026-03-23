@@ -15,6 +15,7 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/input"
 	"github.com/ffuf/ffuf/v2/pkg/interactive"
 	"github.com/ffuf/ffuf/v2/pkg/output"
+	"github.com/ffuf/ffuf/v2/pkg/payloadtamper"
 	"github.com/ffuf/ffuf/v2/pkg/runner"
 	"github.com/ffuf/ffuf/v2/pkg/scraper"
 )
@@ -52,7 +53,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
 
 	var cookies, autocalibrationstrings, autocalibrationstrategies, headers, inputcommands multiStringFlag
-	var wordlists, encoders wordlistFlag
+	var wordlists, encoders, tampers wordlistFlag
 
 	cookies = opts.HTTP.Cookies
 	autocalibrationstrings = opts.General.AutoCalibrationStrings
@@ -60,6 +61,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	inputcommands = opts.Input.Inputcommands
 	wordlists = opts.Input.Wordlists
 	encoders = opts.Input.Encoders
+	tampers = opts.Input.Tampers
 
 	flag.BoolVar(&ignored, "compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	flag.BoolVar(&ignored, "i", true, "Dummy flag for copy as curl functionality (ignored)")
@@ -132,6 +134,8 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Output.OutputDirectory, "od", opts.Output.OutputDirectory, "Directory path to store matched results to.")
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
 	flag.StringVar(&opts.Output.OutputFormat, "of", opts.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
+	flag.BoolVar(&opts.Input.ListTampers, "list-tampers", opts.Input.ListTampers, "List available payload tampers and exit.")
+	flag.StringVar(&opts.Input.TampersDirectory, "tampers-dir", opts.Input.TampersDirectory, "Directory to load payload tampers from.")
 	flag.Var(&autocalibrationstrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.Var(&autocalibrationstrategies, "acs", "Custom auto-calibration strategies. Can be used multiple times. Implies -ac")
 	flag.Var(&cookies, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
@@ -140,6 +144,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Var(&inputcommands, "input-cmd", "Command producing the input. --input-num is required when using this input method. Overrides -w.")
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.Var(&encoders, "enc", "Encoders for keywords, eg. 'FUZZ:urlencode b64encode'")
+	flag.Var(&tampers, "tampers", "Tampers for keywords, eg. 'FUZZ:space2plus backslashescape'")
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -150,11 +155,13 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 			opts.General.AutoCalibrationStrategies = append(opts.General.AutoCalibrationStrategies, strings.Split(strategy, ",")...)
 		}
 	}
+
 	opts.HTTP.Cookies = cookies
 	opts.HTTP.Headers = headers
 	opts.Input.Inputcommands = inputcommands
 	opts.Input.Wordlists = wordlists
 	opts.Input.Encoders = encoders
+	opts.Input.Tampers = tampers
 	return opts
 }
 
@@ -200,6 +207,22 @@ func main() {
 
 	if opts.General.ShowVersion {
 		fmt.Printf("ffuf version: %s\n", ffuf.Version())
+		os.Exit(0)
+	}
+	if opts.Input.ListTampers {
+		tampers, err := payloadtamper.ListTampers(opts.Input.TampersDirectory)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error listing tampers: %s\n", err)
+			os.Exit(1)
+		}
+		if len(tampers) == 0 {
+			fmt.Printf("No tampers found in %s\n", opts.Input.TampersDirectory)
+		} else {
+			fmt.Printf("Available tampers (from %s):\n", opts.Input.TampersDirectory)
+			for _, t := range tampers {
+				fmt.Printf("  %-20s - %s\n", t.Name, t.Desc)
+			}
+		}
 		os.Exit(0)
 	}
 	if len(opts.Output.DebugLog) != 0 {

@@ -10,10 +10,11 @@ import (
 type Tamper interface {
 	// Name returns the name of the tamper.
 	Name() string
+	// Desc represent the description of the tamper
+	Desc() string
 	// Exec takes an original payload and returns the tampered payload.
 	Exec(payload string) string
 }
-
 type PayloadTamper struct {
 	tampers  map[string]Tamper
 	pipeline []string
@@ -23,6 +24,12 @@ type PayloadTamper struct {
 type Config struct {
 	Directory string
 	Tampers   []string
+}
+
+// TamperInfo holds metadata about a tamper plugin.
+type TamperInfo struct {
+	Name string
+	Desc string
 }
 
 // New creates a new PayloadTamper.
@@ -91,10 +98,49 @@ func (pt *PayloadTamper) Execute(payload string) string {
 }
 
 // Returns the names of all registered tampers.
-func (pt *PayloadTamper) GetTampers() []string {
+func (pt *PayloadTamper) GetTampersName() []string {
 	names := make([]string, 0, len(pt.tampers))
 	for name := range pt.tampers {
 		names = append(names, name)
 	}
 	return names
+}
+
+// Returns the names of all registered tampers.
+func (pt *PayloadTamper) GetTampers() []*Tamper {
+	tampers := make([]*Tamper, 0, len(pt.tampers))
+	for _, tamper := range pt.tampers {
+		tampers = append(tampers, &tamper)
+	}
+	return tampers
+}
+
+// ListTampers scans a directory for .so tamper plugins and returns their metadata.
+func ListTampers(directory string) ([]TamperInfo, error) {
+	pattern := filepath.Join(directory, "*.so")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to glob tamper directory: %w", err)
+	}
+
+	var tampers []TamperInfo
+	for _, path := range matches {
+		p, err := plugin.Open(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open tamper plugin %q: %w", path, err)
+		}
+
+		sym, err := p.Lookup("Tamper")
+		if err != nil {
+			return nil, fmt.Errorf("plugin %q missing Tamper symbol: %w", path, err)
+		}
+
+		t, ok := sym.(Tamper)
+		if !ok {
+			return nil, fmt.Errorf("plugin %q: Tamper symbol does not implement Tamper interface", path)
+		}
+
+		tampers = append(tampers, TamperInfo{Name: t.Name(), Desc: t.Desc()})
+	}
+	return tampers, nil
 }
