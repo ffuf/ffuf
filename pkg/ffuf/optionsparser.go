@@ -75,9 +75,12 @@ type GeneralOptions struct {
 type InputOptions struct {
 	DirSearchCompat        bool     `json:"dirsearch_compat"`
 	Encoders               []string `json:"encoders"`
-	ListTampers            bool     `toml:"-" json:"-"`
+	TampersList            bool     `json:"tampers_list"`
+	TampersDownload        bool     `json:"tampers_download"`
+	TampersOverwrite       bool     `json:"tampers_overwrite"`
 	Tampers                []string `json:"tampers"`
 	TampersDirectory       string   `json:"tampers_directory"`
+	TampersDownloadUrl     string   `toml:"tampers_download_url" json:"tampers_download_url"`
 	Extensions             string   `json:"extensions"`
 	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments"`
 	InputMode              string   `json:"input_mode"`
@@ -165,7 +168,11 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.DirSearchCompat = false
 	c.Input.Encoders = []string{}
 	c.Input.Tampers = []string{}
+	c.Input.TampersList = false
+	c.Input.TampersOverwrite = false
+	c.Input.TampersDownload = false
 	c.Input.TampersDirectory = fmt.Sprintf("%s/.config/ffuf/tampers", os.Getenv("HOME"))
+	c.Input.TampersDownloadUrl = "https://api.github.com/repos/ffuf/ffuf/contents/assets/tampers?ref=main"
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
 	c.Input.InputMode = "clusterbomb"
