@@ -2,37 +2,69 @@ package tests
 
 import (
 	"fmt"
-	"log"
-	"strings"
 	"testing"
 
 	"github.com/ffuf/ffuf/v2/pkg/payloadtamper"
 )
 
-func Test_payloadTamper(T *testing.T) {
-	// Make sure to compile the tampers before running, Ex:
-	// Command: go build -buildmode=plugin -o ./tampers/backslashescape.so ./tampers/backslashescape/backslashescape.go
-	var (
-		payloadOriginal = "' or 1=1 -- "
-		directory       = "./tampers"
-		tampers         = []string{"backslashescape"} //[]string{"quote2doublequote", "space2plus", "backslashescape"}
-	)
+func Test_payloadTamper(t *testing.T) {
+	directory := "./tampers"
 
-	payloadTamper, err := payloadtamper.New(payloadtamper.Config{
-		Directory: directory,
-		Tampers:   tampers,
-	})
-	if err != nil {
-		log.Fatal(err)
+	{
+		fmt.Println("=== tamper single ===")
+		const payload = "' or 1=1 -- "
+		pt, err := payloadtamper.New(payloadtamper.Config{
+			Directory: directory,
+			Tampers:   []string{"space2plus"},
+		})
+		if err != nil {
+			t.Fatalf("New: %v", err)
+		}
+		if err := pt.LoadTampers(); err != nil {
+			t.Fatalf("LoadTampers: %v", err)
+		}
+
+		got := pt.Execute(payload)
+		expected := "'+or+1=1+--+"
+		if got != expected {
+			t.Errorf("expected %q, got %q", expected, got)
+		}
+		fmt.Printf("Success: %s", got)
 	}
-	err = payloadTamper.LoadTampers()
-	if err != nil {
-		log.Fatal(err)
+
+	{
+		fmt.Println("\n=== tampers chained ===")
+		const payload = "' or 1=1 -- "
+		pt, err := payloadtamper.New(payloadtamper.Config{
+			Directory: directory,
+			Tampers:   []string{"quote2doublequote", "space2plus", "yeswehack"},
+		})
+		if err != nil {
+			t.Fatalf("New: %v", err)
+		}
+		if err := pt.LoadTampers(); err != nil {
+			t.Fatalf("LoadTampers: %v", err)
+		}
+
+		got := pt.Execute(payload)
+		expected := "yeswehack_\"+or+1=1+--+"
+		if got != expected {
+			t.Errorf("expected %q, got %q", expected, got)
+		}
+		fmt.Printf("Success: %s", got)
 	}
-
-	fmt.Println(strings.Join(payloadTamper.GetTampers(), "\n"))
-
-	payload := payloadTamper.Execute(payloadOriginal)
-
-	fmt.Println(payload)
+	{
+		fmt.Println("\n=== tampers info ===")
+		infos, err := payloadtamper.GetTampersInfo(directory)
+		if err != nil {
+			t.Fatalf("TampersList: %v", err)
+		}
+		if len(infos) == 0 {
+			t.Fatal("expected at least one tamper")
+		}
+		t.Logf("Found %d tampers:", len(infos))
+		for _, info := range infos {
+			t.Logf("  %s: %s", info.Name, info.Desc)
+		}
+	}
 }
