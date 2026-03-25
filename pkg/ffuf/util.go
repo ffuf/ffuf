@@ -100,6 +100,10 @@ func CheckOrCreateConfigDir() error {
 	if err != nil {
 		return err
 	}
+	err = createConfigDir(TAMPERSDIR)
+	if err != nil {
+		return err
+	}
 	err = setupDefaultAutocalibrationStrategies()
 	return err
 }

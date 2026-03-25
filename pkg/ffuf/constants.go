@@ -1,8 +1,9 @@
 package ffuf
 
 import (
-	"github.com/adrg/xdg"
 	"path/filepath"
+
+	"github.com/adrg/xdg"
 )
 
 var (
@@ -13,5 +14,6 @@ var (
 	CONFIGDIR        = filepath.Join(xdg.ConfigHome, "ffuf")
 	HISTORYDIR       = filepath.Join(CONFIGDIR, "history")
 	SCRAPERDIR       = filepath.Join(CONFIGDIR, "scraper")
+	TAMPERSDIR       = filepath.Join(CONFIGDIR, "tampers")
 	AUTOCALIBDIR     = filepath.Join(CONFIGDIR, "autocalibration")
 )

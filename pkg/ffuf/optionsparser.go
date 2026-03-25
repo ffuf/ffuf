@@ -171,8 +171,8 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.TampersList = false
 	c.Input.TampersOverwrite = false
 	c.Input.TampersDownload = false
-	c.Input.TampersDirectory = fmt.Sprintf("%s/.config/ffuf/tampers", os.Getenv("HOME"))
-	c.Input.TampersDownloadUrl = "https://api.github.com/repos/ffuf/ffuf/contents/assets/tampers?ref=main"
+	c.Input.TampersDirectory = TAMPERSDIR
+	c.Input.TampersDownloadUrl = "https://api.github.com/repos/ffuf/ffuf/contents/assets/tampers?ref=master"
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
 	c.Input.InputMode = "clusterbomb"
