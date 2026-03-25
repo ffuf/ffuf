@@ -1,0 +1,24 @@
+# Example run in compose (used for development testing):
+# docker compose run --rm ffuf -V
+
+services:
+  ffuf:
+    build: 
+      context: .
+      dockerfile: dev.dockerfile
+    working_dir: /app
+    network_mode: "host"
+    #user: 1000:1000
+    environment:
+      - CGO_ENABLED=1
+    volumes:
+      - ./:/app
+      - ./tests/.config/:/root/.config/ffuf
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    entrypoint: ["go", "run", "."]
+    command: []
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
