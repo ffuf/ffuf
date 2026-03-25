@@ -134,7 +134,10 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Output.OutputDirectory, "od", opts.Output.OutputDirectory, "Directory path to store matched results to.")
 	flag.StringVar(&opts.Output.OutputFile, "o", opts.Output.OutputFile, "Write output to file")
 	flag.StringVar(&opts.Output.OutputFormat, "of", opts.Output.OutputFormat, "Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)")
-	flag.BoolVar(&opts.Input.ListTampers, "list-tampers", opts.Input.ListTampers, "List available payload tampers and exit.")
+	flag.BoolVar(&opts.Input.TampersDownload, "download-tampers", opts.Input.TampersDownload, "Download default payload tampers from the ffuf repository and exit.")
+	flag.BoolVar(&opts.Input.TampersList, "list-tampers", opts.Input.TampersList, "List available payload tampers and exit.")
+	flag.BoolVar(&opts.Input.TampersOverwrite, "overwrite-tampers", opts.Input.TampersOverwrite, "Overwrite existing tampers with the new downlaoded one in the configured tampers directory.")
+	flag.StringVar(&opts.Input.TampersDownloadUrl, "download-tampers-url", opts.Input.TampersDownloadUrl, "Github API URL to download tampers from.")
 	flag.StringVar(&opts.Input.TampersDirectory, "tampers-dir", opts.Input.TampersDirectory, "Directory to load payload tampers from.")
 	flag.Var(&autocalibrationstrings, "acc", "Custom auto-calibration string. Can be used multiple times. Implies -ac")
 	flag.Var(&autocalibrationstrategies, "acs", "Custom auto-calibration strategies. Can be used multiple times. Implies -ac")
@@ -211,7 +214,7 @@ func main() {
 	}
 
 	// List payload tampers
-	if opts.Input.ListTampers {
+	if opts.Input.TampersList {
 		tampers, err := payloadtamper.GetTampersInfo(opts.Input.TampersDirectory)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error listing tampers: %s\n", err)
@@ -227,6 +230,16 @@ func main() {
 		}
 		os.Exit(0)
 	}
+
+	// Download payload tampers from GitHub
+	if opts.Input.TampersDownload {
+		if err := payloadtamper.DownloadTampers(opts.Input.TampersDownloadUrl, opts.Input.TampersDirectory, opts.Input.TampersOverwrite); err != nil {
+			fmt.Fprintf(os.Stderr, "Error downloading tampers: %s\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	if len(opts.Output.DebugLog) != 0 {
 		f, err := os.OpenFile(opts.Output.DebugLog, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
