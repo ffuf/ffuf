@@ -3,11 +3,11 @@ package tamper
 type T struct{}
 
 func (t T) Desc() string {
-	return "add prefix \"yeswehack_\""
+	return "append null byte (\"\\0\") to payload"
 }
 
 func (t T) Exec(payload string) string {
-	return "yeswehack_" + payload
+	return payload + "\x00"
 }
 
 var Tamper T
