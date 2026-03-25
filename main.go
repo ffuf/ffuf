@@ -209,8 +209,10 @@ func main() {
 		fmt.Printf("ffuf version: %s\n", ffuf.Version())
 		os.Exit(0)
 	}
+
+	// List payload tampers
 	if opts.Input.ListTampers {
-		tampers, err := payloadtamper.ListTampers(opts.Input.TampersDirectory)
+		tampers, err := payloadtamper.GetTampersInfo(opts.Input.TampersDirectory)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error listing tampers: %s\n", err)
 			os.Exit(1)
@@ -220,7 +222,7 @@ func main() {
 		} else {
 			fmt.Printf("Available tampers (from %s):\n", opts.Input.TampersDirectory)
 			for _, t := range tampers {
-				fmt.Printf("  %-20s - %s\n", t.Name, t.Desc)
+				fmt.Printf("\033[1;33m%-20s\033[0m :: %s\n", t.Name, t.Desc)
 			}
 		}
 		os.Exit(0)

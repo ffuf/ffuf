@@ -103,6 +103,12 @@ func Usage() {
 	// Populate the flag sections
 	max_length := 0
 	flag.VisitAll(func(f *flag.Flag) {
+
+		// skip the flag "quickchecks" that is initialized from yaegi
+		if f.Name == "quickchecks" {
+			return
+		}
+
 		found := false
 		for i, section := range sections {
 			if ffuf.StrInSlice(f.Name, section.ExpectedFlags) {

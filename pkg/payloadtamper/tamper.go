@@ -3,7 +3,6 @@ package payloadtamper
 import (
 	"fmt"
 	"path/filepath"
-	"plugin"
 )
 
 // Tamper is the interface that custom tampers must implement.
@@ -26,7 +25,6 @@ type Config struct {
 	Tampers   []string
 }
 
-// TamperInfo holds metadata about a tamper plugin.
 type TamperInfo struct {
 	Name string
 	Desc string
@@ -48,34 +46,24 @@ func New(config Config) (*PayloadTamper, error) {
 // Load all tampers in the configured directory based on their filenames
 func (pt *PayloadTamper) LoadTampers() error {
 	for _, name := range pt.config.Tampers {
-		path := filepath.Join(pt.config.Directory, name+".so")
+		path := filepath.Join(pt.config.Directory, name+".go")
 
-		p, err := plugin.Open(path)
+		t, err := loadTamper(path)
 		if err != nil {
-			return fmt.Errorf("failed to open tamper plugin %q: %w", name, err)
-		}
-
-		sym, err := p.Lookup("Tamper")
-		if err != nil {
-			return fmt.Errorf("plugin %q missing Tamper symbol: %w", name, err)
-		}
-
-		t, ok := sym.(Tamper)
-		if !ok {
-			return fmt.Errorf("plugin %q: Tamper symbol does not implement Tamper interface", name)
+			return err
 		}
 
 		// Register the tamper
-		if err := pt.AddTamper(t); err != nil {
+		if err := pt.registerTamper(t); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// Add a compiled tamper. Returns an error if a tamper
+// Regsiter a tamper. Returns an error if a tamper
 // with the same name is already registered.
-func (pt *PayloadTamper) AddTamper(t Tamper) error {
+func (pt *PayloadTamper) registerTamper(t Tamper) error {
 	if t == nil {
 		return fmt.Errorf("cannot register nil tamper")
 	}
@@ -115,32 +103,23 @@ func (pt *PayloadTamper) GetTampers() []*Tamper {
 	return tampers
 }
 
-// ListTampers scans a directory for .so tamper plugins and returns their metadata.
-func ListTampers(directory string) ([]TamperInfo, error) {
-	pattern := filepath.Join(directory, "*.so")
-	matches, err := filepath.Glob(pattern)
+// GetTampersInfo scans a directory for .go tamper scripts and returns their metadata.
+func GetTampersInfo(directory string) ([]TamperInfo, error) {
+	matches, err := filepath.Glob(filepath.Join(directory, "*.go"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to glob tamper directory: %w", err)
+		return nil, fmt.Errorf("failed to scan tamper directory %q: %w", directory, err)
 	}
 
-	var tampers []TamperInfo
+	var tampersInfo []TamperInfo
 	for _, path := range matches {
-		p, err := plugin.Open(path)
+		t, err := loadTamper(path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open tamper plugin %q: %w", path, err)
+			return nil, err
 		}
-
-		sym, err := p.Lookup("Tamper")
-		if err != nil {
-			return nil, fmt.Errorf("plugin %q missing Tamper symbol: %w", path, err)
-		}
-
-		t, ok := sym.(Tamper)
-		if !ok {
-			return nil, fmt.Errorf("plugin %q: Tamper symbol does not implement Tamper interface", path)
-		}
-
-		tampers = append(tampers, TamperInfo{Name: t.Name(), Desc: t.Desc()})
+		tampersInfo = append(tampersInfo, TamperInfo{
+			Name: t.Name(),
+			Desc: t.Desc(),
+		})
 	}
-	return tampers, nil
+	return tampersInfo, nil
 }
