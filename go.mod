@@ -1,6 +1,6 @@
 module github.com/ffuf/ffuf/v2
 
-go 1.17
+go 1.25.9
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
@@ -13,6 +13,6 @@ require (
 require (
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 )
