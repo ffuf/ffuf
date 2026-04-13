@@ -6,6 +6,8 @@
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
+    - Bump Golang to 1.25.9
+    - Bump indirect dependency net v0.7.0 -> v0.53.0 & sys v0.5.0 -> v0.43.0
   
 - v2.1.0
   - New
