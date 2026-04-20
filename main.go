@@ -47,6 +47,40 @@ func (m *wordlistFlag) Set(value string) error {
 	return nil
 }
 
+// singleUseFlags is the set of flags that should only be provided once.
+// Flags that are intentionally multi-use (e.g. -H, -w, -b, -acc, -acs, -enc,
+// -input-cmd, -cookie, -d/-data/-data-ascii/-data-binary aliases) are excluded.
+var singleUseFlags = []string{
+	"X", "u", "x", "o", "of", "od", "t", "rate", "timeout", "p",
+	"maxtime", "maxtime-job", "mode", "recursion-depth", "recursion-strategy",
+	"replay-proxy", "request", "request-proto", "config", "debug-log",
+	"audit-log", "scraperfile", "scrapers", "input-shell", "input-num",
+	"mc", "ml", "mr", "ms", "mt", "mw",
+	"fc", "fl", "fr", "fs", "ft", "fw",
+	"fmode", "mmode", "ack", "acs", "sni", "search",
+	"cc", "ck", "e",
+}
+
+// warnDuplicateFlags scans os.Args for flags that appear more than once
+// but should only be provided once, and prints a warning for each duplicate.
+func warnDuplicateFlags() {
+	counts := make(map[string]int)
+	for _, arg := range os.Args[1:] {
+		// Strip leading dashes to get the flag name (handles both -flag and --flag)
+		trimmed := strings.TrimLeft(arg, "-")
+		// Only count the flag name part (before any = sign)
+		name := strings.SplitN(trimmed, "=", 2)[0]
+		if name != "" && name != arg { // it was actually a flag (had a dash)
+			counts[name]++
+		}
+	}
+	for _, name := range singleUseFlags {
+		if counts[name] > 1 {
+			fmt.Fprintf(os.Stderr, "[WARN] Flag -%s was provided %d times. Only the last value will be used.\n", name, counts[name])
+		}
+	}
+}
+
 // ParseFlags parses the command line flags and (re)populates the ConfigOptions struct
 func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	var ignored bool
@@ -141,6 +175,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Var(&wordlists, "w", "Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'")
 	flag.Var(&encoders, "enc", "Encoders for keywords, eg. 'FUZZ:urlencode b64encode'")
 	flag.Usage = Usage
+	warnDuplicateFlags()
 	flag.Parse()
 
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
