@@ -1,5 +1,6 @@
 # Contributors
 
+* [0xjah](https://github.com/0xjah)
 * [adamtlangley](https://github.com/adamtlangley)
 * [adilsoybali](https://github.com/adilsoybali)
 * [AverageSecurityGuy](https://github.com/averagesecurityguy)
