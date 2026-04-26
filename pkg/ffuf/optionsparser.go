@@ -26,8 +26,12 @@ type ConfigOptions struct {
 }
 
 type HTTPOptions struct {
-	Cookies           []string `json:"-"` // this is appended in headers
-	Data              string   `json:"data"`
+	Cookies           []string        `json:"-"` // this is appended in headers
+	Preflights        []PreflightConfig `json:"preflights"`
+	Postflights       []PreflightConfig `json:"postflights"`
+	PreflightMode     string          `json:"preflight_mode"`
+	PreflightError    string          `json:"preflight_error"`
+	Data              string          `json:"data"`
 	FollowRedirects   bool     `json:"follow_redirects"`
 	Headers           []string `json:"headers"`
 	IgnoreBody        bool     `json:"ignore_body"`
@@ -145,6 +149,10 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOnErrors = false
 	c.General.Threads = 40
 	c.General.Verbose = false
+	c.HTTP.Preflights = make([]PreflightConfig, 0)
+	c.HTTP.Postflights = make([]PreflightConfig, 0)
+	c.HTTP.PreflightMode = "per-request"
+	c.HTTP.PreflightError = "abort"
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false
 	c.HTTP.IgnoreBody = false
@@ -541,6 +549,40 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+	conf.Preflights = parseOpts.HTTP.Preflights
+	conf.Postflights = parseOpts.HTTP.Postflights
+
+	// Validate and set preflight mode
+	switch parseOpts.HTTP.PreflightMode {
+	case "per-request", "per-thread":
+		conf.PreflightMode = parseOpts.HTTP.PreflightMode
+	case "":
+		conf.PreflightMode = "per-request"
+	default:
+		errs.Add(fmt.Errorf("-preflight-mode must be \"per-request\" or \"per-thread\", got %q", parseOpts.HTTP.PreflightMode))
+	}
+
+	// Validate and set preflight error mode
+	switch parseOpts.HTTP.PreflightError {
+	case "abort", "ignore":
+		conf.PreflightError = parseOpts.HTTP.PreflightError
+	case "":
+		conf.PreflightError = "abort"
+	default:
+		errs.Add(fmt.Errorf("-preflight-error must be \"abort\" or \"ignore\", got %q", parseOpts.HTTP.PreflightError))
+	}
+
+	// Validate preflight/postflight request files exist
+	for i, pf := range conf.Preflights {
+		if _, err := os.Stat(pf.RequestFile); err != nil {
+			errs.Add(fmt.Errorf("preflight request file #%d %q: %s", i+1, pf.RequestFile, err))
+		}
+	}
+	for i, pf := range conf.Postflights {
+		if _, err := os.Stat(pf.RequestFile); err != nil {
+			errs.Add(fmt.Errorf("postflight request file #%d %q: %s", i+1, pf.RequestFile, err))
+		}
+	}
 
 	// Check that fmode and mmode have sane values
 	valid_opmodes := []string{"and", "or"}

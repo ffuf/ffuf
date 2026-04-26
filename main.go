@@ -93,6 +93,14 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.General.AutoCalibrationKeyword, "ack", opts.General.AutoCalibrationKeyword, "Autocalibration keyword")
 	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
 	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
+	flag.StringVar(&opts.HTTP.PreflightMode, "preflight-mode", opts.HTTP.PreflightMode, "Preflight execution mode: \"per-request\" (default) or \"per-thread\"")
+	flag.StringVar(&opts.HTTP.PreflightError, "preflight-error", opts.HTTP.PreflightError, "Preflight error handling: \"abort\" (default) or \"ignore\"")
+	// -preflight, -preflight-vars, -postflight, -postflight-vars are handled by parsePreflightArgs
+	// Register them here as no-op string flags so flag.Parse() doesn't reject them
+	flag.Func("preflight", "Burp-style raw HTTP request file to execute before each fuzzing request (repeatable, order matters)", func(string) error { return nil })
+	flag.Func("preflight-vars", "Extract variable from preceding -preflight response: \"VARNAME=regex\" (repeatable)", func(string) error { return nil })
+	flag.Func("postflight", "Burp-style raw HTTP request file to execute after each fuzzing request (repeatable, order matters)", func(string) error { return nil })
+	flag.Func("postflight-vars", "Extract variable from preceding -postflight response: \"VARNAME=regex\" (repeatable)", func(string) error { return nil })
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
 	flag.StringVar(&opts.General.ScraperFile, "scraperfile", "", "Custom scraper file path")
 	flag.StringVar(&opts.General.Scrapers, "scrapers", opts.General.Scrapers, "Active scraper groups")
@@ -143,6 +151,10 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.Usage = Usage
 	flag.Parse()
 
+	// Positional preflight/postflight parsing: each -preflight-vars binds to the
+	// most recently seen -preflight (same logic for postflight).
+	opts.HTTP.Preflights, opts.HTTP.Postflights = parsePreflightArgs(os.Args[1:])
+
 	opts.General.AutoCalibrationStrings = autocalibrationstrings
 	if len(autocalibrationstrategies) > 0 {
 		opts.General.AutoCalibrationStrategies = []string{}
@@ -156,6 +168,86 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	opts.Input.Wordlists = wordlists
 	opts.Input.Encoders = encoders
 	return opts
+}
+
+// parsePreflightArgs does a positional scan of raw CLI args to build ordered
+// PreflightConfig / PostflightConfig slices. Each -preflight-vars (or -postflight-vars)
+// flag binds to the most recently declared -preflight (or -postflight) entry.
+// This cannot be expressed with Go's flag package, hence the manual pass.
+func parsePreflightArgs(args []string) (preflights []ffuf.PreflightConfig, postflights []ffuf.PreflightConfig) {
+	preflights = make([]ffuf.PreflightConfig, 0)
+	postflights = make([]ffuf.PreflightConfig, 0)
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		// Normalise: accept both "-flag value" and "-flag=value" forms
+		var flagName, flagVal string
+		if strings.HasPrefix(arg, "-") {
+			arg = strings.TrimPrefix(arg, "-")
+			arg = strings.TrimPrefix(arg, "-") // handle "--flag" too
+			if idx := strings.IndexByte(arg, '='); idx >= 0 {
+				flagName = arg[:idx]
+				flagVal = arg[idx+1:]
+			} else {
+				flagName = arg
+				// next token is the value (if it doesn't start with '-')
+				if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+					i++
+					flagVal = args[i]
+				}
+			}
+		} else {
+			continue
+		}
+
+		switch flagName {
+		case "preflight":
+			preflights = append(preflights, ffuf.PreflightConfig{
+				RequestFile: flagVal,
+				Vars:        make([]ffuf.VarExtract, 0),
+			})
+		case "preflight-vars":
+			if len(preflights) == 0 {
+				fmt.Fprintf(os.Stderr, "Warning: -preflight-vars %q has no preceding -preflight, ignoring\n", flagVal)
+				continue
+			}
+			ve, err := parseVarExtract(flagVal)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: invalid -preflight-vars value %q: %s\n", flagVal, err)
+				continue
+			}
+			preflights[len(preflights)-1].Vars = append(preflights[len(preflights)-1].Vars, ve)
+		case "postflight":
+			postflights = append(postflights, ffuf.PreflightConfig{
+				RequestFile: flagVal,
+				Vars:        make([]ffuf.VarExtract, 0),
+			})
+		case "postflight-vars":
+			if len(postflights) == 0 {
+				fmt.Fprintf(os.Stderr, "Warning: -postflight-vars %q has no preceding -postflight, ignoring\n", flagVal)
+				continue
+			}
+			ve, err := parseVarExtract(flagVal)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: invalid -postflight-vars value %q: %s\n", flagVal, err)
+				continue
+			}
+			postflights[len(postflights)-1].Vars = append(postflights[len(postflights)-1].Vars, ve)
+		}
+	}
+	return
+}
+
+// parseVarExtract parses a "VARNAME=regex" string into a VarExtract.
+func parseVarExtract(s string) (ffuf.VarExtract, error) {
+	idx := strings.IndexByte(s, '=')
+	if idx <= 0 {
+		return ffuf.VarExtract{}, fmt.Errorf("expected \"VARNAME=regex\", got %q", s)
+	}
+	return ffuf.VarExtract{
+		Name:  s[:idx],
+		Regex: s[idx+1:],
+	}, nil
 }
 
 func main() {

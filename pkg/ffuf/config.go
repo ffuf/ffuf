@@ -4,6 +4,18 @@ import (
 	"context"
 )
 
+// VarExtract defines a named variable to extract from a response using a regex capture group.
+type VarExtract struct {
+	Name  string `json:"name"`
+	Regex string `json:"regex"`
+}
+
+// PreflightConfig represents a single raw HTTP request file with optional variable extractions.
+type PreflightConfig struct {
+	RequestFile string       `json:"request_file"`
+	Vars        []VarExtract `json:"vars"`
+}
+
 type Config struct {
 	AuditLog                  string                `json:"auditlog"`
 	AutoCalibration           bool                  `json:"autocalibration"`
@@ -68,6 +80,10 @@ type Config struct {
 	Http2                     bool                  `json:"http2"`
 	ClientCert                string                `json:"client-cert"`
 	ClientKey                 string                `json:"client-key"`
+	Preflights                []PreflightConfig     `json:"preflights"`
+	Postflights               []PreflightConfig     `json:"postflights"`
+	PreflightMode             string                `json:"preflight_mode"`
+	PreflightError            string                `json:"preflight_error"`
 }
 
 type InputProviderConfig struct {
@@ -127,6 +143,10 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.Verbose = false
 	conf.Wordlists = []string{}
 	conf.Http2 = false
+	conf.Preflights = make([]PreflightConfig, 0)
+	conf.Postflights = make([]PreflightConfig, 0)
+	conf.PreflightMode = "per-request"
+	conf.PreflightError = "abort"
 	return conf
 }
 
