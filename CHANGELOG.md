@@ -6,6 +6,7 @@
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
+    - Detect terminal width and render a shorter progress line when the full one would not fit, fixing the wrap-then-overwrite corruption on narrow terminals
   
 - v2.1.0
   - New
