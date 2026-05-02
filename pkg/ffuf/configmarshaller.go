@@ -11,6 +11,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.HTTP.Cookies = []string{}
 	o.HTTP.Data = c.Data
 	o.HTTP.FollowRedirects = c.FollowRedirects
+	o.HTTP.RedirectChain = c.RedirectChain
 	o.HTTP.Headers = make([]string, 0)
 	for k, v := range c.Headers {
 		o.HTTP.Headers = append(o.HTTP.Headers, fmt.Sprintf("%s: %s", k, v))

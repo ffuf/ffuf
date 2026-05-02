@@ -98,6 +98,16 @@ type ScraperResult struct {
 	Results []string `json:"results"`
 }
 
+// RedirectHop is a single step in the redirect chain captured when
+// --redirect-chain is set. It records the URL of the request that returned
+// the 3xx response, the status code, and the Location header value of that
+// response (i.e. the URL the next request was sent to).
+type RedirectHop struct {
+	URL        string `json:"url"`
+	StatusCode int    `json:"status_code"`
+	Location   string `json:"location"`
+}
+
 type Result struct {
 	Input            map[string][]byte   `json:"input"`
 	Position         int                 `json:"position"`
@@ -107,6 +117,7 @@ type Result struct {
 	ContentLines     int64               `json:"lines"`
 	ContentType      string              `json:"content-type"`
 	RedirectLocation string              `json:"redirectlocation"`
+	Redirects        []RedirectHop       `json:"redirects,omitempty"`
 	Url              string              `json:"url"`
 	Duration         time.Duration       `json:"duration"`
 	ScraperData      map[string][]string `json:"scraper"`

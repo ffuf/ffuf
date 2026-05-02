@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -21,6 +22,11 @@ import (
 
 	"github.com/andybalholm/brotli"
 )
+
+// redirectChainCtxKey is the request-context key under which Execute stores a
+// pointer to the per-request redirect-hop slice. Unique struct type avoids
+// collisions with other context keys (Go best practice).
+type redirectChainCtxKey struct{}
 
 // Download results < 5MB
 const MAX_DOWNLOAD_SIZE = 5242880
@@ -79,6 +85,29 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	if conf.FollowRedirects {
 		simplerunner.client.CheckRedirect = nil
 	}
+	if conf.RedirectChain {
+		// Capture each redirect hop. Go calls CheckRedirect *before* the next
+		// request is issued; req.Response is the 3xx response that triggered
+		// the redirect, and via[len(via)-1] is the request that received it.
+		simplerunner.client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if req.Response != nil && len(via) > 0 {
+				if chainPtr, ok := req.Context().Value(redirectChainCtxKey{}).(*[]ffuf.RedirectHop); ok && chainPtr != nil {
+					last := via[len(via)-1]
+					hop := ffuf.RedirectHop{
+						URL:        last.URL.String(),
+						StatusCode: req.Response.StatusCode,
+						Location:   req.Response.Header.Get("Location"),
+					}
+					*chainPtr = append(*chainPtr, hop)
+				}
+			}
+			// 10-hop cap mirrors net/http's default to avoid infinite redirect loops.
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			return nil
+		}
+	}
 	return &simplerunner
 }
 
@@ -136,7 +165,15 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	}
 
 	req.Host = httpreq.Host
-	httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
+	ctx := httptrace.WithClientTrace(r.config.Context, trace)
+	// When --redirect-chain is enabled, attach a slice via context so the
+	// shared CheckRedirect callback (set in NewSimpleRunner) can append hops
+	// scoped to this single Execute call.
+	var redirectChain []ffuf.RedirectHop
+	if r.config.RedirectChain {
+		ctx = context.WithValue(ctx, redirectChainCtxKey{}, &redirectChain)
+	}
+	httpreq = httpreq.WithContext(ctx)
 
 	if r.config.Raw {
 		httpreq.URL.Opaque = req.Url
@@ -159,6 +196,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	req.Timestamp = start
 
 	resp := ffuf.NewResponse(httpresp, req)
+	resp.Redirects = redirectChain
 	defer httpresp.Body.Close()
 
 	// Check if we should download the resource or not

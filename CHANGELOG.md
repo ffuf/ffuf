@@ -2,6 +2,7 @@
 - master
   - New
     - Added audit logging functionality
+    - New CLI flag `-redirect-chain` to capture each redirect hop (URL, status, Location) when following redirects, and surface the chain in stdout (verbose), JSON, CSV, MD, HTML, and audit-log outputs (issue #324)
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
