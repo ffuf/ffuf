@@ -3,13 +3,15 @@ package output
 import (
 	"encoding/base64"
 	"encoding/csv"
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
-var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "duration", "resultfile", "Ffufhash"}
+var staticheaders = []string{"url", "redirectlocation", "redirects", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "duration", "resultfile", "Ffufhash"}
 
 func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) error {
 	header := make([]string, 0)
@@ -51,6 +53,21 @@ func base64encode(in []byte) string {
 	return base64.StdEncoding.EncodeToString(in)
 }
 
+// redirectChainToCSV flattens a redirect chain to a single CSV cell. Each hop
+// is encoded as "<status> <url> -> <location>" and hops are joined with " | ".
+// Returns "" when the chain is empty so the column is non-disruptive on
+// existing pipelines that assume a static column count.
+func redirectChainToCSV(hops []ffuf.RedirectHop) string {
+	if len(hops) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(hops))
+	for _, h := range hops {
+		parts = append(parts, fmt.Sprintf("%d %s -> %s", h.StatusCode, h.URL, h.Location))
+	}
+	return strings.Join(parts, " | ")
+}
+
 func toCSV(r ffuf.Result) []string {
 	res := make([]string, 0)
 	ffufhash := ""
@@ -63,6 +80,7 @@ func toCSV(r ffuf.Result) []string {
 	}
 	res = append(res, r.Url)
 	res = append(res, r.RedirectLocation)
+	res = append(res, redirectChainToCSV(r.Redirects))
 	res = append(res, strconv.Itoa(r.Position))
 	res = append(res, strconv.FormatInt(r.StatusCode, 10))
 	res = append(res, strconv.FormatInt(r.ContentLength, 10))

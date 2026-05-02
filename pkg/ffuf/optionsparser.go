@@ -29,6 +29,7 @@ type HTTPOptions struct {
 	Cookies           []string `json:"-"` // this is appended in headers
 	Data              string   `json:"data"`
 	FollowRedirects   bool     `json:"follow_redirects"`
+	RedirectChain     bool     `json:"redirect_chain"`
 	Headers           []string `json:"headers"`
 	IgnoreBody        bool     `json:"ignore_body"`
 	Method            string   `json:"method"`
@@ -147,6 +148,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.Verbose = false
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false
+	c.HTTP.RedirectChain = false
 	c.HTTP.IgnoreBody = false
 	c.HTTP.Method = ""
 	c.HTTP.ProxyURL = ""
@@ -526,6 +528,12 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
+	conf.RedirectChain = parseOpts.HTTP.RedirectChain
+	// --redirect-chain implies -r/--follow-redirects: capturing the chain
+	// requires the client to actually follow the hops.
+	if conf.RedirectChain {
+		conf.FollowRedirects = true
+	}
 	conf.Raw = parseOpts.HTTP.Raw
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth

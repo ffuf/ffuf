@@ -14,9 +14,9 @@ const (
   Command line : ` + "`{{.CommandLine}}`" + `
   Time: ` + "{{ .Time }}" + `
 
-  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile | ScraperData | Ffufhash
-  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- | :------------ | :-------- |
-  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} | {{ .ScraperData }} | {{ .FfufHash }}
+  {{ range .Keys }}| {{ . }} {{ end }}| URL | Redirectlocation | Redirects | Position | Status Code | Content Length | Content Words | Content Lines | Content Type | Duration | ResultFile | ScraperData | Ffufhash
+  {{ range .Keys }}| :- {{ end }}| :-- | :--------------- | :-------- | :---- | :------- | :---------- | :------------- | :------------ | :--------- | :----------- | :------------ | :-------- |
+  {{range .Results}}{{ range $keyword, $value := .Input }}| {{ $value | printf "%s" }} {{ end }}| {{ .Url }} | {{ .RedirectLocation }} | {{ .Redirects }} | {{ .Position }} | {{ .StatusCode }} | {{ .ContentLength }} | {{ .ContentWords }} | {{ .ContentLines }} | {{ .ContentType }} | {{ .Duration}} | {{ .ResultFile }} | {{ .ScraperData }} | {{ .FfufHash }}
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
@@ -64,6 +64,7 @@ func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) 
 			ContentLines:     r.ContentLines,
 			ContentType:      r.ContentType,
 			RedirectLocation: r.RedirectLocation,
+			Redirects:        formatRedirectChainHTML(r.Redirects),
 			ScraperData:      strscraper,
 			Duration:         r.Duration,
 			ResultFile:       r.ResultFile,

@@ -332,6 +332,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ContentLines:     resp.ContentLines,
 		ContentType:      resp.ContentType,
 		RedirectLocation: resp.GetRedirectLocation(false),
+		Redirects:        resp.Redirects,
 		ScraperData:      resp.ScraperData,
 		Url:              resp.Request.Url,
 		Duration:         resp.Duration,
@@ -417,9 +418,15 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	reslines := ""
 	if s.config.Verbose {
 		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
-		redirectLocation := res.RedirectLocation
-		if redirectLocation != "" {
-			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
+		// When --redirect-chain captured intermediate hops, print one line per
+		// hop so the user sees the full chain. Otherwise fall back to the
+		// existing single-line redirect-location summary for back-compat.
+		if len(res.Redirects) > 0 {
+			for _, h := range res.Redirects {
+				reslines = fmt.Sprintf("%s%s| --> | %d %s\n", reslines, TERMINAL_CLEAR_LINE, h.StatusCode, h.Location)
+			}
+		} else if res.RedirectLocation != "" {
+			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, res.RedirectLocation)
 		}
 	}
 	if res.ResultFile != "" {

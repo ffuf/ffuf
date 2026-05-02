@@ -22,6 +22,10 @@ type Response struct {
 	ScraperData   map[string][]string
 	Duration      time.Duration
 	Timestamp     time.Time
+	// Redirects is the chain of intermediate redirect hops captured when
+	// --redirect-chain is set. Empty when --redirect-chain is off, when no
+	// redirects were followed, or when -r is used without --redirect-chain.
+	Redirects []RedirectHop
 }
 
 // GetRedirectLocation returns the redirect location for a 3xx redirect HTTP response

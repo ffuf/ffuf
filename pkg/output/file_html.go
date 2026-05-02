@@ -1,9 +1,11 @@
 package output
 
 import (
+	"fmt"
 	"html"
 	"html/template"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -18,6 +20,7 @@ type htmlResult struct {
 	ContentLines     int64
 	ContentType      string
 	RedirectLocation string
+	Redirects        string
 	ScraperData      string
 	Duration         time.Duration
 	ResultFile       string
@@ -84,13 +87,14 @@ const (
    <table id="ffufreport">
         <thead>
         <div style="display:none">
-|result_raw|StatusCode{{ range $keyword := .Keys }}|{{ $keyword | printf "%s" }}{{ end }}|Url|RedirectLocation|Position|ContentLength|ContentWords|ContentLines|ContentType|Duration|Resultfile|ScraperData|FfufHash|
+|result_raw|StatusCode{{ range $keyword := .Keys }}|{{ $keyword | printf "%s" }}{{ end }}|Url|RedirectLocation|Redirects|Position|ContentLength|ContentWords|ContentLines|ContentType|Duration|Resultfile|ScraperData|FfufHash|
         </div>
           <tr>
               <th>Status</th>
 {{ range .Keys }}              <th>{{ . }}</th>{{ end }}
 			  <th>URL</th>
 			  <th>Redirect location</th>
+			  <th>Redirects</th>
               <th>Position</th>
               <th>Length</th>
               <th>Words</th>
@@ -106,7 +110,7 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
+|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Redirects }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{ $result.HTMLColor }};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
@@ -115,6 +119,7 @@ const (
                     {{ end }}
                     <td><a href="{{ $result.Url }}">{{ $result.Url }}</a></td>
                     <td><a href="{{ $result.RedirectLocation }}">{{ $result.RedirectLocation }}</a></td>
+                    <td>{{ $result.Redirects }}</td>
                     <td>{{ $result.Position }}</td>
                     <td>{{ $result.ContentLength }}</td>
                     <td>{{ $result.ContentWords }}</td>
@@ -245,6 +250,7 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 			ContentLines:     r.ContentLines,
 			ContentType:      r.ContentType,
 			RedirectLocation: r.RedirectLocation,
+			Redirects:        formatRedirectChainHTML(r.Redirects),
 			ScraperData:      strscraper,
 			Duration:         r.Duration,
 			ResultFile:       r.ResultFile,
@@ -276,4 +282,22 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 	}
 	err = t.Execute(f, outHTML)
 	return err
+}
+
+// formatRedirectChainHTML renders a redirect chain as a brief one-line summary
+// suitable for the existing single-cell HTML/Markdown table layout. Each hop
+// is "<status> <url> -> <location>" joined with " | ". URL and location
+// strings are HTML-escaped since they may originate from untrusted servers.
+func formatRedirectChainHTML(hops []ffuf.RedirectHop) string {
+	if len(hops) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(hops))
+	for _, h := range hops {
+		parts = append(parts, fmt.Sprintf("%d %s -> %s",
+			h.StatusCode,
+			html.EscapeString(h.URL),
+			html.EscapeString(h.Location)))
+	}
+	return strings.Join(parts, " | ")
 }
