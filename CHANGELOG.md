@@ -2,6 +2,8 @@
 - master
   - New
     - Added audit logging functionality
+    - Aded `-sh` flag to display MD5 hash of the response body
+    - Added `-fhf` flag to filter responses by MD5 hash (comma-separated)
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case

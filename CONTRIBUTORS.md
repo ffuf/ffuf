@@ -25,6 +25,7 @@
 * [helpermika](https://github.com/helpermika)
 * [h1x](https://github.com/h1x-lnx)
 * [Ice3man543](https://github.com/Ice3man543)
+* [InternetD0g](https://github.com/InternetD0g)
 * [JamTookTheBait](https://github.com/JamTookTheBait)
 * [jimen0](https://github.com/jimen0)
 * [joohoi](https://github.com/joohoi)
