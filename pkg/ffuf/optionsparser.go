@@ -63,6 +63,7 @@ type GeneralOptions struct {
 	Rate                      int      `json:"rate"`
 	ScraperFile               string   `json:"scraperfile"`
 	Scrapers                  string   `json:"scrapers"`
+	ShowHash                  bool     `json:"show_hash"`
 	Searchhash                string   `json:"-"`
 	ShowVersion               bool     `toml:"-" json:"-"`
 	StopOn403                 bool     `json:"stop_on_403"`
@@ -96,6 +97,7 @@ type OutputOptions struct {
 }
 
 type FilterOptions struct {
+	Hash   string `json:"hash"`
 	Mode   string `json:"mode"`
 	Lines  string `json:"lines"`
 	Regexp string `json:"regexp"`
@@ -541,6 +543,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+	conf.ShowHash = parseOpts.General.ShowHash
+	conf.FilterHash = parseOpts.Filter.Hash
 
 	// Check that fmode and mmode have sane values
 	valid_opmodes := []string{"and", "or"}

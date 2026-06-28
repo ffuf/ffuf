@@ -61,7 +61,7 @@ func Usage() {
 		Description:   "",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf", "t", "v", "V"},
+		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf","sh","t", "v", "V"},
 	}
 	u_compat := UsageSection{
 		Name:          "COMPATIBILITY OPTIONS",
@@ -82,7 +82,7 @@ func Usage() {
 		Description:   "Filters for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"fmode", "fc", "fl", "fr", "fs", "ft", "fw"},
+		ExpectedFlags: []string{"fmode", "fc", "fl", "fr", "fs", "ft", "fw", "fhf"},
 	}
 	u_input := UsageSection{
 		Name:          "INPUT OPTIONS",

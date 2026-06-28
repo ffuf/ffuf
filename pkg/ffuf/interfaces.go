@@ -113,4 +113,5 @@ type Result struct {
 	ResultFile       string              `json:"resultfile"`
 	Host             string              `json:"host"`
 	HTMLColor        string              `json:"-"`
+	ResponseHash     string              `json:"response_hash"`
 }

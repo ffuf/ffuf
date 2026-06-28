@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+	"github.com/ffuf/ffuf/v2/pkg/filter"
 )
 
 const (
@@ -337,6 +338,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		Duration:         resp.Duration,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
+		ResponseHash:     filter.CalculateHash(&resp),
 	}
 	s.CurrentResults = append(s.CurrentResults, sResult)
 	// Output the result
@@ -446,7 +448,11 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	prefix := ""
+	if s.config.ShowHash {
+		prefix = fmt.Sprintf("[%s] ", res.ResponseHash)
+	}
+	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), prefix + s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
 	fmt.Println(resnormal)
 }
 

@@ -23,6 +23,7 @@ type Config struct {
 	DirSearchCompat           bool                  `json:"dirsearch_compatibility"`
 	Encoders                  []string              `json:"encoders"`
 	Extensions                []string              `json:"extensions"`
+	FilterHash                string                `json:"filter_hash"`
 	FilterMode                string                `json:"fmode"`
 	FollowRedirects           bool                  `json:"follow_redirects"`
 	Headers                   map[string]string     `json:"headers"`
@@ -56,6 +57,7 @@ type Config struct {
 	RequestProto              string                `json:"requestproto"`
 	ScraperFile               string                `json:"scraperfile"`
 	Scrapers                  string                `json:"scrapers"`
+	ShowHash                  bool                  `json:"show_hash"`
 	SNI                       string                `json:"sni"`
 	StopOn403                 bool                  `json:"stop_403"`
 	StopOnAll                 bool                  `json:"stop_all"`

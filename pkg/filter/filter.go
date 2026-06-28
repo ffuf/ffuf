@@ -71,6 +71,9 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "time" {
 		return NewTimeFilter(value)
 	}
+	if name == "hash" {
+		return NewHashFilter(value)
+	}
 	return nil, fmt.Errorf("Could not create filter with name %s", name)
 }
 
