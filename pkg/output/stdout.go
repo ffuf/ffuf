@@ -324,6 +324,11 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	for k, v := range resp.Request.Input {
 		inputs[k] = v
 	}
+	var responseHash string
+	if s.config.ShowHash || s.config.FilterHash != "" {
+		responseHash = filter.CalculateHash(&resp)
+	}
+	
 	sResult := ffuf.Result{
 		Input:            inputs,
 		Position:         resp.Request.Position,
@@ -338,7 +343,7 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		Duration:         resp.Duration,
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
-		ResponseHash:     filter.CalculateHash(&resp),
+		ResponseHash:     responseHash,
 	}
 	s.CurrentResults = append(s.CurrentResults, sResult)
 	// Output the result
