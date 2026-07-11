@@ -1,3 +1,5 @@
+version: 2
+
 builds:
   - id: ffuf
     binary: ffuf
@@ -5,11 +7,7 @@ builds:
       - -trimpath
     env:
       - CGO_ENABLED=0
-    asmflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    gcflags:
-      - all=-trimpath={{.Env.GOPATH}}
-    ldflags: |
+    ldflags: >-
       -s -w -X github.com/ffuf/ffuf/v2/pkg/ffuf.VERSION_APPENDIX= -extldflags '-static'
     goos:
       - linux
@@ -19,21 +17,43 @@ builds:
       - darwin
     goarch:
       - amd64
-      - 386
+      - "386"
       - arm
       - arm64
     ignore:
       - goos: freebsd
         goarch: arm64
+      # Go no longer supports 32-bit ARM on Windows (unsupported GOOS/GOARCH pair
+      # as of modern toolchains), so windows/arm can't be built anymore.
+      - goos: windows
+        goarch: arm
 
 archives:
   - id: tgz
-    format: tar.gz
-    replacements:
-        darwin: macOS
+    formats: [tar.gz]
+    # v2 removed archive `replacements`; reproduce the darwin->macOS naming
+    # (e.g. ffuf_2.2.0_macOS_arm64.tar.gz, ffuf_2.2.0_linux_armv6.tar.gz) here.
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_
+      {{- .Arch }}{{ with .Arm }}v{{ . }}{{ end }}
     format_overrides:
-        - goos: windows
-          format: zip
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
 
 signs:
   - artifacts: checksum
+    args:
+      - "--batch"
+      - "-u"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
+release:
+  prerelease: auto
