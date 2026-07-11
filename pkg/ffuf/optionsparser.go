@@ -75,6 +75,12 @@ type GeneralOptions struct {
 type InputOptions struct {
 	DirSearchCompat        bool     `json:"dirsearch_compat"`
 	Encoders               []string `json:"encoders"`
+	TampersList            bool     `json:"tampers_list"`
+	TampersDownload        bool     `json:"tampers_download"`
+	TampersOverwrite       bool     `json:"tampers_overwrite"`
+	Tampers                []string `json:"tampers"`
+	TampersDirectory       string   `json:"tampers_directory"`
+	TampersDownloadUrl     string   `toml:"tampers_download_url" json:"tampers_download_url"`
 	Extensions             string   `json:"extensions"`
 	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments"`
 	InputMode              string   `json:"input_mode"`
@@ -161,6 +167,12 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Http2 = false
 	c.Input.DirSearchCompat = false
 	c.Input.Encoders = []string{}
+	c.Input.Tampers = []string{}
+	c.Input.TampersList = false
+	c.Input.TampersOverwrite = false
+	c.Input.TampersDownload = false
+	c.Input.TampersDirectory = TAMPERSDIR
+	c.Input.TampersDownloadUrl = "https://api.github.com/repos/ffuf/ffuf/contents/assets/tampers?ref=master"
 	c.Input.Extensions = ""
 	c.Input.IgnoreWordlistComments = false
 	c.Input.InputMode = "clusterbomb"
@@ -233,6 +245,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			errs.Add(fmt.Errorf("sniper mode only supports one input command"))
 		}
 	}
+
 	tmpEncoders := make(map[string]string)
 	for _, e := range parseOpts.Input.Encoders {
 		if strings.Contains(e, ":") {
@@ -241,6 +254,19 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			tmpEncoders[key] = val
 		}
 	}
+
+	tmpTampers := make(map[string]string)
+	for _, t := range parseOpts.Input.Tampers {
+		if strings.Contains(t, ":") {
+			key := strings.Split(t, ":")[0]
+			val := strings.Split(t, ":")[1]
+			tmpTampers[key] = val
+		} else {
+			// Default to FUZZ keyword if no keyword prefix is given
+			tmpTampers["FUZZ"] = t
+		}
+	}
+
 	tmpWordlists := make([]string, 0)
 	for _, v := range parseOpts.Input.Wordlists {
 		var wl []string
@@ -290,6 +316,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				if ok {
 					newp.Encoders = enc
 				}
+				// Add tampers if set
+				tampers, ok := tmpTampers[wl[1]]
+				if ok {
+					newp.Tampers = tampers
+				}
 				conf.InputProviders = append(conf.InputProviders, newp)
 			}
 		} else {
@@ -303,6 +334,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			enc, ok := tmpEncoders["FUZZ"]
 			if ok {
 				newp.Encoders = enc
+			}
+			// Add tampers if set
+			tampers, ok := tmpTampers["FUZZ"]
+			if ok {
+				newp.Tampers = tampers
 			}
 			conf.InputProviders = append(conf.InputProviders, newp)
 		}
@@ -325,6 +361,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				if ok {
 					newp.Encoders = enc
 				}
+				// Add tampers if set
+				tampers, ok := tmpTampers[ic[1]]
+				if ok {
+					newp.Tampers = tampers
+				}
 				conf.InputProviders = append(conf.InputProviders, newp)
 				conf.CommandKeywords = append(conf.CommandKeywords, ic[0])
 			}
@@ -338,6 +379,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			enc, ok := tmpEncoders["FUZZ"]
 			if ok {
 				newp.Encoders = enc
+			}
+			// Add tampers if set
+			tampers, ok := tmpTampers["FUZZ"]
+			if ok {
+				newp.Tampers = tampers
 			}
 			conf.InputProviders = append(conf.InputProviders, newp)
 			conf.CommandKeywords = append(conf.CommandKeywords, "FUZZ")
@@ -514,6 +560,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.InputNum = parseOpts.Input.InputNum
 
 	conf.InputShell = parseOpts.Input.InputShell
+	conf.TampersDirectory = parseOpts.Input.TampersDirectory
 	conf.AuditLog = parseOpts.Output.AuditLog
 	conf.OutputFile = parseOpts.Output.OutputFile
 	conf.OutputDirectory = parseOpts.Output.OutputDirectory

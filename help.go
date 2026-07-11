@@ -89,7 +89,7 @@ func Usage() {
 		Description:   "Options for input data for fuzzing. Wordlists and input generators.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"D", "enc", "ic", "input-cmd", "input-num", "input-shell", "mode", "request", "request-proto", "e", "w"},
+		ExpectedFlags: []string{"D", "download-tampers", "download-tampers-url", "overwrite-tampers", "enc", "ic", "input-cmd", "input-num", "input-shell", "list-tampers", "mode", "request", "request-proto", "e", "w", "tampers", "tampers-dir"},
 	}
 	u_output := UsageSection{
 		Name:          "OUTPUT OPTIONS",
@@ -103,6 +103,12 @@ func Usage() {
 	// Populate the flag sections
 	max_length := 0
 	flag.VisitAll(func(f *flag.Flag) {
+
+		// skip the flag "quickchecks" that is initialized from yaegi
+		if f.Name == "quickchecks" {
+			return
+		}
+
 		found := false
 		for i, section := range sections {
 			if ffuf.StrInSlice(f.Name, section.ExpectedFlags) {

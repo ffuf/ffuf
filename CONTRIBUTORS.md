@@ -5,6 +5,7 @@
 * [AverageSecurityGuy](https://github.com/averagesecurityguy)
 * [bp0](https://github.com/bp0lr)
 * [bjhulst](https://github.com/bjhulst)
+* [brumens](https://x.com/Brumens2)
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
 * [choket](https://github.com/choket)

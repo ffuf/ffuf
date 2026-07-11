@@ -6,7 +6,20 @@
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
-  
+
+- v3.0.0
+  - New
+      - Payload tamper support using Go interpreter
+      - New CLI flag: `list-tampers` - lists all available tampers
+      - New CLI flag: `overwrite-tampers` - overwrites existing tampers with new ones
+      - New CLI flag: `download-tampers` - boolean flag to enable or disable downloading tampers
+      - New CLI flag: `download-tampers-url` - GitHub API URL to download tampers from
+      - New CLI flag: `tampers-dir` - directory to load payload tampers from
+
+  - Changed
+    - Payload tamper (34) added to Ffuf by [Brumens](https://x.com/Brumens2) / [YesWeHack](https://www.yeswehack.com/)
+
+
 - v2.1.0
   - New
     - autocalibration-strategy refactored to support extensible strategy configuration

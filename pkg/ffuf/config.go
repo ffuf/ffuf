@@ -60,6 +60,7 @@ type Config struct {
 	StopOn403                 bool                  `json:"stop_403"`
 	StopOnAll                 bool                  `json:"stop_all"`
 	StopOnErrors              bool                  `json:"stop_errors"`
+	TampersDirectory          string                `json:"tampers_directory"`
 	Threads                   int                   `json:"threads"`
 	Timeout                   int                   `json:"timeout"`
 	Url                       string                `json:"url"`
@@ -75,6 +76,7 @@ type InputProviderConfig struct {
 	Keyword  string `json:"keyword"`
 	Value    string `json:"value"`
 	Encoders string `json:"encoders"`
+	Tampers  string `json:"tampers"`
 	Template string `json:"template"` // the templating string used for sniper mode (usually "§")
 }
 
