@@ -41,9 +41,15 @@ type HTTPOptions struct {
 	SNI               string   `json:"sni"`
 	Timeout           int      `json:"timeout"`
 	URL               string   `json:"url"`
+	Basic             string   `json:"basic"`
+	Ntlm              string   `json:"ntlm"`
 	Http2             bool     `json:"http2"`
+	TCPAggr           int      `json:"tcpaggr"`
 	ClientCert        string   `json:"client-cert"`
 	ClientKey         string   `json:"client-key"`
+	Preflight         string   `json:"preflight"`
+	Capregex          []string `json:"capregex"`
+	PreflightHeader   []string `json:"preflightheader"`
 }
 
 type GeneralOptions struct {
@@ -67,6 +73,8 @@ type GeneralOptions struct {
 	ShowVersion               bool     `toml:"-" json:"-"`
 	StopOn403                 bool     `json:"stop_on_403"`
 	StopOnAll                 bool     `json:"stop_on_all"`
+	PauseCode                 string   `json:"pausecode"`
+	PauseTime                 string   `json:"pausetime"`
 	StopOnErrors              bool     `json:"stop_on_errors"`
 	Threads                   int      `json:"threads"`
 	Verbose                   bool     `json:"verbose"`
@@ -143,6 +151,8 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOn403 = false
 	c.General.StopOnAll = false
 	c.General.StopOnErrors = false
+	c.General.PauseCode = ""
+	c.General.PauseTime = ""
 	c.General.Threads = 40
 	c.General.Verbose = false
 	c.HTTP.Data = ""
@@ -158,7 +168,12 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Timeout = 10
 	c.HTTP.SNI = ""
 	c.HTTP.URL = ""
+	c.HTTP.Basic = ""
+	c.HTTP.Ntlm = ""
 	c.HTTP.Http2 = false
+	c.HTTP.Preflight = ""
+	c.HTTP.Capregex = []string{}
+	c.HTTP.PreflightHeader = []string{}
 	c.Input.DirSearchCompat = false
 	c.Input.Encoders = []string{}
 	c.Input.Extensions = ""
@@ -348,6 +363,24 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errs.Add(fmt.Errorf("Either -w or --input-cmd flag is required"))
 	}
 
+	if len(parseOpts.HTTP.Capregex) > 0 && parseOpts.HTTP.Preflight != "" {
+		for _, elem := range parseOpts.HTTP.Capregex {
+			ss := strings.Split(elem, ":")
+			kwvar := ss[len(ss)-1]
+			valuevar := ""
+			for _, sss := range ss[:len(ss)-1] {
+				valuevar += sss + ":"
+			}
+			valuevar = strings.TrimRight(valuevar, ":")
+			newp := InputProviderConfig{
+				Name:    "csrf",
+				Value:   valuevar,
+				Keyword: kwvar,
+			}
+			conf.InputProviders = append(conf.InputProviders, newp)
+		}
+	}
+
 	// Prepare the request using body
 	if parseOpts.Input.Request != "" {
 		err := parseRawRequest(parseOpts, &conf)
@@ -365,6 +398,27 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	// Prepare SNI
 	if parseOpts.HTTP.SNI != "" {
 		conf.SNI = parseOpts.HTTP.SNI
+	}
+
+	// Prepare Auth
+	if parseOpts.HTTP.Basic != "" {
+		conf.Basic = parseOpts.HTTP.Basic
+	}
+	if parseOpts.HTTP.Ntlm != "" {
+		conf.Ntlm = parseOpts.HTTP.Ntlm
+	}
+	if parseOpts.HTTP.TCPAggr != 0 {
+		conf.TCPAggr = parseOpts.HTTP.TCPAggr
+	}
+	if parseOpts.HTTP.Preflight != "" && len(parseOpts.HTTP.Capregex) > 0 {
+		conf.Preflight = parseOpts.HTTP.Preflight
+		conf.Capregex = parseOpts.HTTP.Capregex
+		for _, elem := range parseOpts.HTTP.PreflightHeader {
+			ss := strings.SplitN(elem, ":", 2)
+			if len(ss) > 1 {
+				conf.PreflightHeader[ss[0]] = ss[1]
+			}
+		}
 	}
 
 	// prepare cert
@@ -525,6 +579,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.StopOn403 = parseOpts.General.StopOn403
 	conf.StopOnAll = parseOpts.General.StopOnAll
 	conf.StopOnErrors = parseOpts.General.StopOnErrors
+	conf.PauseCode = parseOpts.General.PauseCode
+	conf.PauseTime = parseOpts.General.PauseTime
 	conf.FollowRedirects = parseOpts.HTTP.FollowRedirects
 	conf.Raw = parseOpts.HTTP.Raw
 	conf.Recursion = parseOpts.HTTP.Recursion
@@ -705,6 +761,12 @@ func keywordPresent(keyword string, conf *Config) bool {
 		return true
 	}
 	if strings.Contains(conf.Data, keyword) {
+		return true
+	}
+	if strings.Contains(conf.Basic, keyword) {
+		return true
+	}
+	if strings.Contains(conf.Ntlm, keyword) {
 		return true
 	}
 	for k, v := range conf.Headers {

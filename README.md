@@ -101,6 +101,12 @@ ffuf -w /path/to/wordlist -u https://target/FUZZ -maxtime-job 60 -recursion -rec
 
 It is also possible to combine both flags limiting the per job maximum execution time as well as the overall execution time. If you do not use recursion then both flags behave equally.
 
+### Pausing on error codes
+
+Many servers have fail2ban or some else defences. So after many requests it can responses with 403-code. You can set `-pausecode` and `-pausetime` parameters to avoid this. So after get 5 pausecode ffuf will pause for pausetime of seconds.
+Pausecode can be single code and list or sequence of values (ex: 403 or 403,429 or 500-550). Pausetime also can be not just one value but comma-separated set of values (ex: `-pausetime 60,90,120,180,300`). So first pause will be 60 sec, second - 90 sec, etc. Fifth, six and other pauses  will be 300 seconds. 
+
+
 ### Using external mutator to produce test cases
 
 For this example, we'll fuzz JSON data that's sent over POST. [Radamsa](https://gitlab.com/akihe/radamsa) is used as the mutator.
@@ -144,6 +150,33 @@ parameter.
 <p align="center">
   <img width="250" src="_img/ffuf_juggling_250.png">
 </p>
+
+### CSRF tokens and preflight requests
+To use so-called "preflight request" you can obtain csrf  tokens or cookie to send it in base request. To do this set `-preflight-request` and `-capture-regex` parameters. 
+First parameter is a URL to get tokens. Second is a regex with keywords for yor tokens and cookies. 
+Keywords must be only REGEXNN (REGEX1, REGEX2, REGEX3 ...)
+
+Additionally, there is an optional parameter `-preflight-header` to use only in preflight request.
+
+Example: 
+```
+ffuf -c -w /temp/wordlist.txt:FUZZ -u https://ffuf.io.fi/login 
+     -preflight-request https://ffuf.io.fi/ 
+     -capture-regex 'Set-Cookie: BruteCookie=(.*); SameSite':REGEX1
+     -capture-regex 'csrftoken=(.*) blablahtml':REGEX2
+     -H "Cookie: BruteCookie=REGEX1"
+     -H "Foo: bar"
+     -preflight-header "Cookie: BruteCookie=Empty"
+     -preflight-header "FirstVisit: 1"
+     -d "csrf=REGEX2&login=user&password=FUZZ"
+```
+In this example ffuf will do:
+ - send GET request to https://ffuf.io.fi/ with additional headers (Header Foo: bar will be present also), and analyze response
+ - search for cookie with regexp `Set-Cookie: BruteCookie=(.*); SameSite`
+ - search for csrf token with regexp `csrftoken=(.*) blablahtml`
+ - replace in original POST request REGEX1 with found cookie and REGEX2 with found csrf token
+ - send POST request to https://ffuf.io.fi/login with updated `Cookie: BruteCookie=....`, original header `Foo: bar` and   
+   updated csrf token in POST data `csrf=.....`
 
 ## Usage
 

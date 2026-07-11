@@ -2,6 +2,7 @@
 - master
   - New
     - Added audit logging functionality
+    - Added pausing when get five 403 (or specified) respones code 
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
