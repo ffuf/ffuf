@@ -200,19 +200,19 @@ func TestInjectKeyword(t *testing.T) {
 
 	result := injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
 	if result != expected {
-		t.Errorf("injectKeyword returned unexpected result: " + result)
+		t.Error("injectKeyword returned unexpected result: " + result)
 	}
 
 	if injectKeyword(input, "FUZZ", -32, 44) != input {
-		t.Errorf("injectKeyword offset validation failed")
+		t.Error("injectKeyword offset validation failed")
 	}
 
 	if injectKeyword(input, "FUZZ", 12, 2) != input {
-		t.Errorf("injectKeyword offset validation failed")
+		t.Error("injectKeyword offset validation failed")
 	}
 
 	if injectKeyword(input, "FUZZ", 0, 25) != input {
-		t.Errorf("injectKeyword offset validation failed")
+		t.Error("injectKeyword offset validation failed")
 	}
 
 	input = "id=§a§&sort=desc"
@@ -221,7 +221,7 @@ func TestInjectKeyword(t *testing.T) {
 
 	result = injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
 	if result != expected {
-		t.Errorf("injectKeyword returned unexpected result: " + result)
+		t.Error("injectKeyword returned unexpected result: " + result)
 	}
 
 	input = "feature=aaa&thingie=bbb&array[§0§]=baz"
@@ -230,7 +230,7 @@ func TestInjectKeyword(t *testing.T) {
 
 	result = injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
 	if result != expected {
-		t.Errorf("injectKeyword returned unexpected result: " + result)
+		t.Error("injectKeyword returned unexpected result: " + result)
 	}
 }
 

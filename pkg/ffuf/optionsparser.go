@@ -352,8 +352,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.Input.Request != "" {
 		err := parseRawRequest(parseOpts, &conf)
 		if err != nil {
-			errmsg := fmt.Sprintf("Could not parse raw request: %s", err)
-			errs.Add(fmt.Errorf(errmsg))
+			errs.Add(fmt.Errorf("Could not parse raw request: %s", err))
 		}
 	}
 
@@ -555,12 +554,10 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 	if !fmode_found {
-		errmsg := fmt.Sprintf("Unrecognized value for parameter fmode: %s, valid values are: and, or", parseOpts.Filter.Mode)
-		errs.Add(fmt.Errorf(errmsg))
+		errs.Add(fmt.Errorf("Unrecognized value for parameter fmode: %s, valid values are: and, or", parseOpts.Filter.Mode))
 	}
 	if !mmode_found {
-		errmsg := fmt.Sprintf("Unrecognized value for parameter mmode: %s, valid values are: and, or", parseOpts.Matcher.Mode)
-		errs.Add(fmt.Errorf(errmsg))
+		errs.Add(fmt.Errorf("Unrecognized value for parameter mmode: %s, valid values are: and, or", parseOpts.Matcher.Mode))
 	}
 	conf.FilterMode = parseOpts.Filter.Mode
 	conf.MatcherMode = parseOpts.Matcher.Mode
@@ -585,15 +582,13 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	for _, provider := range conf.InputProviders {
 		if provider.Template != "" {
 			if !templatePresent(provider.Template, &conf) {
-				errmsg := fmt.Sprintf("Template %s defined, but not found in pairs in headers, method, URL or POST data.", provider.Template)
-				errs.Add(fmt.Errorf(errmsg))
+				errs.Add(fmt.Errorf("Template %s defined, but not found in pairs in headers, method, URL or POST data.", provider.Template))
 			} else {
 				newInputProviders = append(newInputProviders, provider)
 			}
 		} else {
 			if !keywordPresent(provider.Keyword, &conf) {
-				errmsg := fmt.Sprintf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword)
-				_, _ = fmt.Fprintf(os.Stderr, "%s\n", fmt.Errorf(errmsg))
+				_, _ = fmt.Fprintf(os.Stderr, "%s\n", fmt.Errorf("Keyword %s defined, but not found in headers, method, URL or POST data.", provider.Keyword))
 			} else {
 				newInputProviders = append(newInputProviders, provider)
 			}
@@ -611,8 +606,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	// Do checks for recursion mode
 	if parseOpts.HTTP.Recursion {
 		if !strings.HasSuffix(conf.Url, "FUZZ") {
-			errmsg := "When using -recursion the URL (-u) must end with FUZZ keyword."
-			errs.Add(fmt.Errorf(errmsg))
+			errs.Add(fmt.Errorf("When using -recursion the URL (-u) must end with FUZZ keyword."))
 		}
 	}
 
