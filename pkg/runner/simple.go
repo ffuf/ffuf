@@ -176,31 +176,32 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		resp.Request.Raw = string(rawreq)
 		resp.Raw = string(rawresp)
 	}
-	var bodyReader io.ReadCloser
-	if httpresp.Header.Get("Content-Encoding") == "gzip" {
-		bodyReader, err = gzip.NewReader(httpresp.Body)
-		if err != nil {
-			// fallback to raw data
-			bodyReader = httpresp.Body
-		}
-	} else if httpresp.Header.Get("Content-Encoding") == "br" {
-		bodyReader = io.NopCloser(brotli.NewReader(httpresp.Body))
-		if err != nil {
-			// fallback to raw data
-			bodyReader = httpresp.Body
-		}
-	} else if httpresp.Header.Get("Content-Encoding") == "deflate" {
+	var bodyReader io.Reader = httpresp.Body
+	switch httpresp.Header.Get("Content-Encoding") {
+	case "gzip":
+		if zr, zerr := gzip.NewReader(httpresp.Body); zerr == nil {
+			bodyReader = zr
+		} // else: fall back to the raw (undecoded) body
+	case "br":
+		bodyReader = brotli.NewReader(httpresp.Body)
+	case "deflate":
 		bodyReader = flate.NewReader(httpresp.Body)
-		if err != nil {
-			// fallback to raw data
-			bodyReader = httpresp.Body
-		}
-	} else {
-		bodyReader = httpresp.Body
 	}
 
-	if respbody, err := io.ReadAll(bodyReader); err == nil {
-		resp.ContentLength = int64(len(string(respbody)))
+	// Bound the DECOMPRESSED read. The Content-Length guard above is not
+	// sufficient on its own: a malicious server can send a small compressed body
+	// (or a chunked response with no Content-Length, or one the transport
+	// transparently decoded and stripped the headers from) that expands to
+	// gigabytes. LimitReader caps the bytes we ever pull from the possibly-
+	// decompressing reader, so a decompression bomb only materialises
+	// MAX_DOWNLOAD_SIZE+1 bytes in memory instead of OOM-killing the process.
+	limited := io.LimitReader(bodyReader, int64(MAX_DOWNLOAD_SIZE)+1)
+	if respbody, rerr := io.ReadAll(limited); rerr == nil {
+		if len(respbody) > MAX_DOWNLOAD_SIZE {
+			resp.Cancelled = true
+			return resp, nil
+		}
+		resp.ContentLength = int64(len(respbody))
 		resp.Data = respbody
 	}
 
