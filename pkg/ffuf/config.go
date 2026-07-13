@@ -83,55 +83,29 @@ type InputProviderConfig struct {
 	Template string `json:"template"` // the templating string used for sniper mode (usually "§")
 }
 
+// NewConfig returns a Config ready for ConfigFromOptions to populate. It sets ONLY
+// what ConfigFromOptions does not: the context, non-nil slice/map fields (which are
+// appended to or indexed during parsing), and the few defaults for fields that are
+// not copied from the options. Every other default lives once in NewConfigOptions
+// and flows in through ConfigFromOptions — listing it here too would just duplicate
+// that single source.
 func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	var conf Config
-	conf.AutoCalibrationKeyword = "FUZZ"
-	conf.AutoCalibrationStrategies = []string{"basic"}
-	conf.AutoCalibrationStrings = make([]string, 0)
-	conf.CommandKeywords = make([]string, 0)
 	conf.Context = ctx
 	conf.Cancel = cancel
-	conf.Data = ""
-	conf.Debuglog = ""
-	conf.Delay = optRange{0, 0, false, false}
-	conf.DirSearchCompat = false
+
+	conf.AutoCalibrationStrings = make([]string, 0)
+	conf.CommandKeywords = make([]string, 0)
 	conf.Encoders = make([]string, 0)
 	conf.Extensions = make([]string, 0)
-	conf.FilterMode = "or"
-	conf.FollowRedirects = false
 	conf.Headers = make(map[string]string)
-	conf.IgnoreWordlistComments = false
-	conf.InputMode = "clusterbomb"
-	conf.InputNum = 0
-	conf.InputShell = ""
 	conf.InputProviders = make([]InputProviderConfig, 0)
-	conf.Json = false
-	conf.MatcherMode = "or"
-	conf.MaxTime = 0
-	conf.MaxTimeJob = 0
-	conf.Method = "GET"
-	conf.Noninteractive = false
-	conf.ProgressFrequency = 125
-	conf.ProxyURL = ""
-	conf.Quiet = false
-	conf.Rate = 0
-	conf.Raw = false
-	conf.Recursion = false
-	conf.RecursionDepth = 0
-	conf.RecursionStrategy = "default"
-	conf.RequestFile = ""
-	conf.RequestProto = "https"
-	conf.SNI = ""
-	conf.ScraperFile = ""
-	conf.Scrapers = "all"
-	conf.StopOn403 = false
-	conf.StopOnAll = false
-	conf.StopOnErrors = false
-	conf.Timeout = 10
-	conf.Url = ""
-	conf.Verbose = false
 	conf.Wordlists = []string{}
-	conf.Http2 = false
+
+	conf.AutoCalibrationKeyword = "FUZZ"
+	conf.Method = "GET"
+	conf.ProgressFrequency = 125
+	conf.RequestProto = "https"
 	return conf
 }
 
