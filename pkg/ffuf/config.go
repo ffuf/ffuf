@@ -68,6 +68,11 @@ type Config struct {
 	Http2                     bool                  `json:"http2"`
 	ClientCert                string                `json:"client-cert"`
 	ClientKey                 string                `json:"client-key"`
+	// Options retains the raw ConfigOptions this Config was built from, so the
+	// configuration can be re-serialized (FFUFHASH history and similar features)
+	// directly, with no hand-maintained reverse mapper. Set by ConfigFromOptions;
+	// nil for a Config assembled by other means.
+	Options *ConfigOptions `json:"-"`
 }
 
 type InputProviderConfig struct {

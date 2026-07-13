@@ -18,8 +18,11 @@ type ConfigOptionsHistory struct {
 }
 
 func WriteHistoryEntry(conf *Config) (string, error) {
+	if conf.Options == nil {
+		return "", errors.New("cannot write history entry: config has no source options")
+	}
 	options := ConfigOptionsHistory{
-		ConfigOptions: conf.ToOptions(),
+		ConfigOptions: *conf.Options,
 		Time:          time.Now(),
 	}
 	jsonoptions, err := json.Marshal(options)

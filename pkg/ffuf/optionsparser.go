@@ -626,6 +626,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.General.Verbose && parseOpts.General.Json {
 		errs.Add(fmt.Errorf("Cannot have -json and -v"))
 	}
+	// Retain the source options so the configuration can be re-serialized later
+	// (history / FFUFHASH) without reconstructing it field-by-field.
+	conf.Options = parseOpts
 	return &conf, errs.ErrorOrNil()
 }
 
