@@ -101,6 +101,8 @@ func TestCharacterization_ConfigGolden(t *testing.T) {
 		{name: "extensions", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-e", ".php,.bak"}},
 		{name: "encoders", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt:FUZZ", "-enc", "FUZZ:b64encode"}},
 		{name: "autocalibration", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-ac", "-acc", "custom1", "-acc", "custom2"}},
+		{name: "acs_strategies", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-acs", "advanced,greedy", "-acs", "custom"}},
+		{name: "compat_data_alias", args: []string{"-u", "https://example.org/", "-w", "/tmp/wl.txt", "-data", "x=FUZZ"}},
 		{name: "precedence_cli_overrides_file", toml: "[general]\nthreads = 99\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-t", "5"}},
 		{name: "precedence_file_used", toml: "[general]\nthreads = 99\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
 		{name: "error_missing_url", args: []string{"-w", "/tmp/wl.txt"}},
