@@ -1,0 +1,24 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: go test
+        run: go test ./...
+      - name: characterization goldens are current
+        run: |
+          go test -run Characterization -update-golden .
+          if [ -n "$(git status --porcelain -- testdata/)" ]; then
+            echo "::error::characterization goldens are out of date. Run: go test -run Characterization -update-golden ."
+            git diff -- testdata/
+            exit 1
+          fi
