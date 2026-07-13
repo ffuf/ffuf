@@ -123,7 +123,7 @@ func Usage() {
 		}
 	})
 
-	fmt.Printf("Fuzz Faster U Fool - v%s\n\n", ffuf.Version())
+	fmt.Printf("Fuzz Faster U Fool - %s\n\n", ffuf.FormattedVersion())
 
 	// Print out the sections
 	for _, section := range sections {

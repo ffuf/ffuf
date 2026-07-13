@@ -6,7 +6,9 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
+	"runtime/debug"
 	"strings"
+	"time"
 )
 
 // used for random string generation in calibration function
@@ -77,9 +79,68 @@ func HostURLFromRequest(req Request) string {
 	return u.Host + trimpath
 }
 
-// Version returns the ffuf version string
+// Version returns the ffuf version string.
+//
+// Release builds have their version injected via -ldflags by goreleaser: VERSION
+// is set to the git tag and VERSION_APPENDIX is emptied, so they report a plain
+// semantic version like "2.2.0" with no manual constant bump required.
+//
+// Builds from a source checkout (VERSION_APPENDIX still set) instead report a
+// "git-<UTC date>-<short commit>" identifier derived from the VCS metadata that
+// `go build` embeds into the binary, e.g. "git-20260613-aabbccdd". When that
+// metadata is unavailable it falls back to VERSION+VERSION_APPENDIX.
 func Version() string {
+	if VERSION_APPENDIX == "" {
+		return VERSION
+	}
+	if v := gitVersion(); v != "" {
+		return v
+	}
 	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
+}
+
+// gitVersion assembles a "git-<date>-<shorthash>" string from the VCS metadata
+// that `go build` stamps into the binary. It returns "" when the metadata is
+// missing (e.g. a module build outside of a repository).
+func gitVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	var revision string
+	var modified bool
+	var stamp time.Time
+	for _, s := range info.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			revision = s.Value
+		case "vcs.time":
+			stamp, _ = time.Parse(time.RFC3339, s.Value)
+		case "vcs.modified":
+			modified = s.Value == "true"
+		}
+	}
+	if revision == "" || stamp.IsZero() {
+		return ""
+	}
+	if len(revision) > 8 {
+		revision = revision[:8]
+	}
+	dirty := ""
+	if modified {
+		dirty = "-dirty"
+	}
+	return fmt.Sprintf("git-%s-%s%s", stamp.UTC().Format("20060102"), revision, dirty)
+}
+
+// FormattedVersion returns the version prepared for display. Release builds are
+// prefixed with "v" (e.g. "v2.2.0"); development builds are returned unprefixed
+// (e.g. "git-20260613-aabbccdd") since a "v" reads as noise there.
+func FormattedVersion() string {
+	if VERSION_APPENDIX == "" {
+		return "v" + Version()
+	}
+	return Version()
 }
 
 func CheckOrCreateConfigDir() error {

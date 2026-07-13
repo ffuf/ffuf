@@ -8,7 +8,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags: >-
-      -s -w -X github.com/ffuf/ffuf/v2/pkg/ffuf.VERSION_APPENDIX= -extldflags '-static'
+      -s -w -X github.com/ffuf/ffuf/v2/pkg/ffuf.VERSION={{ .Version }} -X github.com/ffuf/ffuf/v2/pkg/ffuf.VERSION_APPENDIX= -extldflags '-static'
     goos:
       - linux
       - windows
