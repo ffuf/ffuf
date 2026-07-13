@@ -627,8 +627,11 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errs.Add(fmt.Errorf("Cannot have -json and -v"))
 	}
 	// Retain the source options so the configuration can be re-serialized later
-	// (history / FFUFHASH) without reconstructing it field-by-field.
-	conf.Options = parseOpts
+	// (history / FFUFHASH) without reconstructing it field-by-field. Store a
+	// shallow copy, not the caller's pointer, so a later mutation of the passed-in
+	// options can't retroactively change this Config's retained snapshot.
+	optsCopy := *parseOpts
+	conf.Options = &optsCopy
 	return &conf, errs.ErrorOrNil()
 }
 

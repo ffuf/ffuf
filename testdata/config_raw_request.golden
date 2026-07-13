@@ -1,0 +1,84 @@
+{
+  "auditlog": "",
+  "autocalibration": false,
+  "autocalibration_keyword": "FUZZ",
+  "autocalibration_perhost": false,
+  "autocalibration_strategies": [
+    "basic"
+  ],
+  "autocalibration_strings": [],
+  "colors": false,
+  "cmdline": "ffuf -w /tmp/wl.txt -request $REQFILE",
+  "configfile": "",
+  "postdata": "{\"q\":\"FUZZ\"}",
+  "debuglog": "",
+  "delay": {
+    "value": "0.00"
+  },
+  "dirsearch_compatibility": false,
+  "encoders": [],
+  "extensions": [],
+  "fmode": "or",
+  "follow_redirects": false,
+  "headers": {
+    "Content-Type": "application/json",
+    "Host": "example.org"
+  },
+  "ignorebody": false,
+  "ignore_wordlist_comments": false,
+  "inputmode": "clusterbomb",
+  "cmd_inputnum": 100,
+  "inputproviders": [
+    {
+      "name": "wordlist",
+      "keyword": "FUZZ",
+      "value": "/tmp/wl.txt",
+      "encoders": "",
+      "template": ""
+    }
+  ],
+  "inputshell": "",
+  "json": false,
+  "matchers": null,
+  "mmode": "or",
+  "maxtime": 0,
+  "maxtime_job": 0,
+  "method": "POST",
+  "noninteractive": false,
+  "outputdirectory": "",
+  "outputfile": "",
+  "outputformat": "",
+  "OutputSkipEmptyFile": false,
+  "proxyurl": "",
+  "quiet": false,
+  "rate": 0,
+  "raw": false,
+  "recursion": false,
+  "recursion_depth": 0,
+  "recursion_strategy": "default",
+  "replayproxyurl": "",
+  "requestfile": "$REQFILE",
+  "requestproto": "https",
+  "scraperfile": "",
+  "scrapers": "all",
+  "sni": "",
+  "stop_403": false,
+  "stop_all": false,
+  "stop_errors": false,
+  "threads": 40,
+  "timeout": 10,
+  "url": "https://example.org/submit",
+  "verbose": false,
+  "wordlists": [
+    "/tmp/wl.txt"
+  ],
+  "http2": false,
+  "client-cert": "",
+  "client-key": ""
+}
+
+--- matchers after SetupFilters ---
+matchers:
+  status = 200-299,301,302,307,401,403,405,500
+filters:
+

@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -80,15 +81,19 @@ func TestCharacterization_HelpGolden(t *testing.T) {
 }
 
 type configCase struct {
-	name string
-	args []string
-	toml string // optional config-file contents; when set, loaded before flags (file < CLI)
+	name        string
+	args        []string
+	toml        string // optional config-file contents; when set, loaded before flags (file < CLI)
+	requestBody string // optional raw HTTP request; when set, written to a temp file and passed via -request
 }
 
 // TestCharacterization_ConfigGolden pins the Config produced by the full parse
 // pipeline (ReadConfig/defaults -> ParseFlags -> ConfigFromOptions -> SetupFilters)
 // for a table of argvs covering every flag shape, aliases, precedence, and errors.
 func TestCharacterization_ConfigGolden(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("config goldens are recorded on unix; ConfigFromOptions applies windows-specific wordlist path handling that diverges from them")
+	}
 	cwd, _ := os.Getwd()
 	cases := []configCase{
 		{name: "basic", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
@@ -103,6 +108,14 @@ func TestCharacterization_ConfigGolden(t *testing.T) {
 		{name: "autocalibration", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-ac", "-acc", "custom1", "-acc", "custom2"}},
 		{name: "acs_strategies", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-acs", "advanced,greedy", "-acs", "custom"}},
 		{name: "compat_data_alias", args: []string{"-u", "https://example.org/", "-w", "/tmp/wl.txt", "-data", "x=FUZZ"}},
+		// Locks the -ach behavior: a config-file -ac must NOT auto-enable per-host calibration.
+		{name: "config_ach_no_autoenable", toml: "[general]\nautocalibration = true\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
+		// Locks the -cc/-ck behavior: a config-file client cert/key survives (is not wiped by the flag default).
+		{name: "config_client_cert", toml: "[http]\nclientcert = \"/tmp/cert.pem\"\nclientkey = \"/tmp/key.pem\"\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
+		// Broad coverage of otherwise-unexercised flags through to Config.
+		{name: "many_flags", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-x", "http://127.0.0.1:8080", "-replay-proxy", "http://127.0.0.1:9090", "-sni", "example.com", "-timeout", "15", "-rate", "50", "-recursion", "-recursion-depth", "3", "-recursion-strategy", "greedy", "-of", "json", "-od", "/tmp/out", "-maxtime", "60", "-json", "-r", "-raw", "-http2", "-ic", "-D", "-sf"}},
+		// Exercises the raw-request parse path (parseRawRequest).
+		{name: "raw_request", args: []string{"-w", "/tmp/wl.txt"}, requestBody: "POST /submit HTTP/1.1\nHost: example.org\nContent-Type: application/json\n\n{\"q\":\"FUZZ\"}\n"},
 		{name: "precedence_cli_overrides_file", toml: "[general]\nthreads = 99\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-t", "5"}},
 		{name: "precedence_file_used", toml: "[general]\nthreads = 99\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
 		{name: "error_missing_url", args: []string{"-w", "/tmp/wl.txt"}},
@@ -110,8 +123,17 @@ func TestCharacterization_ConfigGolden(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			args := c.args
+			reqPath := ""
+			if c.requestBody != "" {
+				reqPath = filepath.Join(t.TempDir(), "request.txt")
+				if err := os.WriteFile(reqPath, []byte(c.requestBody), 0644); err != nil {
+					t.Fatal(err)
+				}
+				args = append(append([]string{}, c.args...), "-request", reqPath)
+			}
 			var snap string
-			withCleanFlagState(c.args, func() {
+			withCleanFlagState(args, func() {
 				opts := loadOpts(t, c.toml)
 				ParseFlags(opts)
 				ctx, cancel := context.WithCancel(context.Background())
@@ -123,6 +145,9 @@ func TestCharacterization_ConfigGolden(t *testing.T) {
 					snap += "\n--- matchers after SetupFilters ---\n" + matcherSnapshot(conf)
 				}
 			})
+			if reqPath != "" {
+				snap = strings.ReplaceAll(snap, reqPath, "$REQFILE") // temp path is machine-specific
+			}
 			compareGolden(t, "testdata/config_"+c.name+".golden", snap)
 		})
 	}
