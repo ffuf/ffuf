@@ -47,6 +47,7 @@ type Config struct {
 	ProxyURL                  string                `json:"proxyurl"`
 	Quiet                     bool                  `json:"quiet"`
 	Rate                      int64                 `json:"rate"`
+	ShowTimestamp             bool                  `json:"show_timestamp"`
 	Raw                       bool                  `json:"raw"`
 	Recursion                 bool                  `json:"recursion"`
 	RecursionDepth            int                   `json:"recursion_depth"`
@@ -110,6 +111,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.ProxyURL = ""
 	conf.Quiet = false
 	conf.Rate = 0
+	conf.ShowTimestamp = false
 	conf.Raw = false
 	conf.Recursion = false
 	conf.RecursionDepth = 0
