@@ -2,6 +2,9 @@
 - master
   - New
     - Added audit logging functionality
+    - Added smart calibration (-sc) - automatically analyzes first N responses and filters out dominant patterns
+    - Added -scs flag to configure smart calibration sample size (default: 100)
+    - Added -sct flag to configure smart calibration threshold percentage (default: 90)
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case

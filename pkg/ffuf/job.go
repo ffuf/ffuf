@@ -41,6 +41,8 @@ type Job struct {
 	currentDepth         int
 	calibMutex           sync.Mutex
 	pauseWg              sync.WaitGroup
+	// Smart calibration - статистика для умной калибровки
+	SmartCalibStats      *SmartCalibrationStats
 }
 
 type QueueJob struct {
@@ -63,6 +65,8 @@ func NewJob(conf *Config) *Job {
 	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
 	j.skipQueue = false
+	// Smart calibration - инициализация статистики
+	j.SmartCalibStats = NewSmartCalibrationStats()
 	return &j
 }
 
@@ -476,6 +480,17 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 	j.pauseWg.Wait()
 
+	// ========== SMART CALIBRATION - собираем статистику первых N ответов ==========
+	if j.Config.SmartCalibration && !j.SmartCalibStats.IsCalibrationDone() {
+		j.SmartCalibStats.AddResponse(resp)
+		
+		// Проверяем, достигли ли мы нужного количества сэмплов
+		if j.SmartCalibStats.ShouldCalibrate(j.Config.SmartCalibrationSamples) {
+			j.applySmartCalibration()
+		}
+	}
+	// ========== END SMART CALIBRATION ==========
+
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
 	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
 
@@ -616,4 +631,67 @@ func (j *Job) Stop() {
 // Stop current, resume to next
 func (j *Job) Next() {
 	j.RunningJob = false
+}
+
+// applySmartCalibration - анализирует собранные ответы и применяет фильтры
+// Вызывается после того, как собрано достаточное количество сэмплов
+// После применения фильтров перезапускает сканирование с начала вордлиста
+func (j *Job) applySmartCalibration() {
+	j.calibMutex.Lock()
+	defer j.calibMutex.Unlock()
+
+	// Проверяем ещё раз под мьютексом
+	if j.SmartCalibStats.IsCalibrationDone() {
+		return
+	}
+
+	// Выводим статистику
+	j.Output.Info("=== SMART CALIBRATION ===")
+	j.Output.Info(j.SmartCalibStats.GetDetailedStats())
+
+	// Получаем рекомендуемые фильтры
+	filters := j.SmartCalibStats.AnalyzeAndGetFilters(j.Config.SmartCalibrationThreshold)
+
+	if len(filters) == 0 {
+		j.Output.Info("Smart calibration: No dominant response pattern found, no filters applied")
+	} else {
+		for _, f := range filters {
+			percent := float64(f.Count) / float64(j.Config.SmartCalibrationSamples) * 100
+			j.Output.Info(fmt.Sprintf("Smart calibration: Adding filter -%s %s (matched %.1f%% of samples)",
+				getFilterFlag(f.Type), f.Value, percent))
+			
+			// Применяем фильтр
+			err := j.Config.MatcherManager.AddFilter(f.Type, f.Value, false)
+			if err != nil {
+				j.Output.Error(fmt.Sprintf("Failed to add filter: %s", err))
+			}
+		}
+	}
+
+	j.SmartCalibStats.SetCalibrationDone()
+
+	// Перезапускаем сканирование с начала вордлиста
+	j.Output.Info("Smart calibration: Restarting scan from beginning with new filters...")
+	j.Output.Info("=========================")
+	
+	// Сбрасываем вордлист на начало
+	j.Input.Reset()
+	j.Counter = 0
+	j.startTimeJob = time.Now()
+}
+
+// getFilterFlag - возвращает флаг командной строки для типа фильтра
+func getFilterFlag(filterType string) string {
+	switch filterType {
+	case "size":
+		return "fs"
+	case "word":
+		return "fw"
+	case "line":
+		return "fl"
+	case "status":
+		return "fc"
+	default:
+		return filterType
+	}
 }

@@ -196,8 +196,11 @@ GENERAL OPTIONS:
   -rate               Rate of requests per second (default: 0)
   -s                  Do not print additional information (silent mode) (default: false)
   -sa                 Stop on all error cases. Implies -sf and -se. (default: false)
+  -sc                 Smart calibration: analyze first N responses and auto-filter common patterns (default: false)
   -scraperfile        Custom scraper file path
   -scrapers           Active scraper groups (default: all)
+  -scs                Smart calibration sample size (default: 100) (default: 100)
+  -sct                Smart calibration threshold percentage (default: 90) (default: 90)
   -se                 Stop on spurious errors (default: false)
   -search             Search for a FFUFHASH payload from ffuf history
   -sf                 Stop when > 95% of responses return 403 Forbidden (default: false)

@@ -11,6 +11,10 @@ type Config struct {
 	AutoCalibrationPerHost    bool                  `json:"autocalibration_perhost"`
 	AutoCalibrationStrategies []string              `json:"autocalibration_strategies"`
 	AutoCalibrationStrings    []string              `json:"autocalibration_strings"`
+	// Smart calibration - новые параметры для умной калибровки
+	SmartCalibration          bool                  `json:"smart_calibration"`
+	SmartCalibrationSamples   int                   `json:"smart_calibration_samples"`
+	SmartCalibrationThreshold int                   `json:"smart_calibration_threshold"`
 	Cancel                    context.CancelFunc    `json:"-"`
 	Colors                    bool                  `json:"colors"`
 	CommandKeywords           []string              `json:"-"`
@@ -83,6 +87,10 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.AutoCalibrationKeyword = "FUZZ"
 	conf.AutoCalibrationStrategies = []string{"basic"}
 	conf.AutoCalibrationStrings = make([]string, 0)
+	// Smart calibration - значения по умолчанию
+	conf.SmartCalibration = false
+	conf.SmartCalibrationSamples = 100
+	conf.SmartCalibrationThreshold = 90
 	conf.CommandKeywords = make([]string, 0)
 	conf.Context = ctx
 	conf.Cancel = cancel
