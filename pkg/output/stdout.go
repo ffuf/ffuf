@@ -167,6 +167,14 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 		return
 	}
 
+	fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, formatProgress(status, terminalWidth()))
+}
+
+// formatProgress returns the progress line for the given status, picking the
+// widest variant that fits within width columns. When width <= 0 (e.g. stderr
+// is not a tty, or detection failed) the full variant is returned so output to
+// pipes/files is unchanged.
+func formatProgress(status ffuf.Progress, width int) string {
 	dur := time.Since(status.StartedAt)
 	runningSecs := int(dur / time.Second)
 	var reqRate int64
@@ -182,7 +190,26 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	full := fmt.Sprintf(":: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::",
+		status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	if width <= 0 || len(full) <= width {
+		return full
+	}
+
+	medium := fmt.Sprintf(":: [%d/%d] %d r/s %d:%02d:%02d Errs:%d",
+		status.ReqCount, status.ReqTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	if len(medium) <= width {
+		return medium
+	}
+
+	tiny := fmt.Sprintf(":: [%d/%d]", status.ReqCount, status.ReqTotal)
+	if len(tiny) <= width {
+		return tiny
+	}
+
+	// Last resort: truncate so we never overflow the terminal width and
+	// trigger the wrap-then-overwrite corruption from issue #166.
+	return tiny[:width]
 }
 
 func (s *Stdoutput) Info(infostring string) {
