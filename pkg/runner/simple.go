@@ -125,6 +125,15 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 		return ffuf.Response{}, err
 	}
 
+	// If random agent is set pick a random agent here.
+	if r.config.RandomAgent != "" {
+		if _, ok := req.Headers["User-Agent"]; !ok {
+			if ua, err := ffuf.GetRandomLine(r.config.RandomAgent); err == nil {
+				req.Headers["User-Agent"] = ua
+			}
+		}
+	}
+
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
 		req.Headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())

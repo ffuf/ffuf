@@ -9,6 +9,7 @@
 * [ccsplit](https://github.com/ccsplit)
 * [choket](https://github.com/choket)
 * [codingo](https://github.com/codingo)
+* [Crelic](https://github.com/Crelic1/)
 * [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
 * [Daviey](https://github.com/Daviey)

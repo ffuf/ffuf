@@ -94,6 +94,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.HTTP.ClientCert, "cc", "", "Client cert for authentication. Client key needs to be defined as well for this to work")
 	flag.StringVar(&opts.HTTP.ClientKey, "ck", "", "Client key for authentication. Client certificate needs to be defined as well for this to work")
 	flag.StringVar(&opts.General.ConfigFile, "config", "", "Load configuration from a file")
+	flag.StringVar(&opts.General.RandomAgent, "random-agent", opts.General.RandomAgent, "Send a random User-Agent header with each request, specify a file with user agents")
 	flag.StringVar(&opts.General.ScraperFile, "scraperfile", "", "Custom scraper file path")
 	flag.StringVar(&opts.General.Scrapers, "scrapers", opts.General.Scrapers, "Active scraper groups")
 	flag.StringVar(&opts.Filter.Mode, "fmode", opts.Filter.Mode, "Filter set operator. Either of: and, or")
