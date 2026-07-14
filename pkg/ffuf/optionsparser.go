@@ -101,6 +101,7 @@ type FilterOptions struct {
 	Regexp string `json:"regexp"`
 	Size   string `json:"size"`
 	Status string `json:"status"`
+	ContentType string `json:"content_type"`
 	Time   string `json:"time"`
 	Words  string `json:"words"`
 }
@@ -111,6 +112,7 @@ type MatcherOptions struct {
 	Regexp string `json:"regexp"`
 	Size   string `json:"size"`
 	Status string `json:"status"`
+	ContentType string `json:"content_type"`
 	Time   string `json:"time"`
 	Words  string `json:"words"`
 }
@@ -172,6 +174,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Matcher.Regexp = ""
 	c.Matcher.Size = ""
 	c.Matcher.Status = "200-299,301,302,307,401,403,405,500"
+	c.Matcher.ContentType = ""
 	c.Matcher.Time = ""
 	c.Matcher.Words = ""
 	c.Output.AuditLog = ""

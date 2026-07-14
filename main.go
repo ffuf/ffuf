@@ -103,6 +103,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Filter.Status, "fc", opts.Filter.Status, "Filter HTTP status codes from response. Comma separated list of codes and ranges")
 	flag.StringVar(&opts.Filter.Time, "ft", opts.Filter.Time, "Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
 	flag.StringVar(&opts.Filter.Words, "fw", opts.Filter.Words, "Filter by amount of words in response. Comma separated list of word counts and ranges")
+	flag.StringVar(&opts.Filter.ContentType, "fct", opts.Filter.ContentType, "Filter HTTP response Content-Type header. Comma separated list. Supports exact (text/html), wildcard (application/*), substring (json), or 'all'")
 	flag.StringVar(&opts.General.Delay, "p", opts.General.Delay, "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
 	flag.StringVar(&opts.General.Searchhash, "search", opts.General.Searchhash, "Search for a FFUFHASH payload from ffuf history")
 	flag.StringVar(&opts.HTTP.Data, "d", opts.HTTP.Data, "POST data")
@@ -127,6 +128,7 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flag.StringVar(&opts.Matcher.Status, "mc", opts.Matcher.Status, "Match HTTP status codes, or \"all\" for everything.")
 	flag.StringVar(&opts.Matcher.Time, "mt", opts.Matcher.Time, "Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100")
 	flag.StringVar(&opts.Matcher.Words, "mw", opts.Matcher.Words, "Match amount of words in response")
+	flag.StringVar(&opts.Matcher.ContentType, "mct", opts.Matcher.ContentType, "Match HTTP response Content-Type header. Comma separated list. Supports exact (text/html), wildcard (application/*), substring (json), or 'all'")
 	flag.StringVar(&opts.Output.AuditLog, "audit-log", opts.Output.AuditLog, "Write audit log containing all requests, responses and config")
 	flag.StringVar(&opts.Output.DebugLog, "debug-log", opts.Output.DebugLog, "Write all of the internal logging to the specified file.")
 	flag.StringVar(&opts.Output.OutputDirectory, "od", opts.Output.OutputDirectory, "Directory path to store matched results to.")
@@ -339,6 +341,9 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 		if f.Name == "mt" {
 			matcherSet = true
 		}
+		if f.Name == "mct" {
+			matcherSet = true
+		}
 		if f.Name == "mw" {
 			matcherSet = true
 			warningIgnoreBody = true
@@ -373,6 +378,11 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 			errs.Add(err)
 		}
 	}
+	if parseOpts.Filter.ContentType != "" {
+		if err := conf.MatcherManager.AddFilter("contenttype", parseOpts.Filter.ContentType, false); err != nil {
+			errs.Add(err)
+		}
+	}
 	if parseOpts.Filter.Lines != "" {
 		warningIgnoreBody = true
 		if err := conf.MatcherManager.AddFilter("line", parseOpts.Filter.Lines, false); err != nil {
@@ -396,6 +406,11 @@ func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
 	}
 	if parseOpts.Matcher.Words != "" {
 		if err := conf.MatcherManager.AddMatcher("word", parseOpts.Matcher.Words); err != nil {
+			errs.Add(err)
+		}
+	}
+	if parseOpts.Matcher.ContentType != "" {
+		if err := conf.MatcherManager.AddMatcher("contenttype", parseOpts.Matcher.ContentType); err != nil {
 			errs.Add(err)
 		}
 	}

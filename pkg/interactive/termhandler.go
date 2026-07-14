@@ -164,6 +164,24 @@ func (i *interactive) handleInput(in []byte) {
 				i.appendFilter("time", args[1])
 				i.Job.Output.Info("New response time filter value set")
 			}
+		case "fct":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value for content-type filter, or \"none\" for removing it")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"fct\"")
+			} else {
+				i.updateFilter("contenttype", args[1], true)
+				i.Job.Output.Info("New content-type filter value set")
+			}
+		case "afct":
+			if len(args) < 2 {
+				i.Job.Output.Error("Please define a value to append to content-type filter")
+			} else if len(args) > 2 {
+				i.Job.Output.Error("Too many arguments for \"afct\"")
+			} else {
+				i.appendFilter("contenttype", args[1])
+				i.Job.Output.Info("New content-type filter value set")
+			}
 		case "queueshow":
 			i.printQueue()
 		case "queuedel":
@@ -277,7 +295,7 @@ func (i *interactive) printPrompt() {
 }
 
 func (i *interactive) printHelp() {
-	var fc, fl, fs, ft, fw string
+	var fc, fl, fs, ft, fw, fct string
 	for name, filter := range i.Job.Config.MatcherManager.GetFilters() {
 		switch name {
 		case "status":
@@ -290,6 +308,8 @@ func (i *interactive) printHelp() {
 			fs = "(active: " + filter.Repr() + ")"
 		case "time":
 			ft = "(active: " + filter.Repr() + ")"
+		case "contenttype":
+			fct = "(active: " + filter.Repr() + ")"
 		}
 	}
 	rate := fmt.Sprintf("(active: %d)", i.Job.Config.Rate)
@@ -305,6 +325,8 @@ available commands:
  fs   [value]             - (re)configure size filter %s
  aft  [value]             - append to time filter %s
  ft   [value]             - (re)configure time filter %s
+ afct [value]             - append to content-type filter %s
+ fct  [value]             - (re)configure content-type filter %s
  rate [value]             - adjust rate of requests per second %s
  queueshow                - show job queue
  queuedel [number]        - delete a job in the queue
@@ -315,5 +337,5 @@ available commands:
  savejson [filename]      - save current matches to a file
  help                     - you are looking at it
 `
-	i.Job.Output.Raw(fmt.Sprintf(help, fc, fc, fl, fl, fw, fw, fs, fs, ft, ft, rate))
+	i.Job.Output.Raw(fmt.Sprintf(help, fc, fc, fl, fl, fw, fw, fs, fs, ft, ft, fct, fct, rate))
 }

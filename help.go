@@ -75,14 +75,14 @@ func Usage() {
 		Description:   "Matchers for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"mmode", "mc", "ml", "mr", "ms", "mt", "mw"},
+		ExpectedFlags: []string{"mmode", "mc", "mct", "ml", "mr", "ms", "mt", "mw"},
 	}
 	u_filter := UsageSection{
 		Name:          "FILTER OPTIONS",
 		Description:   "Filters for the response filtering.",
 		Flags:         make([]UsageFlag, 0),
 		Hidden:        false,
-		ExpectedFlags: []string{"fmode", "fc", "fl", "fr", "fs", "ft", "fw"},
+		ExpectedFlags: []string{"fmode", "fc", "fct", "fl", "fr", "fs", "ft", "fw"},
 	}
 	u_input := UsageSection{
 		Name:          "INPUT OPTIONS",

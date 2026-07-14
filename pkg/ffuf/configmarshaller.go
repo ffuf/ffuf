@@ -86,6 +86,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.Filter.Regexp = ""
 	o.Filter.Size = ""
 	o.Filter.Status = ""
+	o.Filter.ContentType = ""
 	o.Filter.Time = ""
 	o.Filter.Words = ""
 	for name, filter := range c.MatcherManager.GetFilters() {
@@ -98,6 +99,8 @@ func (c *Config) ToOptions() ConfigOptions {
 			o.Filter.Size = filter.Repr()
 		case "status":
 			o.Filter.Status = filter.Repr()
+		case "contenttype":
+			o.Filter.ContentType = filter.Repr()
 		case "time":
 			o.Filter.Time = filter.Repr()
 		case "words":
@@ -109,6 +112,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.Matcher.Regexp = ""
 	o.Matcher.Size = ""
 	o.Matcher.Status = ""
+	o.Matcher.ContentType = ""
 	o.Matcher.Time = ""
 	o.Matcher.Words = ""
 	for name, filter := range c.MatcherManager.GetMatchers() {
@@ -121,6 +125,8 @@ func (c *Config) ToOptions() ConfigOptions {
 			o.Matcher.Size = filter.Repr()
 		case "status":
 			o.Matcher.Status = filter.Repr()
+		case "contenttype":
+			o.Matcher.ContentType = filter.Repr()
 		case "time":
 			o.Matcher.Time = filter.Repr()
 		case "words":
