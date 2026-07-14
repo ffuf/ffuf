@@ -148,6 +148,18 @@ Additionally, in case you wish to use bunch of configuration files for different
 the configuration file path using `-config` command line flag that takes the file path to the configuration file as its
 parameter. 
 
+### Markov Chain Feedback
+
+Ffuf now supports Markov Chain-based adaptive feedback for more intelligent fuzzing. This feature enables ffuf to learn from response patterns and adapt its input selection strategy based on the feedback from previous requests.
+
+The Markov Chain feedback mechanism:
+- Tracks HTTP response characteristics (status codes, content length, word count, etc.) as states
+- Learns transition probabilities between response states
+- Biases input selection toward patterns that previously led to interesting responses
+- Adapts the fuzzing strategy in real-time based on learned patterns
+
+This feature is enabled by default and works transparently with all existing ffuf functionality.
+
 <p align="center">
   <img width="250" src="_img/ffuf_juggling_250.png">
 </p>

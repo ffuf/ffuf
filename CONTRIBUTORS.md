@@ -20,6 +20,7 @@
 * [gserrg](https://github.com/gserrg)
 * [fabiobauer](https://github.com/fabiobauer)
 * [fang0654](https://github.com/fang0654)
+* [Fedor Bogoslavskii](https://github.com/LuciyVI)
 * [haseobang](https://github.com/haseobang)
 * [Hazegard](https://github.com/Hazegard)
 * [helpermika](https://github.com/helpermika)

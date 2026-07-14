@@ -41,6 +41,7 @@ type Job struct {
 	currentDepth         int
 	calibMutex           sync.Mutex
 	pauseWg              sync.WaitGroup
+	MarkovFeedback       MarkovFeedback
 }
 
 type QueueJob struct {
@@ -63,6 +64,11 @@ func NewJob(conf *Config) *Job {
 	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
 	j.skipQueue = false
+	j.MarkovFeedback = NewFeedbackController()
+	// Set verbose mode based on config
+	if j.Config.Verbose {
+		j.MarkovFeedback.SetVerbose(true)
+	}
 	return &j
 }
 
@@ -257,23 +263,41 @@ func (j *Job) startExecution() {
 		threadlimiter <- true
 		// Ratelimiter handles the rate ticker
 		<-j.Rate.RateLimiter.C
-		nextInput := j.Input.Value()
-		nextPosition := j.Input.Position()
+		
+		// Get next input with Markov feedback if available
+		var nextInput map[string][]byte
+		var nextPosition int
+		var useFeedbackInput bool = false
+		
+		if j.MarkovFeedback != nil {
+			nextInput, useFeedbackInput = j.MarkovFeedback.GetNextInput(j.Input)
+		}
+		
+		if useFeedbackInput && nextInput != nil {
+			// Use feedback-based input selection
+			nextPosition = j.Input.Position() // Use the current position but with modified input
+		} else {
+			// Use normal input provider
+			nextInput = j.Input.Value()
+			nextPosition = j.Input.Position()
+		}
+		
 		// Add FFUFHASH and its value
 		nextInput["FFUFHASH"] = j.ffufHash(nextPosition)
 
 		wg.Add(1)
 		j.Counter++
 
-		go func() {
+		go func(input map[string][]byte, position int) {
 			defer func() { <-threadlimiter }()
 			defer wg.Done()
 			threadStart := time.Now()
-			j.runTask(nextInput, nextPosition, false)
+			j.runTask(input, position, false)
 			j.sleepIfNeeded()
 			threadEnd := time.Now()
 			j.Rate.Tick(threadStart, threadEnd)
-		}()
+		}(nextInput, nextPosition)
+		
 		if !j.RunningJob {
 			defer j.Output.Warning(j.Error)
 			return
@@ -487,7 +511,22 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 
-	if j.isMatch(resp) {
+	isMatch := j.isMatch(resp)
+	
+	// Update Markov feedback with response data
+	if j.MarkovFeedback != nil {
+		j.MarkovFeedback.UpdateWithResponse(resp, isMatch)
+		if isMatch {
+			j.MarkovFeedback.UpdateWithMatchedInput(input)
+		}
+		
+		// Optionally display Markov Chain info in verbose mode
+		if j.MarkovFeedback.GetVerbose() && j.Counter%50 == 0 { // Every 50 requests
+			j.MarkovFeedback.PrintMarkovInfo()
+		}
+	}
+
+	if isMatch {
 		// Re-send request through replay-proxy if needed
 		if j.ReplayRunner != nil {
 			replayreq, err := j.ReplayRunner.Prepare(input, &basereq)
