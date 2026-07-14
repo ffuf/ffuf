@@ -8,6 +8,7 @@
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
 * [choket](https://github.com/choket)
+* [chouettevan](https://github.com/chouettevan)
 * [codingo](https://github.com/codingo)
 * [c_sto](https://github.com/c-sto)
 * [Damian89](https://github.com/Damian89)
