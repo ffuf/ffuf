@@ -205,3 +205,8 @@ func mergeMaps(m1 map[string][]string, m2 map[string][]string) map[string][]stri
 	}
 	return merged
 }
+
+func parseProxyUrl(proxyUrl string) (u *url.URL, isValid bool) {
+	u, err := url.Parse(proxyUrl)
+	return u, err == nil && u.Opaque == "" && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "socks5")
+}

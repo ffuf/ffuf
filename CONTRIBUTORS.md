@@ -7,6 +7,7 @@
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
 * [ccsplit](https://github.com/ccsplit)
+* [chadhyatt](https://github.com/chadhyatt)
 * [choket](https://github.com/choket)
 * [codingo](https://github.com/codingo)
 * [c_sto](https://github.com/c-sto)
