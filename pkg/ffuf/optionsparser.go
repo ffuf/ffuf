@@ -189,6 +189,15 @@ func NewConfigOptions() *ConfigOptions {
 	return c
 }
 
+// cloneStrings returns a copy of s with its own backing array (nil stays nil), so
+// the retained options snapshot can't be mutated through the caller's slices.
+func cloneStrings(s []string) []string {
+	if s == nil {
+		return nil
+	}
+	return append([]string(nil), s...)
+}
+
 // ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
 func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel context.CancelFunc) (*Config, error) {
@@ -208,9 +217,12 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.Extensions = extensions
 	}
 
-	// Convert cookies to a header
+	// Effective request headers: the -H values plus any -b/-cookie folded in. Built
+	// as a fresh slice so ConfigFromOptions never mutates the caller's options (it
+	// stays idempotent) and the retained snapshot below shares no backing with it.
+	effectiveHeaders := append([]string(nil), parseOpts.HTTP.Headers...)
 	if len(parseOpts.HTTP.Cookies) > 0 {
-		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Cookie: "+strings.Join(parseOpts.HTTP.Cookies, "; "))
+		effectiveHeaders = append(effectiveHeaders, "Cookie: "+strings.Join(parseOpts.HTTP.Cookies, "; "))
 	}
 
 	//Prepare inputproviders
@@ -382,7 +394,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	//Prepare headers and make canonical
-	for _, v := range parseOpts.HTTP.Headers {
+	for _, v := range effectiveHeaders {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
 			// trim and make canonical
@@ -627,10 +639,18 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errs.Add(fmt.Errorf("Cannot have -json and -v"))
 	}
 	// Retain the source options so the configuration can be re-serialized later
-	// (history / FFUFHASH) without reconstructing it field-by-field. Store a
-	// shallow copy, not the caller's pointer, so a later mutation of the passed-in
-	// options can't retroactively change this Config's retained snapshot.
+	// (history / FFUFHASH) without a hand-maintained reverse mapper. Deep-copy the
+	// slice fields so the retained snapshot shares no backing array with the caller's
+	// options; a later mutation of either side can't corrupt the other. Headers holds
+	// the effective set (with -b/-cookie folded in) computed above.
 	optsCopy := *parseOpts
+	optsCopy.HTTP.Headers = effectiveHeaders
+	optsCopy.HTTP.Cookies = cloneStrings(parseOpts.HTTP.Cookies)
+	optsCopy.Input.Wordlists = cloneStrings(parseOpts.Input.Wordlists)
+	optsCopy.Input.Encoders = cloneStrings(parseOpts.Input.Encoders)
+	optsCopy.Input.Inputcommands = cloneStrings(parseOpts.Input.Inputcommands)
+	optsCopy.General.AutoCalibrationStrings = cloneStrings(parseOpts.General.AutoCalibrationStrings)
+	optsCopy.General.AutoCalibrationStrategies = cloneStrings(parseOpts.General.AutoCalibrationStrategies)
 	conf.Options = &optsCopy
 	return &conf, errs.ErrorOrNil()
 }
