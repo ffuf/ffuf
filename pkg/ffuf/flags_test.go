@@ -29,9 +29,42 @@ func TestRegisterFlags_Wellformed(t *testing.T) {
 		SectionFilter: true, SectionInput: true, SectionOutput: true,
 	}
 
-	count := 0
+	// The full expected flag surface. Unlike a bare count, this catches a net-zero
+	// add-and-remove, a rename, or a duplicate — update it DELIBERATELY when the CLI
+	// surface changes. 72 visible flags + 7 hidden compat (4 aliases + 3 dummies).
+	expected := map[string]bool{
+		// HTTP
+		"H": true, "X": true, "b": true, "cc": true, "ck": true, "d": true,
+		"http2": true, "ignore-body": true, "r": true, "raw": true, "recursion": true,
+		"recursion-depth": true, "recursion-strategy": true, "replay-proxy": true,
+		"sni": true, "timeout": true, "u": true, "x": true,
+		// General
+		"V": true, "ac": true, "acc": true, "ach": true, "ack": true, "acs": true,
+		"c": true, "config": true, "json": true, "maxtime": true, "maxtime-job": true,
+		"noninteractive": true, "p": true, "rate": true, "s": true, "sa": true,
+		"scraperfile": true, "scrapers": true, "se": true, "search": true, "sf": true,
+		"t": true, "v": true,
+		// Matcher
+		"mc": true, "ml": true, "mmode": true, "mr": true, "ms": true, "mt": true, "mw": true,
+		// Filter
+		"fc": true, "fl": true, "fmode": true, "fr": true, "fs": true, "ft": true, "fw": true,
+		// Input
+		"D": true, "e": true, "enc": true, "ic": true, "input-cmd": true, "input-num": true,
+		"input-shell": true, "mode": true, "request": true, "request-proto": true, "w": true,
+		// Output
+		"audit-log": true, "debug-log": true, "o": true, "od": true, "of": true, "or": true,
+		// Compat aliases
+		"cookie": true, "data": true, "data-ascii": true, "data-binary": true,
+		// Compat dummies
+		"compressed": true, "i": true, "k": true,
+	}
+
+	registered := map[string]bool{}
 	fs.VisitAll(func(f *flag.Flag) {
-		count++
+		registered[f.Name] = true
+		if f.Usage == "" {
+			t.Errorf("flag -%s has an empty usage string", f.Name)
+		}
 		section, ok := reg.SectionOf(f.Name)
 		if !ok {
 			t.Errorf("flag -%s is registered but missing from the registry (no section)", f.Name)
@@ -42,10 +75,14 @@ func TestRegisterFlags_Wellformed(t *testing.T) {
 		}
 	})
 
-	// Guard against silent flag drops or duplicate registrations: ffuf currently
-	// ships 79 flags (72 visible + 7 hidden compatibility flags). Update this
-	// number deliberately when adding or removing a flag.
-	if count != 79 {
-		t.Errorf("expected 79 registered flags, got %d — a flag was added, dropped, or duplicated", count)
+	for name := range expected {
+		if !registered[name] {
+			t.Errorf("expected flag -%s is not registered (dropped or renamed?)", name)
+		}
+	}
+	for name := range registered {
+		if !expected[name] {
+			t.Errorf("unexpected flag -%s registered — add it to the expected set deliberately", name)
+		}
 	}
 }

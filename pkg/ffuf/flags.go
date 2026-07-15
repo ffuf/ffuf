@@ -17,6 +17,15 @@ const (
 	SectionOutput  = "output"
 )
 
+// isKnownSection reports whether s is one of the defined help sections.
+func isKnownSection(s string) bool {
+	switch s {
+	case SectionHTTP, SectionGeneral, SectionCompat, SectionMatcher, SectionFilter, SectionInput, SectionOutput:
+		return true
+	}
+	return false
+}
+
 // RegisteredFlag is one flag's help metadata.
 type RegisteredFlag struct {
 	Name    string
@@ -123,8 +132,15 @@ func RegisterFlags(fs *flag.FlagSet, o *ConfigOptions) *FlagRegistry {
 			if name == "" {
 				continue // not a flag
 			}
-			bindField(fs, name, sf.Tag.Get("usage"), sf.Tag.Get("kind"), group.Field(j).Addr().Interface())
-			record(name, sf.Tag.Get("section"), false)
+			usage, section := sf.Tag.Get("usage"), sf.Tag.Get("section")
+			if usage == "" {
+				panic("ffuf: flag -" + name + " is missing a usage tag")
+			}
+			if !isKnownSection(section) {
+				panic("ffuf: flag -" + name + " has unknown section \"" + section + "\"")
+			}
+			bindField(fs, name, usage, sf.Tag.Get("kind"), group.Field(j).Addr().Interface())
+			record(name, section, false)
 
 			// Compatibility aliases bind the SAME field, hidden in the compat section.
 			for _, alias := range strings.Split(sf.Tag.Get("alias"), ",") {
