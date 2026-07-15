@@ -51,7 +51,10 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 }
 
 // isTerminal reports whether f is an interactive terminal, as opposed to a
-// file or a pipe.
+// regular file or a pipe. This also treats other character devices (e.g.
+// /dev/null) as terminals, which is harmless here since it only affects
+// whether a handful of extra control bytes get written to a destination
+// that isn't going to be read back anyway.
 func isTerminal(f *os.File) bool {
 	fi, err := f.Stat()
 	if err != nil {
