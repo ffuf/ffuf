@@ -6,6 +6,7 @@
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
+    - Fix terminal control characters being written to stdout/stderr when they're redirected to a file or pipe
   
 - v2.1.0
   - New
