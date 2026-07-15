@@ -22,7 +22,7 @@ func WriteHistoryEntry(conf *Config) (string, error) {
 		return "", errors.New("cannot write history entry: config has no source options")
 	}
 	options := ConfigOptionsHistory{
-		ConfigOptions: *conf.Options,
+		ConfigOptions: historyOptions(conf),
 		Time:          time.Now(),
 	}
 	jsonoptions, err := json.Marshal(options)
@@ -36,6 +36,60 @@ func WriteHistoryEntry(conf *Config) (string, error) {
 	}
 	err = os.WriteFile(filepath.Join(HISTORYDIR, hashstr, "options"), jsonoptions, 0640)
 	return hashstr, err
+}
+
+// historyOptions projects the Config's retained source options into the form
+// persisted for FFUFHASH history. Most fields ride the retained snapshot
+// unchanged, but fields the engine mutates AFTER parsing must be refreshed from
+// the live Config — otherwise a `-search` reconstruction shows stale values:
+//   - HTTP.URL: recursion rewrites conf.Url per queued job (job.go prepareQueueJob),
+//     so the frozen snapshot would report the base URL, not the recursed path.
+//   - Filter/Matcher.*: autocalibration installs filters at runtime, absent from
+//     the raw input. Rebuilt from MatcherManager exactly as the old ToOptions did.
+func historyOptions(conf *Config) ConfigOptions {
+	o := *conf.Options
+	o.HTTP.URL = conf.Url
+	if conf.MatcherManager != nil {
+		o.Filter.Mode = conf.FilterMode
+		o.Filter.Lines, o.Filter.Regexp, o.Filter.Size = "", "", ""
+		o.Filter.Status, o.Filter.Time, o.Filter.Words = "", "", ""
+		for name, f := range conf.MatcherManager.GetFilters() {
+			switch name {
+			case "line":
+				o.Filter.Lines = f.Repr()
+			case "regexp":
+				o.Filter.Regexp = f.Repr()
+			case "size":
+				o.Filter.Size = f.Repr()
+			case "status":
+				o.Filter.Status = f.Repr()
+			case "time":
+				o.Filter.Time = f.Repr()
+			case "words":
+				o.Filter.Words = f.Repr()
+			}
+		}
+		o.Matcher.Mode = conf.MatcherMode
+		o.Matcher.Lines, o.Matcher.Regexp, o.Matcher.Size = "", "", ""
+		o.Matcher.Status, o.Matcher.Time, o.Matcher.Words = "", "", ""
+		for name, f := range conf.MatcherManager.GetMatchers() {
+			switch name {
+			case "line":
+				o.Matcher.Lines = f.Repr()
+			case "regexp":
+				o.Matcher.Regexp = f.Repr()
+			case "size":
+				o.Matcher.Size = f.Repr()
+			case "status":
+				o.Matcher.Status = f.Repr()
+			case "time":
+				o.Matcher.Time = f.Repr()
+			case "words":
+				o.Matcher.Words = f.Repr()
+			}
+		}
+	}
+	return o
 }
 
 func calculateHistoryHash(options []byte) string {

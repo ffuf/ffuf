@@ -65,3 +65,63 @@ func TestConfigOptions_SerializationRoundTrip(t *testing.T) {
 		t.Errorf("header changed across round-trip: %q -> %q", conf.Headers["X-Test"], conf2.Headers["X-Test"])
 	}
 }
+
+// --- test doubles for the runtime-derived serialization state ---
+
+type fakeFilter struct{ repr string }
+
+func (f fakeFilter) Filter(*Response) (bool, error) { return false, nil }
+func (f fakeFilter) Repr() string                   { return f.repr }
+func (f fakeFilter) ReprVerbose() string            { return f.repr }
+
+type fakeMatcherManager struct {
+	filters  map[string]FilterProvider
+	matchers map[string]FilterProvider
+}
+
+func (m *fakeMatcherManager) SetCalibrated(bool)                                {}
+func (m *fakeMatcherManager) SetCalibratedForHost(string, bool)                 {}
+func (m *fakeMatcherManager) AddFilter(string, string, bool) error              { return nil }
+func (m *fakeMatcherManager) AddPerDomainFilter(string, string, string) error   { return nil }
+func (m *fakeMatcherManager) RemoveFilter(string)                               {}
+func (m *fakeMatcherManager) AddMatcher(string, string) error                   { return nil }
+func (m *fakeMatcherManager) GetFilters() map[string]FilterProvider             { return m.filters }
+func (m *fakeMatcherManager) GetMatchers() map[string]FilterProvider            { return m.matchers }
+func (m *fakeMatcherManager) FiltersForDomain(string) map[string]FilterProvider { return nil }
+func (m *fakeMatcherManager) CalibratedForDomain(string) bool                   { return false }
+func (m *fakeMatcherManager) Calibrated() bool                                  { return false }
+
+// TestHistoryOptions_ReflectsRecursedURL locks the recursion fix: WriteHistoryEntry
+// serializes the LIVE Config.Url (rewritten per queued job by prepareQueueJob), not
+// the base URL frozen in the retained parse-time options. Without the fix, -search on
+// a recursive hit reconstructs the wrong (base) path.
+func TestHistoryOptions_ReflectsRecursedURL(t *testing.T) {
+	opts := NewConfigOptions()
+	opts.HTTP.URL = "https://example.org/FUZZ" // parse-time base
+	conf := &Config{Options: opts, Url: "https://example.org/admin/FUZZ"}
+
+	got := historyOptions(conf)
+	if got.HTTP.URL != "https://example.org/admin/FUZZ" {
+		t.Errorf("history URL = %q, want the recursed live URL %q", got.HTTP.URL, "https://example.org/admin/FUZZ")
+	}
+}
+
+// TestHistoryOptions_ReflectsRuntimeFilters locks the autocalibration fix: filters
+// installed at runtime (e.g. by -ac) appear in the serialized history, rebuilt from
+// MatcherManager. The raw parse-time options never held them.
+func TestHistoryOptions_ReflectsRuntimeFilters(t *testing.T) {
+	opts := NewConfigOptions()
+	opts.HTTP.URL = "https://example.org/FUZZ"
+	conf := &Config{
+		Options: opts,
+		Url:     "https://example.org/FUZZ",
+		MatcherManager: &fakeMatcherManager{
+			filters: map[string]FilterProvider{"size": fakeFilter{"4242"}},
+		},
+	}
+
+	got := historyOptions(conf)
+	if got.Filter.Size != "4242" {
+		t.Errorf("history Filter.Size = %q, want the runtime-installed %q", got.Filter.Size, "4242")
+	}
+}
