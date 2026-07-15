@@ -36,6 +36,7 @@
 * [l4yton](https://github.com/l4yton)
 * [lc](https://github.com/lc)
 * [mprencipe](https://github.com/mprencipe)
+* [munzzyy](https://github.com/munzzyy)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)

@@ -27,10 +27,12 @@ const (
 )
 
 type Stdoutput struct {
-	config         *ffuf.Config
-	fuzzkeywords   []string
-	Results        []ffuf.Result
-	CurrentResults []ffuf.Result
+	config           *ffuf.Config
+	fuzzkeywords     []string
+	Results          []ffuf.Result
+	CurrentResults   []ffuf.Result
+	stdoutIsTerminal bool
+	stderrIsTerminal bool
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -39,11 +41,56 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	outp.Results = make([]ffuf.Result, 0)
 	outp.CurrentResults = make([]ffuf.Result, 0)
 	outp.fuzzkeywords = make([]string, 0)
+	outp.stdoutIsTerminal = isTerminal(os.Stdout)
+	outp.stderrIsTerminal = isTerminal(os.Stderr)
 	for _, ip := range conf.InputProviders {
 		outp.fuzzkeywords = append(outp.fuzzkeywords, ip.Keyword)
 	}
 	sort.Strings(outp.fuzzkeywords)
 	return &outp
+}
+
+// isTerminal reports whether f is an interactive terminal, as opposed to a
+// regular file or a pipe. This also treats other character devices (e.g.
+// /dev/null) as terminals, which is harmless here since it only affects
+// whether a handful of extra control bytes get written to a destination
+// that isn't going to be read back anyway.
+func isTerminal(f *os.File) bool {
+	fi, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	return fi.Mode()&os.ModeCharDevice != 0
+}
+
+// stderrClear returns the terminal control sequence used to redraw the
+// current line, or an empty string when stderr isn't an interactive
+// terminal. Without this, redirecting stderr to a file or another process
+// leaves raw control characters in the output.
+func (s *Stdoutput) stderrClear() string {
+	if s.stderrIsTerminal {
+		return TERMINAL_CLEAR_LINE
+	}
+	return ""
+}
+
+// stdoutClear is the stdout equivalent of stderrClear, used when printing
+// results that overwrite the in-progress progress bar line.
+func (s *Stdoutput) stdoutClear() string {
+	if s.stdoutIsTerminal {
+		return TERMINAL_CLEAR_LINE
+	}
+	return ""
+}
+
+// ansiClear returns the ANSI reset code used to close a color started by
+// colorize(), or an empty string when -c wasn't requested. Without this,
+// result lines carry a trailing reset code even when nothing was colored.
+func (s *Stdoutput) ansiClear() string {
+	if s.config.Colors {
+		return ANSI_CLEAR
+	}
+	return ""
 }
 
 func (s *Stdoutput) Banner() {
@@ -182,7 +229,7 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", TERMINAL_CLEAR_LINE, status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", s.stderrClear(), status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
 }
 
 func (s *Stdoutput) Info(infostring string) {
@@ -190,9 +237,9 @@ func (s *Stdoutput) Info(infostring string) {
 		fmt.Fprintf(os.Stderr, "%s", infostring)
 	} else {
 		if !s.config.Colors {
-			fmt.Fprintf(os.Stderr, "%s[INFO] %s\n\n", TERMINAL_CLEAR_LINE, infostring)
+			fmt.Fprintf(os.Stderr, "%s[INFO] %s\n\n", s.stderrClear(), infostring)
 		} else {
-			fmt.Fprintf(os.Stderr, "%s[%sINFO%s] %s\n\n", TERMINAL_CLEAR_LINE, ANSI_BLUE, ANSI_CLEAR, infostring)
+			fmt.Fprintf(os.Stderr, "%s[%sINFO%s] %s\n\n", s.stderrClear(), ANSI_BLUE, ANSI_CLEAR, infostring)
 		}
 	}
 }
@@ -202,9 +249,9 @@ func (s *Stdoutput) Error(errstring string) {
 		fmt.Fprintf(os.Stderr, "%s", errstring)
 	} else {
 		if !s.config.Colors {
-			fmt.Fprintf(os.Stderr, "%s[ERR] %s\n", TERMINAL_CLEAR_LINE, errstring)
+			fmt.Fprintf(os.Stderr, "%s[ERR] %s\n", s.stderrClear(), errstring)
 		} else {
-			fmt.Fprintf(os.Stderr, "%s[%sERR%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_RED, ANSI_CLEAR, errstring)
+			fmt.Fprintf(os.Stderr, "%s[%sERR%s] %s\n", s.stderrClear(), ANSI_RED, ANSI_CLEAR, errstring)
 		}
 	}
 }
@@ -214,15 +261,15 @@ func (s *Stdoutput) Warning(warnstring string) {
 		fmt.Fprintf(os.Stderr, "%s", warnstring)
 	} else {
 		if !s.config.Colors {
-			fmt.Fprintf(os.Stderr, "%s[WARN] %s\n", TERMINAL_CLEAR_LINE, warnstring)
+			fmt.Fprintf(os.Stderr, "%s[WARN] %s\n", s.stderrClear(), warnstring)
 		} else {
-			fmt.Fprintf(os.Stderr, "%s[%sWARN%s] %s\n", TERMINAL_CLEAR_LINE, ANSI_RED, ANSI_CLEAR, warnstring)
+			fmt.Fprintf(os.Stderr, "%s[%sWARN%s] %s\n", s.stderrClear(), ANSI_RED, ANSI_CLEAR, warnstring)
 		}
 	}
 }
 
 func (s *Stdoutput) Raw(output string) {
-	fmt.Fprintf(os.Stderr, "%s%s", TERMINAL_CLEAR_LINE, output)
+	fmt.Fprintf(os.Stderr, "%s%s", s.stderrClear(), output)
 }
 
 func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.Result) error {
@@ -413,32 +460,32 @@ func (s *Stdoutput) resultQuiet(res ffuf.Result) {
 func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	var res_hdr, res_str string
 	res_str = "%s%s    * %s: %s\n"
-	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	res_hdr = fmt.Sprintf("%s%s[Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", s.stdoutClear(), s.colorize(res.StatusCode), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), s.ansiClear())
 	reslines := ""
 	if s.config.Verbose {
-		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, TERMINAL_CLEAR_LINE, res.Url)
+		reslines = fmt.Sprintf("%s%s| URL | %s\n", reslines, s.stdoutClear(), res.Url)
 		redirectLocation := res.RedirectLocation
 		if redirectLocation != "" {
-			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, TERMINAL_CLEAR_LINE, redirectLocation)
+			reslines = fmt.Sprintf("%s%s| --> | %s\n", reslines, s.stdoutClear(), redirectLocation)
 		}
 	}
 	if res.ResultFile != "" {
-		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, TERMINAL_CLEAR_LINE, res.ResultFile)
+		reslines = fmt.Sprintf("%s%s| RES | %s\n", reslines, s.stdoutClear(), res.ResultFile)
 	}
 	for _, k := range s.fuzzkeywords {
 		if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 			// If we're using external command for input, display the position instead of input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, strconv.Itoa(res.Position))
+			reslines = fmt.Sprintf(res_str, reslines, s.stdoutClear(), k, strconv.Itoa(res.Position))
 		} else {
 			// Wordlist input
-			reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, res.Input[k])
+			reslines = fmt.Sprintf(res_str, reslines, s.stdoutClear(), k, res.Input[k])
 		}
 	}
 	if len(res.ScraperData) > 0 {
-		reslines = fmt.Sprintf("%s%s| SCR |\n", reslines, TERMINAL_CLEAR_LINE)
+		reslines = fmt.Sprintf("%s%s| SCR |\n", reslines, s.stdoutClear())
 		for k, vslice := range res.ScraperData {
 			for _, v := range vslice {
-				reslines = fmt.Sprintf(res_str, reslines, TERMINAL_CLEAR_LINE, k, v)
+				reslines = fmt.Sprintf(res_str, reslines, s.stdoutClear(), k, v)
 			}
 		}
 	}
@@ -446,7 +493,7 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 }
 
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", TERMINAL_CLEAR_LINE, s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), ANSI_CLEAR)
+	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", s.stdoutClear(), s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), s.ansiClear())
 	fmt.Println(resnormal)
 }
 
@@ -455,7 +502,7 @@ func (s *Stdoutput) resultJson(res ffuf.Result) {
 	if err != nil {
 		s.Error(err.Error())
 	} else {
-		fmt.Fprint(os.Stderr, TERMINAL_CLEAR_LINE)
+		fmt.Fprint(os.Stderr, s.stderrClear())
 		fmt.Println(string(resBytes))
 	}
 }
