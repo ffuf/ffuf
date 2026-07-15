@@ -25,17 +25,17 @@ type ConfigOptions struct {
 	Output  OutputOptions  `json:"output"`
 }
 
-// The `ffuf`, `section`, `usage` and `kind` struct tags are the single source of
-// truth for CLI flags (see flags.go / RegisterFlags). A field with an `ffuf` tag
-// becomes a flag; the help section, usage text and (for []string) the value kind
-// come from the tags. Fields WITHOUT an `ffuf` tag (Cookies/Headers/Delay) are
-// registered by the explicit supplement in flags.go because their usage text
-// contains a backtick, which cannot appear inside a struct tag.
+// The `ffuf`, `section`, `usage`, `kind` and `alias` struct tags are the single
+// source of truth for CLI flags (see flags.go / RegisterFlags). A field with an
+// `ffuf` tag becomes a flag; the help section, usage text, (for []string) the value
+// kind, and any compatibility aliases come from the tags. The only flags NOT backed
+// by a field are the dummy `copy as curl` compat flags (-i/-k/-compressed), declared
+// explicitly in flags.go because they have no value to bind.
 type HTTPOptions struct {
-	Cookies           []string `json:"-"` // -b/-cookie (see flags.go); appended into headers
-	Data              string   `json:"data" ffuf:"d" section:"http" usage:"POST data"`
+	Cookies           []string `json:"-" ffuf:"b" alias:"cookie" kind:"multistring" section:"http" usage:"Cookie data \"NAME1=VALUE1; NAME2=VALUE2\" for copy as curl functionality."`
+	Data              string   `json:"data" ffuf:"d" alias:"data,data-ascii,data-binary" section:"http" usage:"POST data"`
 	FollowRedirects   bool     `json:"follow_redirects" ffuf:"r" section:"http" usage:"Follow redirects"`
-	Headers           []string `json:"headers"` // -H (see flags.go)
+	Headers           []string `json:"headers" ffuf:"H" kind:"multistring" section:"http" usage:"Header \"Name: Value\", separated by colon. Multiple -H flags are accepted."`
 	IgnoreBody        bool     `json:"ignore_body" ffuf:"ignore-body" section:"http" usage:"Do not fetch the response content."`
 	Method            string   `json:"method" ffuf:"X" section:"http" usage:"HTTP method to use"`
 	ProxyURL          string   `json:"proxy_url" ffuf:"x" section:"http" usage:"Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080"`
@@ -60,7 +60,7 @@ type GeneralOptions struct {
 	AutoCalibrationStrings    []string `json:"autocalibration_strings" ffuf:"acc" kind:"multistring" section:"general" usage:"Custom auto-calibration string. Can be used multiple times. Implies -ac"`
 	Colors                    bool     `json:"colors" ffuf:"c" section:"general" usage:"Colorize output."`
 	ConfigFile                string   `toml:"-" json:"config_file" ffuf:"config" section:"general" usage:"Load configuration from a file"`
-	Delay                     string   `json:"delay"` // -p (see flags.go)
+	Delay                     string   `json:"delay" ffuf:"p" section:"general" usage:"Seconds of delay between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\""`
 	Json                      bool     `json:"json" ffuf:"json" section:"general" usage:"JSON output, printing newline-delimited JSON records"`
 	MaxTime                   int      `json:"maxtime" ffuf:"maxtime" section:"general" usage:"Maximum running time in seconds for entire process."`
 	MaxTimeJob                int      `json:"maxtime_job" ffuf:"maxtime-job" section:"general" usage:"Maximum running time in seconds per job."`

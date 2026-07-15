@@ -88,33 +88,9 @@ type extraFlag struct {
 }
 
 var extraFlags = []extraFlag{
-	// Backtick-usage flags: their usage strings contain `...`, which cannot live
-	// inside a (backtick-delimited) struct tag, so they are declared here.
-	{"H", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Var(&multiStringValue{&o.HTTP.Headers}, "H", "Header `\"Name: Value\"`, separated by colon. Multiple -H flags are accepted.")
-	}},
-	{"b", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Var(&multiStringValue{&o.HTTP.Cookies}, "b", "Cookie data `\"NAME1=VALUE1; NAME2=VALUE2\"` for copy as curl functionality.")
-	}},
-	{"p", SectionGeneral, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.StringVar(&o.General.Delay, "p", o.General.Delay, "Seconds of `delay` between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\"")
-	}},
-
-	// Cross-section aliases (bind the same target as their canonical flag).
-	{"cookie", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Var(&multiStringValue{&o.HTTP.Cookies}, "cookie", "Cookie data (alias of -b)")
-	}},
-	{"data", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.StringVar(&o.HTTP.Data, "data", o.HTTP.Data, "POST data (alias of -d)")
-	}},
-	{"data-ascii", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.StringVar(&o.HTTP.Data, "data-ascii", o.HTTP.Data, "POST data (alias of -d)")
-	}},
-	{"data-binary", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.StringVar(&o.HTTP.Data, "data-binary", o.HTTP.Data, "POST data (alias of -d)")
-	}},
-
-	// Dummy compatibility flags (accepted and ignored).
+	// Dummy `copy as curl` compat flags: accepted and ignored. They have no backing
+	// ConfigOptions field to bind, so unlike every real flag (and its aliases) they
+	// can't be expressed as a tagged field and are declared explicitly here.
 	{"compressed", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
 		_ = fs.Bool("compressed", true, "Dummy flag for copy as curl functionality (ignored)")
 	}},
@@ -149,6 +125,16 @@ func RegisterFlags(fs *flag.FlagSet, o *ConfigOptions) *FlagRegistry {
 			}
 			bindField(fs, name, sf.Tag.Get("usage"), sf.Tag.Get("kind"), group.Field(j).Addr().Interface())
 			record(name, sf.Tag.Get("section"), false)
+
+			// Compatibility aliases bind the SAME field, hidden in the compat section.
+			for _, alias := range strings.Split(sf.Tag.Get("alias"), ",") {
+				alias = strings.TrimSpace(alias)
+				if alias == "" {
+					continue
+				}
+				bindField(fs, alias, sf.Tag.Get("usage"), sf.Tag.Get("kind"), group.Field(j).Addr().Interface())
+				record(alias, SectionCompat, true)
+			}
 		}
 	}
 
