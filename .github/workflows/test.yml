@@ -28,6 +28,33 @@ jobs:
       - name: go test (race)
         run: go test -race ./... -count=1
 
+  # Non-gating: wall-clock timing and rate-limit tests behind the `timing` build
+  # tag. Kept off the required gate because timing is noisy on shared runners.
+  timing:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: go test -tags=timing
+        run: go test -tags=timing ./... -count=1
+
+  # Informational coverage. Not gated; ratchet a threshold in once it settles.
+  coverage:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: coverage
+        run: |
+          go test -coverprofile=coverage.out ./... >/dev/null
+          go tool cover -func=coverage.out | tail -1
+
   # Characterization goldens (help output, etc.) must be regenerated and
   # committed with any change that affects them.
   golden:
