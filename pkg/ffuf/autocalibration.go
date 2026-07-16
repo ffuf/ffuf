@@ -142,11 +142,21 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 	}
 	cInputs := j.autoCalibrationStrings()
 
+	// Copy the caller's inputs before overwriting the calibration keyword below.
+	// SimpleRunner.Prepare sets req.Input to the map it is given, so the map the
+	// caller passes here is the same one used for result attribution; mutating it
+	// in place makes a later matched result report the calibration string instead
+	// of the real payload. CalibrateForHost copies for the same reason.
+	cinput := make(map[string][]byte, len(input))
+	for k, v := range input {
+		cinput[k] = v
+	}
+
 	for _, v := range cInputs {
 		responses := make([]Response, 0)
 		for _, cs := range v {
-			input[j.Config.AutoCalibrationKeyword] = []byte(cs)
-			resp, err := j.calibrationRequest(input)
+			cinput[j.Config.AutoCalibrationKeyword] = []byte(cs)
+			resp, err := j.calibrationRequest(cinput)
 			if err != nil {
 				continue
 			}
