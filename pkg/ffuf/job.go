@@ -66,6 +66,52 @@ func NewJob(conf *Config) *Job {
 	return &j
 }
 
+// The per-run counters and run-state flags below are mutated by the execution
+// loop and worker goroutines while the progress goroutine and the interrupt
+// handler read them concurrently. ErrorMutex serializes every access. All access
+// goes through these leaf helpers, which never call one another, so they cannot
+// deadlock (including CheckStop, which reads via getters and then calls Stop).
+
+func (j *Job) incCounter()      { j.ErrorMutex.Lock(); j.Counter++; j.ErrorMutex.Unlock() }
+func (j *Job) setCounter(n int) { j.ErrorMutex.Lock(); j.Counter = n; j.ErrorMutex.Unlock() }
+func (j *Job) getCounter() int  { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Counter }
+
+func (j *Job) getErrorCounter() int {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	return j.ErrorCounter
+}
+func (j *Job) getSpuriousErrorCounter() int {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	return j.SpuriousErrorCounter
+}
+func (j *Job) getCount403() int { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Count403 }
+func (j *Job) getCount429() int { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Count429 }
+
+func (j *Job) setRunning(v bool)    { j.ErrorMutex.Lock(); j.Running = v; j.ErrorMutex.Unlock() }
+func (j *Job) isRunning() bool      { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Running }
+func (j *Job) setRunningJob(v bool) { j.ErrorMutex.Lock(); j.RunningJob = v; j.ErrorMutex.Unlock() }
+func (j *Job) isRunningJob() bool {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	return j.RunningJob
+}
+func (j *Job) setPaused(v bool) { j.ErrorMutex.Lock(); j.Paused = v; j.ErrorMutex.Unlock() }
+func (j *Job) isPaused() bool   { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Paused }
+func (j *Job) setSkipQueue(v bool) {
+	j.ErrorMutex.Lock()
+	j.skipQueue = v
+	j.ErrorMutex.Unlock()
+}
+func (j *Job) isSkipQueue() bool {
+	j.ErrorMutex.Lock()
+	defer j.ErrorMutex.Unlock()
+	return j.skipQueue
+}
+func (j *Job) setError(s string) { j.ErrorMutex.Lock(); j.Error = s; j.ErrorMutex.Unlock() }
+func (j *Job) getError() string  { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Error }
+
 // incError increments the error counter
 func (j *Job) incError() {
 	j.ErrorMutex.Lock()
@@ -130,8 +176,8 @@ func (j *Job) Start() {
 	rand.Seed(time.Now().UnixNano())
 	defer j.Stop()
 
-	j.Running = true
-	j.RunningJob = true
+	j.setRunning(true)
+	j.setRunningJob(true)
 	//Show banner if not running in silent mode
 	if !j.Config.Quiet {
 		j.Output.Banner()
@@ -141,7 +187,7 @@ func (j *Job) Start() {
 	for j.jobsInQueue() {
 		j.prepareQueueJob()
 		j.Reset(true)
-		j.RunningJob = true
+		j.setRunningJob(true)
 		j.startExecution()
 	}
 
@@ -154,8 +200,8 @@ func (j *Job) Start() {
 // Reset resets the counters and wordlist position for a job
 func (j *Job) Reset(cycle bool) {
 	j.Input.Reset()
-	j.Counter = 0
-	j.skipQueue = false
+	j.setCounter(0)
+	j.setSkipQueue(false)
 	j.startTimeJob = time.Now()
 	if cycle {
 		j.Output.Cycle()
@@ -188,7 +234,7 @@ func (j *Job) prepareQueueJob() {
 
 // SkipQueue allows to skip the current job and advance to the next queued recursion job
 func (j *Job) SkipQueue() {
-	j.skipQueue = true
+	j.setSkipQueue(true)
 }
 
 func (j *Job) sleepIfNeeded() {
@@ -211,8 +257,8 @@ func (j *Job) sleepIfNeeded() {
 
 // Pause pauses the job process
 func (j *Job) Pause() {
-	if !j.Paused {
-		j.Paused = true
+	if !j.isPaused() {
+		j.setPaused(true)
 		j.pauseWg.Add(1)
 		j.Output.Info("------ PAUSING ------")
 	}
@@ -220,8 +266,8 @@ func (j *Job) Pause() {
 
 // Resume resumes the job process
 func (j *Job) Resume() {
-	if j.Paused {
-		j.Paused = false
+	if j.isPaused() {
+		j.setPaused(false)
 		j.Output.Info("------ RESUMING -----")
 		j.pauseWg.Done()
 	}
@@ -244,12 +290,12 @@ func (j *Job) startExecution() {
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
 	threadlimiter := make(chan bool, j.Config.Threads)
 
-	for j.Input.Next() && !j.skipQueue {
+	for j.Input.Next() && !j.isSkipQueue() {
 		// Check if we should stop the process
 		j.CheckStop()
 
-		if !j.Running {
-			defer j.Output.Warning(j.Error)
+		if !j.isRunning() {
+			defer j.Output.Warning(j.getError())
 			break
 		}
 		j.pauseWg.Wait()
@@ -263,7 +309,7 @@ func (j *Job) startExecution() {
 		nextInput["FFUFHASH"] = j.ffufHash(nextPosition)
 
 		wg.Add(1)
-		j.Counter++
+		j.incCounter()
 
 		go func() {
 			defer func() { <-threadlimiter }()
@@ -274,8 +320,8 @@ func (j *Job) startExecution() {
 			threadEnd := time.Now()
 			j.Rate.Tick(threadStart, threadEnd)
 		}()
-		if !j.RunningJob {
-			defer j.Output.Warning(j.Error)
+		if !j.isRunningJob() {
+			defer j.Output.Warning(j.getError())
 			return
 		}
 	}
@@ -288,9 +334,9 @@ func (j *Job) interruptMonitor() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		for range sigChan {
-			j.Error = "Caught keyboard interrupt (Ctrl-C)\n"
+			j.setError("Caught keyboard interrupt (Ctrl-C)\n")
 			// resume if paused
-			if j.Paused {
+			if j.isPaused() {
 				j.pauseWg.Done()
 			}
 			// Stop the job
@@ -302,16 +348,16 @@ func (j *Job) interruptMonitor() {
 func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 	defer wg.Done()
 	totalProgress := j.Input.Total()
-	for j.Counter <= totalProgress && !j.skipQueue {
+	for j.getCounter() <= totalProgress && !j.isSkipQueue() {
 		j.pauseWg.Wait()
-		if !j.Running {
+		if !j.isRunning() {
 			break
 		}
 		j.updateProgress()
-		if j.Counter == totalProgress {
+		if j.getCounter() == totalProgress {
 			return
 		}
-		if !j.RunningJob {
+		if !j.isRunningJob() {
 			return
 		}
 		time.Sleep(time.Millisecond * time.Duration(j.Config.ProgressFrequency))
@@ -321,12 +367,12 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 func (j *Job) updateProgress() {
 	prog := Progress{
 		StartedAt:  j.startTimeJob,
-		ReqCount:   j.Counter,
+		ReqCount:   j.getCounter(),
 		ReqTotal:   j.Input.Total(),
 		ReqSec:     j.Rate.CurrentRate(),
 		QueuePos:   j.queuepos,
 		QueueTotal: len(j.queuejobs),
-		ErrorCount: j.ErrorCounter,
+		ErrorCount: j.getErrorCounter(),
 	}
 	j.Output.Progress(prog)
 }
@@ -459,7 +505,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		}
 	}
 
-	if j.SpuriousErrorCounter > 0 {
+	if j.getSpuriousErrorCounter() > 0 {
 		j.resetSpuriousErrors()
 	}
 	if j.Config.StopOn403 || j.Config.StopOnAll {
@@ -561,26 +607,27 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 
 // CheckStop stops the job if stopping conditions are met
 func (j *Job) CheckStop() {
-	if j.Counter > 50 {
+	counter := j.getCounter()
+	if counter > 50 {
 		// We have enough samples
 		if j.Config.StopOn403 || j.Config.StopOnAll {
-			if float64(j.Count403)/float64(j.Counter) > 0.95 {
+			if float64(j.getCount403())/float64(counter) > 0.95 {
 				// Over 95% of requests are 403
-				j.Error = "Getting an unusual amount of 403 responses, exiting."
+				j.setError("Getting an unusual amount of 403 responses, exiting.")
 				j.Stop()
 			}
 		}
 		if j.Config.StopOnErrors || j.Config.StopOnAll {
-			if j.SpuriousErrorCounter > j.Config.Threads*2 {
+			if j.getSpuriousErrorCounter() > j.Config.Threads*2 {
 				// Most of the requests are erroring
-				j.Error = "Receiving spurious errors, exiting."
+				j.setError("Receiving spurious errors, exiting.")
 				j.Stop()
 			}
 
 		}
-		if j.Config.StopOnAll && (float64(j.Count429)/float64(j.Counter) > 0.2) {
+		if j.Config.StopOnAll && (float64(j.getCount429())/float64(counter) > 0.2) {
 			// Over 20% of responses are 429
-			j.Error = "Getting an unusual amount of 429 responses, exiting."
+			j.setError("Getting an unusual amount of 429 responses, exiting.")
 			j.Stop()
 		}
 	}
@@ -590,7 +637,7 @@ func (j *Job) CheckStop() {
 		dur := time.Since(j.startTime)
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTime {
-			j.Error = "Maximum running time for entire process reached, exiting."
+			j.setError("Maximum running time for entire process reached, exiting.")
 			j.Stop()
 		}
 	}
@@ -600,7 +647,7 @@ func (j *Job) CheckStop() {
 		dur := time.Since(j.startTimeJob)
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTimeJob {
-			j.Error = "Maximum running time for this job reached, continuing with next job if one exists."
+			j.setError("Maximum running time for this job reached, continuing with next job if one exists.")
 			j.Next()
 
 		}
@@ -609,11 +656,11 @@ func (j *Job) CheckStop() {
 
 // Stop the execution of the Job
 func (j *Job) Stop() {
-	j.Running = false
+	j.setRunning(false)
 	j.Config.Cancel()
 }
 
 // Stop current, resume to next
 func (j *Job) Next() {
-	j.RunningJob = false
+	j.setRunningJob(false)
 }

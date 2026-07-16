@@ -5,15 +5,65 @@ on:
       - master
   pull_request:
 jobs:
+  # Build, vet, and run the whole suite with the race detector across the
+  # supported Go floor + latest, on Linux and macOS. Windows is intentionally
+  # not in the matrix yet: several existing tests are not Windows-clean (the
+  # help-golden test deadlocks on Windows' small stdout pipe buffer, and a couple
+  # of output tests assume POSIX terminal control), so enabling it would need
+  # those fixed first.
   test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go: ['1.18', 'stable']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: go vet
+        run: go vet ./...
+      - name: go test (race)
+        run: go test -race ./... -count=1
+
+  # Gating: wall-clock timing and rate-limit tests behind the `timing` build tag.
+  # The margins are wide (500ms/800ms) so the required gate stays stable while
+  # still protecting -rate and the time matcher.
+  timing:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: stable
-      - name: go test
-        run: go test ./...
+      - name: go test -tags=timing
+        run: go test -tags=timing ./... -count=1
+
+  # Informational coverage. Not gated; ratchet a threshold in once it settles.
+  coverage:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: coverage
+        run: |
+          go test -coverprofile=coverage.out ./... >/dev/null
+          go tool cover -func=coverage.out | tail -1
+
+  # Characterization goldens (help output, etc.) must be regenerated and
+  # committed with any change that affects them.
+  golden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
       - name: characterization goldens are current
         run: |
           go test -run Characterization -update-golden .
