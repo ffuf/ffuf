@@ -25,94 +25,100 @@ type ConfigOptions struct {
 	Output  OutputOptions  `json:"output"`
 }
 
+// The `ffuf`, `section`, `usage`, `kind` and `alias` struct tags are the single
+// source of truth for CLI flags (see flags.go / RegisterFlags). A field with an
+// `ffuf` tag becomes a flag; the help section, usage text, (for []string) the value
+// kind, and any compatibility aliases come from the tags. The only flags NOT backed
+// by a field are the dummy `copy as curl` compat flags (-i/-k/-compressed), declared
+// explicitly in flags.go because they have no value to bind.
 type HTTPOptions struct {
-	Cookies           []string `json:"-"` // this is appended in headers
-	Data              string   `json:"data"`
-	FollowRedirects   bool     `json:"follow_redirects"`
-	Headers           []string `json:"headers"`
-	IgnoreBody        bool     `json:"ignore_body"`
-	Method            string   `json:"method"`
-	ProxyURL          string   `json:"proxy_url"`
-	Raw               bool     `json:"raw"`
-	Recursion         bool     `json:"recursion"`
-	RecursionDepth    int      `json:"recursion_depth"`
-	RecursionStrategy string   `json:"recursion_strategy"`
-	ReplayProxyURL    string   `json:"replay_proxy_url"`
-	SNI               string   `json:"sni"`
-	Timeout           int      `json:"timeout"`
-	URL               string   `json:"url"`
-	Http2             bool     `json:"http2"`
-	ClientCert        string   `json:"client-cert"`
-	ClientKey         string   `json:"client-key"`
+	Cookies           []string `json:"-" ffuf:"b" alias:"cookie" kind:"multistring" section:"http" usage:"Cookie data \"NAME1=VALUE1; NAME2=VALUE2\" for copy as curl functionality."`
+	Data              string   `json:"data" ffuf:"d" alias:"data,data-ascii,data-binary" section:"http" usage:"POST data"`
+	FollowRedirects   bool     `json:"follow_redirects" ffuf:"r" section:"http" usage:"Follow redirects"`
+	Headers           []string `json:"headers" ffuf:"H" kind:"multistring" section:"http" usage:"Header \"Name: Value\", separated by colon. Multiple -H flags are accepted."`
+	IgnoreBody        bool     `json:"ignore_body" ffuf:"ignore-body" section:"http" usage:"Do not fetch the response content."`
+	Method            string   `json:"method" ffuf:"X" section:"http" usage:"HTTP method to use"`
+	ProxyURL          string   `json:"proxy_url" ffuf:"x" section:"http" usage:"Proxy URL (SOCKS5 or HTTP). For example: http://127.0.0.1:8080 or socks5://127.0.0.1:8080"`
+	Raw               bool     `json:"raw" ffuf:"raw" section:"http" usage:"Do not encode URI"`
+	Recursion         bool     `json:"recursion" ffuf:"recursion" section:"http" usage:"Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it."`
+	RecursionDepth    int      `json:"recursion_depth" ffuf:"recursion-depth" section:"http" usage:"Maximum recursion depth."`
+	RecursionStrategy string   `json:"recursion_strategy" ffuf:"recursion-strategy" section:"http" usage:"Recursion strategy: \"default\" for a redirect based, and \"greedy\" to recurse on all matches"`
+	ReplayProxyURL    string   `json:"replay_proxy_url" ffuf:"replay-proxy" section:"http" usage:"Replay matched requests using this proxy."`
+	SNI               string   `json:"sni" ffuf:"sni" section:"http" usage:"Target TLS SNI, does not support FUZZ keyword"`
+	Timeout           int      `json:"timeout" ffuf:"timeout" section:"http" usage:"HTTP request timeout in seconds."`
+	URL               string   `json:"url" ffuf:"u" section:"http" usage:"Target URL"`
+	Http2             bool     `json:"http2" ffuf:"http2" section:"http" usage:"Use HTTP2 protocol"`
+	ClientCert        string   `json:"client-cert" ffuf:"cc" section:"http" usage:"Client cert for authentication. Client key needs to be defined as well for this to work"`
+	ClientKey         string   `json:"client-key" ffuf:"ck" section:"http" usage:"Client key for authentication. Client certificate needs to be defined as well for this to work"`
 }
 
 type GeneralOptions struct {
-	AutoCalibration           bool     `json:"autocalibration"`
-	AutoCalibrationKeyword    string   `json:"autocalibration_keyword"`
-	AutoCalibrationPerHost    bool     `json:"autocalibration_per_host"`
-	AutoCalibrationStrategies []string `json:"autocalibration_strategies"`
-	AutoCalibrationStrings    []string `json:"autocalibration_strings"`
-	Colors                    bool     `json:"colors"`
-	ConfigFile                string   `toml:"-" json:"config_file"`
-	Delay                     string   `json:"delay"`
-	Json                      bool     `json:"json"`
-	MaxTime                   int      `json:"maxtime"`
-	MaxTimeJob                int      `json:"maxtime_job"`
-	Noninteractive            bool     `json:"noninteractive"`
-	Quiet                     bool     `json:"quiet"`
-	Rate                      int      `json:"rate"`
-	ScraperFile               string   `json:"scraperfile"`
-	Scrapers                  string   `json:"scrapers"`
-	Searchhash                string   `json:"-"`
-	ShowVersion               bool     `toml:"-" json:"-"`
-	StopOn403                 bool     `json:"stop_on_403"`
-	StopOnAll                 bool     `json:"stop_on_all"`
-	StopOnErrors              bool     `json:"stop_on_errors"`
-	Threads                   int      `json:"threads"`
-	Verbose                   bool     `json:"verbose"`
+	AutoCalibration           bool     `json:"autocalibration" ffuf:"ac" section:"general" usage:"Automatically calibrate filtering options"`
+	AutoCalibrationKeyword    string   `json:"autocalibration_keyword" ffuf:"ack" section:"general" usage:"Autocalibration keyword"`
+	AutoCalibrationPerHost    bool     `json:"autocalibration_per_host" ffuf:"ach" section:"general" usage:"Per host autocalibration"`
+	AutoCalibrationStrategies []string `json:"autocalibration_strategies" ffuf:"acs" kind:"csvreplace" section:"general" usage:"Custom auto-calibration strategies. Can be used multiple times. Implies -ac"`
+	AutoCalibrationStrings    []string `json:"autocalibration_strings" ffuf:"acc" kind:"multistring" section:"general" usage:"Custom auto-calibration string. Can be used multiple times. Implies -ac"`
+	Colors                    bool     `json:"colors" ffuf:"c" section:"general" usage:"Colorize output."`
+	ConfigFile                string   `toml:"-" json:"config_file" ffuf:"config" section:"general" usage:"Load configuration from a file"`
+	Delay                     string   `json:"delay" ffuf:"p" section:"general" usage:"Seconds of delay between requests, or a range of random delay. For example \"0.1\" or \"0.1-2.0\""`
+	Json                      bool     `json:"json" ffuf:"json" section:"general" usage:"JSON output, printing newline-delimited JSON records"`
+	MaxTime                   int      `json:"maxtime" ffuf:"maxtime" section:"general" usage:"Maximum running time in seconds for entire process."`
+	MaxTimeJob                int      `json:"maxtime_job" ffuf:"maxtime-job" section:"general" usage:"Maximum running time in seconds per job."`
+	Noninteractive            bool     `json:"noninteractive" ffuf:"noninteractive" section:"general" usage:"Disable the interactive console functionality"`
+	Quiet                     bool     `json:"quiet" ffuf:"s" section:"general" usage:"Do not print additional information (silent mode)"`
+	Rate                      int      `json:"rate" ffuf:"rate" section:"general" usage:"Rate of requests per second"`
+	ScraperFile               string   `json:"scraperfile" ffuf:"scraperfile" section:"general" usage:"Custom scraper file path"`
+	Scrapers                  string   `json:"scrapers" ffuf:"scrapers" section:"general" usage:"Active scraper groups"`
+	Searchhash                string   `json:"-" ffuf:"search" section:"general" usage:"Search for a FFUFHASH payload from ffuf history"`
+	ShowVersion               bool     `toml:"-" json:"-" ffuf:"V" section:"general" usage:"Show version information."`
+	StopOn403                 bool     `json:"stop_on_403" ffuf:"sf" section:"general" usage:"Stop when > 95% of responses return 403 Forbidden"`
+	StopOnAll                 bool     `json:"stop_on_all" ffuf:"sa" section:"general" usage:"Stop on all error cases. Implies -sf and -se."`
+	StopOnErrors              bool     `json:"stop_on_errors" ffuf:"se" section:"general" usage:"Stop on spurious errors"`
+	Threads                   int      `json:"threads" ffuf:"t" section:"general" usage:"Number of concurrent threads."`
+	Verbose                   bool     `json:"verbose" ffuf:"v" section:"general" usage:"Verbose output, printing full URL and redirect location (if any) with the results."`
 }
 
 type InputOptions struct {
-	DirSearchCompat        bool     `json:"dirsearch_compat"`
-	Encoders               []string `json:"encoders"`
-	Extensions             string   `json:"extensions"`
-	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments"`
-	InputMode              string   `json:"input_mode"`
-	InputNum               int      `json:"input_num"`
-	InputShell             string   `json:"input_shell"`
-	Inputcommands          []string `json:"input_commands"`
-	Request                string   `json:"request_file"`
-	RequestProto           string   `json:"request_proto"`
-	Wordlists              []string `json:"wordlists"`
+	DirSearchCompat        bool     `json:"dirsearch_compat" ffuf:"D" section:"input" usage:"DirSearch wordlist compatibility mode. Used in conjunction with -e flag."`
+	Encoders               []string `json:"encoders" ffuf:"enc" kind:"wordlist" section:"input" usage:"Encoders for keywords, eg. 'FUZZ:urlencode b64encode'"`
+	Extensions             string   `json:"extensions" ffuf:"e" section:"input" usage:"Comma separated list of extensions. Extends FUZZ keyword."`
+	IgnoreWordlistComments bool     `json:"ignore_wordlist_comments" ffuf:"ic" section:"input" usage:"Ignore wordlist comments"`
+	InputMode              string   `json:"input_mode" ffuf:"mode" section:"input" usage:"Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper"`
+	InputNum               int      `json:"input_num" ffuf:"input-num" section:"input" usage:"Number of inputs to test. Used in conjunction with --input-cmd."`
+	InputShell             string   `json:"input_shell" ffuf:"input-shell" section:"input" usage:"Shell to be used for running command"`
+	Inputcommands          []string `json:"input_commands" ffuf:"input-cmd" kind:"multistring" section:"input" usage:"Command producing the input. --input-num is required when using this input method. Overrides -w."`
+	Request                string   `json:"request_file" ffuf:"request" section:"input" usage:"File containing the raw http request"`
+	RequestProto           string   `json:"request_proto" ffuf:"request-proto" section:"input" usage:"Protocol to use along with raw request"`
+	Wordlists              []string `json:"wordlists" ffuf:"w" kind:"wordlist" section:"input" usage:"Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'"`
 }
 
 type OutputOptions struct {
-	AuditLog            string `json:"audit_log"`
-	DebugLog            string `json:"debug_log"`
-	OutputDirectory     string `json:"output_directory"`
-	OutputFile          string `json:"output_file"`
-	OutputFormat        string `json:"output_format"`
-	OutputSkipEmptyFile bool   `json:"output_skip_empty"`
+	AuditLog            string `json:"audit_log" ffuf:"audit-log" section:"output" usage:"Write audit log containing all requests, responses and config"`
+	DebugLog            string `json:"debug_log" ffuf:"debug-log" section:"output" usage:"Write all of the internal logging to the specified file."`
+	OutputDirectory     string `json:"output_directory" ffuf:"od" section:"output" usage:"Directory path to store matched results to."`
+	OutputFile          string `json:"output_file" ffuf:"o" section:"output" usage:"Write output to file"`
+	OutputFormat        string `json:"output_format" ffuf:"of" section:"output" usage:"Output file format. Available formats: json, ejson, html, md, csv, ecsv (or, 'all' for all formats)"`
+	OutputSkipEmptyFile bool   `json:"output_skip_empty" ffuf:"or" section:"output" usage:"Don't create the output file if we don't have results"`
 }
 
 type FilterOptions struct {
-	Mode   string `json:"mode"`
-	Lines  string `json:"lines"`
-	Regexp string `json:"regexp"`
-	Size   string `json:"size"`
-	Status string `json:"status"`
-	Time   string `json:"time"`
-	Words  string `json:"words"`
+	Mode   string `json:"mode" ffuf:"fmode" section:"filter" usage:"Filter set operator. Either of: and, or"`
+	Lines  string `json:"lines" ffuf:"fl" section:"filter" usage:"Filter by amount of lines in response. Comma separated list of line counts and ranges"`
+	Regexp string `json:"regexp" ffuf:"fr" section:"filter" usage:"Filter regexp"`
+	Size   string `json:"size" ffuf:"fs" section:"filter" usage:"Filter HTTP response size. Comma separated list of sizes and ranges"`
+	Status string `json:"status" ffuf:"fc" section:"filter" usage:"Filter HTTP status codes from response. Comma separated list of codes and ranges"`
+	Time   string `json:"time" ffuf:"ft" section:"filter" usage:"Filter by number of milliseconds to the first response byte, either greater or less than. EG: >100 or <100"`
+	Words  string `json:"words" ffuf:"fw" section:"filter" usage:"Filter by amount of words in response. Comma separated list of word counts and ranges"`
 }
 
 type MatcherOptions struct {
-	Mode   string `json:"mode"`
-	Lines  string `json:"lines"`
-	Regexp string `json:"regexp"`
-	Size   string `json:"size"`
-	Status string `json:"status"`
-	Time   string `json:"time"`
-	Words  string `json:"words"`
+	Mode   string `json:"mode" ffuf:"mmode" section:"matcher" usage:"Matcher set operator. Either of: and, or"`
+	Lines  string `json:"lines" ffuf:"ml" section:"matcher" usage:"Match amount of lines in response"`
+	Regexp string `json:"regexp" ffuf:"mr" section:"matcher" usage:"Match regexp"`
+	Size   string `json:"size" ffuf:"ms" section:"matcher" usage:"Match HTTP response size"`
+	Status string `json:"status" ffuf:"mc" section:"matcher" usage:"Match HTTP status codes, or \"all\" for everything."`
+	Time   string `json:"time" ffuf:"mt" section:"matcher" usage:"Match how many milliseconds to the first response byte, either greater or less than. EG: >100 or <100"`
+	Words  string `json:"words" ffuf:"mw" section:"matcher" usage:"Match amount of words in response"`
 }
 
 // NewConfigOptions returns a newly created ConfigOptions struct with default values
@@ -183,6 +189,15 @@ func NewConfigOptions() *ConfigOptions {
 	return c
 }
 
+// cloneStrings returns a copy of s with its own backing array (nil stays nil), so
+// the retained options snapshot can't be mutated through the caller's slices.
+func cloneStrings(s []string) []string {
+	if s == nil {
+		return nil
+	}
+	return append([]string(nil), s...)
+}
+
 // ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
 // and creates a Config struct out of them.
 func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel context.CancelFunc) (*Config, error) {
@@ -202,9 +217,12 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		conf.Extensions = extensions
 	}
 
-	// Convert cookies to a header
+	// Effective request headers: the -H values plus any -b/-cookie folded in. Built
+	// as a fresh slice so ConfigFromOptions never mutates the caller's options (it
+	// stays idempotent) and the retained snapshot below shares no backing with it.
+	effectiveHeaders := append([]string(nil), parseOpts.HTTP.Headers...)
 	if len(parseOpts.HTTP.Cookies) > 0 {
-		parseOpts.HTTP.Headers = append(parseOpts.HTTP.Headers, "Cookie: "+strings.Join(parseOpts.HTTP.Cookies, "; "))
+		effectiveHeaders = append(effectiveHeaders, "Cookie: "+strings.Join(parseOpts.HTTP.Cookies, "; "))
 	}
 
 	//Prepare inputproviders
@@ -376,7 +394,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	//Prepare headers and make canonical
-	for _, v := range parseOpts.HTTP.Headers {
+	for _, v := range effectiveHeaders {
 		hs := strings.SplitN(v, ":", 2)
 		if len(hs) == 2 {
 			// trim and make canonical
@@ -620,6 +638,20 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if parseOpts.General.Verbose && parseOpts.General.Json {
 		errs.Add(fmt.Errorf("Cannot have -json and -v"))
 	}
+	// Retain the source options so the configuration can be re-serialized later
+	// (history / FFUFHASH) without a hand-maintained reverse mapper. Deep-copy the
+	// slice fields so the retained snapshot shares no backing array with the caller's
+	// options; a later mutation of either side can't corrupt the other. Headers holds
+	// the effective set (with -b/-cookie folded in) computed above.
+	optsCopy := *parseOpts
+	optsCopy.HTTP.Headers = effectiveHeaders
+	optsCopy.HTTP.Cookies = cloneStrings(parseOpts.HTTP.Cookies)
+	optsCopy.Input.Wordlists = cloneStrings(parseOpts.Input.Wordlists)
+	optsCopy.Input.Encoders = cloneStrings(parseOpts.Input.Encoders)
+	optsCopy.Input.Inputcommands = cloneStrings(parseOpts.Input.Inputcommands)
+	optsCopy.General.AutoCalibrationStrings = cloneStrings(parseOpts.General.AutoCalibrationStrings)
+	optsCopy.General.AutoCalibrationStrategies = cloneStrings(parseOpts.General.AutoCalibrationStrategies)
+	conf.Options = &optsCopy
 	return &conf, errs.ErrorOrNil()
 }
 

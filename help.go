@@ -9,11 +9,11 @@ import (
 )
 
 type UsageSection struct {
-	Name          string
-	Description   string
-	Flags         []UsageFlag
-	Hidden        bool
-	ExpectedFlags []string
+	Name        string
+	Description string
+	Flags       []UsageFlag
+	Hidden      bool
+	Key         string
 }
 
 // PrintSection prints out the section name, description and each of the flags
@@ -49,75 +49,35 @@ func (f *UsageFlag) PrintFlag(max_length int) {
 }
 
 func Usage() {
-	u_http := UsageSection{
-		Name:          "HTTP OPTIONS",
-		Description:   "Options controlling the HTTP request and its parts.",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        false,
-		ExpectedFlags: []string{"cc", "ck", "H", "X", "b", "d", "r", "u", "raw", "recursion", "recursion-depth", "recursion-strategy", "replay-proxy", "timeout", "ignore-body", "x", "sni", "http2"},
+	// Section order and metadata; membership comes from the flag registry.
+	sections := []UsageSection{
+		{Name: "HTTP OPTIONS", Description: "Options controlling the HTTP request and its parts.", Flags: make([]UsageFlag, 0), Hidden: false, Key: ffuf.SectionHTTP},
+		{Name: "GENERAL OPTIONS", Description: "", Flags: make([]UsageFlag, 0), Hidden: false, Key: ffuf.SectionGeneral},
+		{Name: "COMPATIBILITY OPTIONS", Description: "Options to ensure compatibility with other pieces of software.", Flags: make([]UsageFlag, 0), Hidden: true, Key: ffuf.SectionCompat},
+		{Name: "MATCHER OPTIONS", Description: "Matchers for the response filtering.", Flags: make([]UsageFlag, 0), Hidden: false, Key: ffuf.SectionMatcher},
+		{Name: "FILTER OPTIONS", Description: "Filters for the response filtering.", Flags: make([]UsageFlag, 0), Hidden: false, Key: ffuf.SectionFilter},
+		{Name: "INPUT OPTIONS", Description: "Options for input data for fuzzing. Wordlists and input generators.", Flags: make([]UsageFlag, 0), Hidden: false, Key: ffuf.SectionInput},
+		{Name: "OUTPUT OPTIONS", Description: "Options for output. Output file formats, file names and debug file locations.", Flags: make([]UsageFlag, 0), Hidden: false, Key: ffuf.SectionOutput},
 	}
-	u_general := UsageSection{
-		Name:          "GENERAL OPTIONS",
-		Description:   "",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        false,
-		ExpectedFlags: []string{"ac", "acc", "ack", "ach", "acs", "c", "config", "json", "maxtime", "maxtime-job", "noninteractive", "p", "rate", "scraperfile", "scrapers", "search", "s", "sa", "se", "sf", "t", "v", "V"},
+	byKey := make(map[string]int, len(sections))
+	for i, s := range sections {
+		byKey[s.Key] = i
 	}
-	u_compat := UsageSection{
-		Name:          "COMPATIBILITY OPTIONS",
-		Description:   "Options to ensure compatibility with other pieces of software.",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        true,
-		ExpectedFlags: []string{"compressed", "cookie", "data", "data-ascii", "data-binary", "i", "k"},
-	}
-	u_matcher := UsageSection{
-		Name:          "MATCHER OPTIONS",
-		Description:   "Matchers for the response filtering.",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        false,
-		ExpectedFlags: []string{"mmode", "mc", "ml", "mr", "ms", "mt", "mw"},
-	}
-	u_filter := UsageSection{
-		Name:          "FILTER OPTIONS",
-		Description:   "Filters for the response filtering.",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        false,
-		ExpectedFlags: []string{"fmode", "fc", "fl", "fr", "fs", "ft", "fw"},
-	}
-	u_input := UsageSection{
-		Name:          "INPUT OPTIONS",
-		Description:   "Options for input data for fuzzing. Wordlists and input generators.",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        false,
-		ExpectedFlags: []string{"D", "enc", "ic", "input-cmd", "input-num", "input-shell", "mode", "request", "request-proto", "e", "w"},
-	}
-	u_output := UsageSection{
-		Name:          "OUTPUT OPTIONS",
-		Description:   "Options for output. Output file formats, file names and debug file locations.",
-		Flags:         make([]UsageFlag, 0),
-		Hidden:        false,
-		ExpectedFlags: []string{"audit-log", "debug-log", "o", "of", "od", "or"},
-	}
-	sections := []UsageSection{u_http, u_general, u_compat, u_matcher, u_filter, u_input, u_output}
 
 	// Populate the flag sections
 	max_length := 0
 	flag.VisitAll(func(f *flag.Flag) {
-		found := false
-		for i, section := range sections {
-			if ffuf.StrInSlice(f.Name, section.ExpectedFlags) {
-				sections[i].Flags = append(sections[i].Flags, UsageFlag{
-					Name:        f.Name,
-					Description: f.Usage,
-					Default:     f.DefValue,
-				})
-				found = true
-			}
-		}
-		if !found {
-			fmt.Printf("DEBUG: Flag %s was found but not defined in help.go.\n", f.Name)
+		section, ok := flagRegistry.SectionOf(f.Name)
+		if !ok {
+			fmt.Printf("DEBUG: Flag %s was found but not defined in the flag registry.\n", f.Name)
 			os.Exit(1)
 		}
+		i := byKey[section]
+		sections[i].Flags = append(sections[i].Flags, UsageFlag{
+			Name:        f.Name,
+			Description: f.Usage,
+			Default:     f.DefValue,
+		})
 		if len(f.Name) > max_length {
 			max_length = len(f.Name)
 		}
