@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -29,6 +30,7 @@ const (
 type Stdoutput struct {
 	config           *ffuf.Config
 	fuzzkeywords     []string
+	resultMutex      sync.Mutex // guards Results and CurrentResults; Result is called from worker goroutines
 	Results          []ffuf.Result
 	CurrentResults   []ffuf.Result
 	stdoutIsTerminal bool
@@ -189,23 +191,33 @@ func (s *Stdoutput) Banner() {
 
 // Reset resets the result slice
 func (s *Stdoutput) Reset() {
+	s.resultMutex.Lock()
 	s.CurrentResults = make([]ffuf.Result, 0)
+	s.resultMutex.Unlock()
 }
 
 // Cycle moves the CurrentResults to Results and resets the results slice
 func (s *Stdoutput) Cycle() {
+	s.resultMutex.Lock()
 	s.Results = append(s.Results, s.CurrentResults...)
-	s.Reset()
+	s.CurrentResults = make([]ffuf.Result, 0)
+	s.resultMutex.Unlock()
 }
 
 // GetResults returns the result slice
 func (s *Stdoutput) GetCurrentResults() []ffuf.Result {
-	return s.CurrentResults
+	s.resultMutex.Lock()
+	defer s.resultMutex.Unlock()
+	out := make([]ffuf.Result, len(s.CurrentResults))
+	copy(out, s.CurrentResults)
+	return out
 }
 
 // SetResults sets the result slice
 func (s *Stdoutput) SetCurrentResults(results []ffuf.Result) {
+	s.resultMutex.Lock()
 	s.CurrentResults = results
+	s.resultMutex.Unlock()
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
@@ -322,25 +334,33 @@ func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.
 // SaveFile saves the current results to a file of a given type
 func (s *Stdoutput) SaveFile(filename, format string) error {
 	var err error
-	if s.config.OutputSkipEmptyFile && len(s.Results) == 0 && len(s.CurrentResults) == 0 {
+	// Snapshot the results under the lock so a concurrent Result() cannot race the
+	// file writers, then write outside the lock.
+	s.resultMutex.Lock()
+	all := make([]ffuf.Result, 0, len(s.Results)+len(s.CurrentResults))
+	all = append(all, s.Results...)
+	all = append(all, s.CurrentResults...)
+	s.resultMutex.Unlock()
+
+	if s.config.OutputSkipEmptyFile && len(all) == 0 {
 		s.Info("No results and -or defined, output file not written.")
 		return err
 	}
 	switch format {
 	case "all":
-		err = s.writeToAll(filename, s.config, append(s.Results, s.CurrentResults...))
+		err = s.writeToAll(filename, s.config, all)
 	case "json":
-		err = writeJSON(filename, s.config, append(s.Results, s.CurrentResults...))
+		err = writeJSON(filename, s.config, all)
 	case "ejson":
-		err = writeEJSON(filename, s.config, append(s.Results, s.CurrentResults...))
+		err = writeEJSON(filename, s.config, all)
 	case "html":
-		err = writeHTML(filename, s.config, append(s.Results, s.CurrentResults...))
+		err = writeHTML(filename, s.config, all)
 	case "md":
-		err = writeMarkdown(filename, s.config, append(s.Results, s.CurrentResults...))
+		err = writeMarkdown(filename, s.config, all)
 	case "csv":
-		err = writeCSV(filename, s.config, append(s.Results, s.CurrentResults...), false)
+		err = writeCSV(filename, s.config, all, false)
 	case "ecsv":
-		err = writeCSV(filename, s.config, append(s.Results, s.CurrentResults...), true)
+		err = writeCSV(filename, s.config, all, true)
 	}
 	return err
 }
@@ -385,7 +405,9 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}
+	s.resultMutex.Lock()
 	s.CurrentResults = append(s.CurrentResults, sResult)
+	s.resultMutex.Unlock()
 	// Output the result
 	s.PrintResult(sResult)
 }
