@@ -180,16 +180,22 @@ func forbidden(w http.ResponseWriter) {
 }
 func notFound(w http.ResponseWriter) { w.WriteHeader(http.StatusNotFound); fmt.Fprint(w, "not found") }
 
+// maxTailInt bounds every path-derived integer. It is far above anything the
+// tests use and keeps the value that reaches size/word/line allocation from
+// being attacker-controlled (a request like /size/99999999999 is rejected
+// rather than allocating from an unbounded, path-supplied size).
+const maxTailInt = 1 << 20
+
 // tailInt parses the integer immediately following prefix in path. It requires
 // the remainder to be exactly an integer (no further path segments), so
-// /size/20 parses and /size/20/extra does not.
+// /size/20 parses and /size/20/extra does not, and enforces 0 <= n <= maxTailInt.
 func tailInt(path, prefix string) (int, bool) {
 	rest := strings.TrimPrefix(path, prefix)
 	if rest == "" || strings.Contains(rest, "/") {
 		return 0, false
 	}
 	n, err := strconv.Atoi(rest)
-	if err != nil {
+	if err != nil || n < 0 || n > maxTailInt {
 		return 0, false
 	}
 	return n, true
