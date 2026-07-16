@@ -2,11 +2,24 @@ package integration
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/testtarget"
 )
+
+// anyRequest reports whether any recorded request satisfies pred. Used to assert
+// what ffuf actually put on the wire (method, headers, body), not just that a
+// response matched.
+func anyRequest(reqs []testtarget.Recorded, pred func(testtarget.Recorded) bool) bool {
+	for _, r := range reqs {
+		if pred(r) {
+			return true
+		}
+	}
+	return false
+}
 
 // recordedPaths returns the sorted, de-duplicated set of request paths the target
 // received. Order is nondeterministic (the engine is concurrent), so callers
@@ -38,15 +51,6 @@ func assertContainsAll(t *testing.T, got, want []string) {
 	for _, w := range want {
 		if !contains(got, w) {
 			t.Errorf("missing %q in %v", w, got)
-		}
-	}
-}
-
-func assertContainsNone(t *testing.T, got, unwanted []string) {
-	t.Helper()
-	for _, u := range unwanted {
-		if contains(got, u) {
-			t.Errorf("unexpected %q in %v", u, got)
 		}
 	}
 }
@@ -87,6 +91,11 @@ func TestRequestHeaderMissingDoesNotMatch(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200") },
 	)
 	assertSet(t, got, []string{})
+	// De-vacuum: the empty result must be because the request was made and got a
+	// 403, not because the engine failed to send anything.
+	if target.Count() == 0 {
+		t.Fatal("engine sent no request; the empty match set is meaningless")
+	}
 }
 
 func TestRequestCookieSent(t *testing.T) {
@@ -99,6 +108,11 @@ func TestRequestCookieSent(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200") },
 	)
 	assertSet(t, got, []string{"c"})
+	if !anyRequest(target.Requests(), func(r testtarget.Recorded) bool {
+		return strings.Contains(r.Header.Get("Cookie"), "SESSION=abc")
+	}) {
+		t.Error("the -b cookie was not sent on the wire")
+	}
 }
 
 func TestRequestMethod(t *testing.T) {
@@ -111,6 +125,9 @@ func TestRequestMethod(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200") },
 	)
 	assertSet(t, got, []string{"m"})
+	if !anyRequest(target.Requests(), func(r testtarget.Recorded) bool { return r.Method == "POST" }) {
+		t.Error("the -X method was not sent as POST")
+	}
 }
 
 func TestRequestBody(t *testing.T) {
@@ -127,6 +144,11 @@ func TestRequestBody(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200") },
 	)
 	assertSet(t, got, []string{"b"})
+	// Verify FUZZ was actually substituted in the body (not just that "token"
+	// from the template survived): the wire body must be "token=b".
+	if !anyRequest(target.Requests(), func(r testtarget.Recorded) bool { return r.Body == "token=b" }) {
+		t.Error("the -d body was not sent with FUZZ substituted (want \"token=b\")")
+	}
 }
 
 // --- redirects -------------------------------------------------------------
@@ -184,9 +206,14 @@ func TestInputModeClusterbomb(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "all") },
 	)
 
-	// clusterbomb is the cartesian product: every combination is requested.
-	assertContainsAll(t, recordedPaths(target.Requests()),
+	// clusterbomb is the cartesian product: exactly every combination, no more.
+	// Exact set catches extra paths; the count catches duplicates (recordedPaths
+	// de-duplicates, so a doubled request would slip past a set check alone).
+	assertSet(t, recordedPaths(target.Requests()),
 		[]string{"/reflect/a-1", "/reflect/a-2", "/reflect/b-1", "/reflect/b-2"})
+	if n := target.Count(); n != 4 {
+		t.Errorf("clusterbomb 2x2 made %d requests, want exactly 4 (over-production?)", n)
+	}
 }
 
 func TestInputModePitchfork(t *testing.T) {
@@ -205,8 +232,9 @@ func TestInputModePitchfork(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "all") },
 	)
 
-	paths := recordedPaths(target.Requests())
-	// pitchfork reads the wordlists in lockstep: a with 1, b with 2 (no cross terms).
-	assertContainsAll(t, paths, []string{"/reflect/a-1", "/reflect/b-2"})
-	assertContainsNone(t, paths, []string{"/reflect/a-2", "/reflect/b-1"})
+	// pitchfork reads the wordlists in lockstep: exactly a-1 and b-2, no cross terms.
+	assertSet(t, recordedPaths(target.Requests()), []string{"/reflect/a-1", "/reflect/b-2"})
+	if n := target.Count(); n != 2 {
+		t.Errorf("pitchfork made %d requests, want exactly 2 (over-production?)", n)
+	}
 }

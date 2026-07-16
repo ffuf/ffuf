@@ -2,10 +2,15 @@ package ffuf
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"testing"
 	"testing/quick"
 )
+
+// qcfg fixes the seed so a failure is reproducible (quick.Check with a nil config
+// seeds from time.Now, which is unreplayable) and raises the sample count.
+var qcfg = &quick.Config{Rand: rand.New(rand.NewSource(1)), MaxCount: 1000}
 
 // The range/value parsers back every numeric matcher and filter (-mc, -fc, -ms,
 // -fs, ...). These property tests assert their invariants hold across a wide
@@ -22,7 +27,7 @@ func TestValueRange_RangeInvariant(t *testing.T) {
 		}
 		return err != nil
 	}
-	if err := quick.Check(f, nil); err != nil {
+	if err := quick.Check(f, qcfg); err != nil {
 		t.Error(err)
 	}
 }
@@ -33,18 +38,19 @@ func TestValueRange_SingleValueInvariant(t *testing.T) {
 		vr, err := ValueRangeFromString(strconv.FormatUint(uint64(n), 10))
 		return err == nil && vr.Min == int64(n) && vr.Max == int64(n)
 	}
-	if err := quick.Check(f, nil); err != nil {
+	if err := quick.Check(f, qcfg); err != nil {
 		t.Error(err)
 	}
 }
 
-// Arbitrary input never panics (it returns an error for anything unparseable).
+// Arbitrary input never panics, and on success the returned range is always
+// well-formed (Min <= Max).
 func TestValueRange_NeverPanics(t *testing.T) {
 	f := func(s string) bool {
-		_, _ = ValueRangeFromString(s)
-		return true
+		vr, err := ValueRangeFromString(s)
+		return err != nil || vr.Min <= vr.Max
 	}
-	if err := quick.Check(f, nil); err != nil {
+	if err := quick.Check(f, qcfg); err != nil {
 		t.Error(err)
 	}
 }
@@ -62,19 +68,20 @@ func TestOptRange_SingleFloatInvariant(t *testing.T) {
 		}
 		return o.HasDelay && !o.IsRange && o.Min == want
 	}
-	if err := quick.Check(f, nil); err != nil {
+	if err := quick.Check(f, qcfg); err != nil {
 		t.Error(err)
 	}
 }
 
-// Arbitrary input never panics optRange.Initialize.
+// Arbitrary input never panics, and any non-empty value that initializes without
+// error must have HasDelay set (the contract of a successfully-parsed delay).
 func TestOptRange_NeverPanics(t *testing.T) {
 	f := func(s string) bool {
 		var o optRange
-		_ = o.Initialize(s)
-		return true
+		err := o.Initialize(s)
+		return err != nil || len(s) == 0 || o.HasDelay
 	}
-	if err := quick.Check(f, nil); err != nil {
+	if err := quick.Check(f, qcfg); err != nil {
 		t.Error(err)
 	}
 }

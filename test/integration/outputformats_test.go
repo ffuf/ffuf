@@ -1,8 +1,11 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +18,15 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/runner"
 	"github.com/ffuf/ffuf/v2/pkg/testtarget"
 )
+
+func indexOf(row []string, col string) int {
+	for i, c := range row {
+		if c == col {
+			return i
+		}
+	}
+	return -1
+}
 
 // runScanStdout runs a scan with the real stdout OutputProvider (which
 // accumulates Results and can write them to files), and returns it so a test can
@@ -91,27 +103,67 @@ func TestOutputFormats(t *testing.T) {
 			continue
 		}
 
+		// Assert the actual result FIELDS (status + input), not just that a file
+		// was written or that "200" appears (which the URL would satisfy).
 		switch format {
-		case "json", "ejson":
-			// Both are JSON documents with a results array; both matches present.
+		case "json":
 			var doc struct {
-				Results []map[string]interface{} `json:"results"`
+				Results []struct {
+					Input  map[string]string `json:"input"`
+					Status int64             `json:"status"`
+				} `json:"results"`
 			}
 			if err := json.Unmarshal(b, &doc); err != nil {
-				t.Errorf("%s: not valid JSON: %v", format, err)
-			} else if len(doc.Results) != 2 {
-				t.Errorf("%s: %d results, want 2", format, len(doc.Results))
+				t.Errorf("json: %v", err)
+				continue
 			}
+			var statuses, inputs []string
+			for _, r := range doc.Results {
+				statuses = append(statuses, fmt.Sprintf("%d", r.Status))
+				inputs = append(inputs, r.Input["FUZZ"])
+			}
+			assertSet(t, statuses, []string{"200", "201"})
+			assertSet(t, inputs, []string{"200", "201"})
+		case "ejson":
+			// ejson base64-encodes the input; unmarshalling into []byte decodes it.
+			var doc struct {
+				Results []struct {
+					Input  map[string][]byte `json:"input"`
+					Status int64             `json:"status"`
+				} `json:"results"`
+			}
+			if err := json.Unmarshal(b, &doc); err != nil {
+				t.Errorf("ejson: %v", err)
+				continue
+			}
+			var statuses, inputs []string
+			for _, r := range doc.Results {
+				statuses = append(statuses, fmt.Sprintf("%d", r.Status))
+				inputs = append(inputs, string(r.Input["FUZZ"]))
+			}
+			assertSet(t, statuses, []string{"200", "201"})
+			assertSet(t, inputs, []string{"200", "201"})
 		case "csv", "ecsv":
-			// Header line plus one row per result.
-			if lines := strings.Count(strings.TrimRight(string(b), "\n"), "\n") + 1; lines < 3 {
-				t.Errorf("%s: %d lines, want >= 3 (header + 2 rows)", format, lines)
+			rows, err := csv.NewReader(bytes.NewReader(b)).ReadAll()
+			if err != nil {
+				t.Errorf("%s: not valid CSV: %v", format, err)
+				continue
 			}
+			if len(rows) != 3 {
+				t.Errorf("%s: %d rows, want 3 (header + 2 results)", format, len(rows))
+				continue
+			}
+			col := indexOf(rows[0], "status_code")
+			if col < 0 {
+				t.Errorf("%s: no StatusCode column in header %v", format, rows[0])
+				continue
+			}
+			assertSet(t, []string{rows[1][col], rows[2][col]}, []string{"200", "201"})
 		case "md", "html":
-			// Raw (non-encoded) formats: the input values appear verbatim.
+			// Human formats: both status codes must be present in the rendered output.
 			for _, in := range []string{"200", "201"} {
 				if !strings.Contains(string(b), in) {
-					t.Errorf("%s: output missing input %q", format, in)
+					t.Errorf("%s: output missing status %q", format, in)
 				}
 			}
 		}

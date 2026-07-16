@@ -20,8 +20,11 @@ func TestInputModeSniper(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "all") },
 	)
 
-	assertContainsAll(t, recordedPaths(target.Requests()),
+	assertSet(t, recordedPaths(target.Requests()),
 		[]string{"/reflect/x/b", "/reflect/y/b", "/reflect/a/x", "/reflect/a/y"})
+	if n := target.Count(); n != 4 {
+		t.Errorf("sniper made %d requests, want exactly 4 (2 positions x 2 words)", n)
+	}
 }
 
 func TestMatcherModeAnd(t *testing.T) {

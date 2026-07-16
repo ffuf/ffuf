@@ -159,7 +159,23 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 		forbidden(w)
 		return
 
-	// --- recursion tree -------------------------------------------------
+	// --- status decoupled from the payload -----------------------------
+	// The status code does not appear in the path or body, so a status matcher
+	// can be told apart from a payload/body matcher.
+	case strings.HasPrefix(p, "/map/"):
+		switch strings.TrimPrefix(p, "/map/") {
+		case "ok":
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, "mapped alpha")
+		case "bad":
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "mapped gamma")
+		default:
+			notFound(w)
+		}
+		return
+
+	// --- recursion tree (greedy strategy) -------------------------------
 	case p == "/":
 		fmt.Fprint(w, "root")
 		return
@@ -168,6 +184,20 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	case p == "/admin/secret":
 		fmt.Fprint(w, "the secret")
+		return
+
+	// --- redirect-based directory (default recursion strategy) ----------
+	// A directory that redirects to itself + "/", which the default recursion
+	// strategy uses to detect a directory to descend into.
+	case p == "/rdir":
+		w.Header().Set("Location", "/rdir/")
+		w.WriteHeader(http.StatusMovedPermanently)
+		return
+	case p == "/rdir/":
+		fmt.Fprint(w, "rdir index")
+		return
+	case p == "/rdir/found":
+		fmt.Fprint(w, "found under rdir")
 		return
 	}
 

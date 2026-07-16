@@ -28,11 +28,11 @@ jobs:
       - name: go test (race)
         run: go test -race ./... -count=1
 
-  # Non-gating: wall-clock timing and rate-limit tests behind the `timing` build
-  # tag. Kept off the required gate because timing is noisy on shared runners.
+  # Gating: wall-clock timing and rate-limit tests behind the `timing` build tag.
+  # The margins are wide (500ms/800ms) so the required gate stays stable while
+  # still protecting -rate and the time matcher.
   timing:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

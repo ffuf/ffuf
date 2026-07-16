@@ -20,8 +20,9 @@ func TestEncoderApplied(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "all") },
 	)
 
-	paths := recordedPaths(target.Requests())
-	// base64("hello") == "aGVsbG8="
-	assertContainsAll(t, paths, []string{"/reflect/aGVsbG8="})
-	assertContainsNone(t, paths, []string{"/reflect/hello"})
+	// base64("hello") == "aGVsbG8="; exactly one request, with the encoded payload.
+	assertSet(t, recordedPaths(target.Requests()), []string{"/reflect/aGVsbG8="})
+	if n := target.Count(); n != 1 {
+		t.Errorf("encoder scan made %d requests, want exactly 1", n)
+	}
 }

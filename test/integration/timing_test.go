@@ -16,18 +16,19 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/testtarget"
 )
 
-// TestTimeMatcher: /sleep/500 responds well over 200ms, /sleep/5 well under, so
-// a "time > 200" matcher keeps only the slow one. Wide margins keep it stable.
+// TestTimeMatcher: /sleep/1000 responds ~1s, /sleep/1 near-instant, so a
+// "time > 500" matcher keeps only the slow one. The 500ms gap is wide enough to
+// stay stable even on a loaded CI runner.
 func TestTimeMatcher(t *testing.T) {
 	target := testtarget.New()
 	defer target.Close()
 
 	got := runScan(t, target.URL+"/sleep/FUZZ",
-		[]string{"5", "500"},
+		[]string{"1", "1000"},
 		nil,
-		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "time", ">200") },
+		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "time", ">500") },
 	)
-	assertSet(t, got, []string{"500"})
+	assertSet(t, got, []string{"1000"})
 }
 
 // TestRateLimit: N requests at -rate R should take at least ~N/R seconds. A wide

@@ -2,20 +2,39 @@ package integration
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/testtarget"
 )
 
-// assertSet fails unless got equals want as a set (both are pre-sorted by
-// runScan / the literal). Result order is nondeterministic, so this is the only
-// correct comparison.
+// assertSet fails unless got equals want as a set. Both sides are sorted here, so
+// callers don't have to pre-sort want and result order (nondeterministic under
+// concurrency) never matters.
 func assertSet(t *testing.T, got, want []string) {
 	t.Helper()
+	sort.Strings(got)
+	sort.Strings(want)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("matched set = %v, want %v", got, want)
 	}
+}
+
+// TestStatusMatcherDecoupled uses /map, where the HTTP status is NOT present in
+// the payload or body ("ok" -> 200 "mapped alpha", "bad" -> 500 "mapped gamma").
+// So a status matcher can be distinguished from a matcher that keyed on the
+// payload or body by mistake.
+func TestStatusMatcherDecoupled(t *testing.T) {
+	target := testtarget.New()
+	defer target.Close()
+
+	got := runScan(t, target.URL+"/map/FUZZ",
+		[]string{"ok", "bad"},
+		nil,
+		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200") },
+	)
+	assertSet(t, got, []string{"ok"})
 }
 
 func TestStatusMatcher(t *testing.T) {
@@ -138,6 +157,31 @@ func TestRecursion(t *testing.T) {
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200") },
 	)
 	assertSet(t, got, []string{"admin", "secret"})
+}
+
+// TestRecursionDefaultStrategy covers the default (redirect-based) recursion
+// strategy, which is a different code path (handleDefaultRecursionJob) from the
+// greedy one: /rdir 301-redirects to /rdir/, which ffuf detects as a directory
+// and descends into, finding /rdir/found. Asserting "found" matched is the
+// version-robust core signal (it is a 404 at the root, so it can only appear via
+// recursion); the /rdir 301 itself is not asserted because a bare 3xx is handled
+// differently across Go versions.
+func TestRecursionDefaultStrategy(t *testing.T) {
+	target := testtarget.New()
+	defer target.Close()
+
+	got := runScan(t, target.URL+"/FUZZ",
+		[]string{"rdir", "found"},
+		func(o *ffuf.ConfigOptions) {
+			o.HTTP.Recursion = true
+			o.HTTP.RecursionStrategy = "default"
+			o.HTTP.RecursionDepth = 1
+		},
+		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200,301") },
+	)
+	if !contains(got, "found") {
+		t.Errorf("default recursion did not descend into /rdir/ to match 'found'; got %v", got)
+	}
 }
 
 func TestRequestRecorder(t *testing.T) {
