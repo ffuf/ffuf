@@ -65,9 +65,12 @@ func TestOutputFormats(t *testing.T) {
 	target := testtarget.New()
 	defer target.Close()
 
+	// Single-threaded: the real stdout provider accumulates results without
+	// synchronizing, so under concurrency a result can be lost. This test is
+	// about the file writers, not concurrency, so run it deterministically.
 	out := runScanStdout(t, target.URL+"/status/FUZZ",
 		[]string{"200", "201"},
-		nil,
+		func(o *ffuf.ConfigOptions) { o.General.Threads = 1 },
 		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "200,201") },
 	)
 
