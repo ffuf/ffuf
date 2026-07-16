@@ -70,6 +70,30 @@ func runScanStdout(t *testing.T, url string, wordlist []string, configure func(*
 	return out
 }
 
+// TestOutputConcurrentResultAccumulation drives the real stdout OutputProvider at
+// the default concurrency with many matches and asserts every one is accumulated.
+// Before #908 the unsynchronized append lost results (and raced); this is the
+// multi-threaded coverage that was previously pinned to Threads=1. Run under -race.
+func TestOutputConcurrentResultAccumulation(t *testing.T) {
+	target := testtarget.New()
+	defer target.Close()
+
+	const n = 60
+	words := make([]string, n)
+	for i := range words {
+		words[i] = fmt.Sprintf("w%d", i)
+	}
+
+	out := runScanStdout(t, target.URL+"/reflect/FUZZ",
+		words,
+		nil, // default threads (40)
+		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "all") },
+	)
+	if got := len(out.GetCurrentResults()); got != n {
+		t.Errorf("accumulated %d results at high concurrency, want %d (results lost?)", got, n)
+	}
+}
+
 // TestOutputFormats runs a scan with two known matches and writes each supported
 // file format, checking the writer succeeds and the output actually carries the
 // results. It is the regression net for the pkg/output file writers.

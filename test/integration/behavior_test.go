@@ -166,6 +166,36 @@ func TestRecursion(t *testing.T) {
 // version-robust core signal (it is a 404 at the root, so it can only appear via
 // recursion); the /rdir 301 itself is not asserted because a bare 3xx is handled
 // differently across Go versions.
+// TestAutocalibrationConcurrent runs autocalibration at the default concurrency.
+// It cannot assert an exact set (junk requests already in flight before the filter
+// installs may leak, which is inherent, not a bug), but it locks the #907
+// invariant that survives concurrency: "real" always matches, and no calibration
+// probe string ever appears as a result payload (before #907 the calibration input
+// map was mutated in place and a probe could be reported). Run under -race.
+func TestAutocalibrationConcurrent(t *testing.T) {
+	target := testtarget.New()
+	defer target.Close()
+
+	got := runScan(t, target.URL+"/ac/FUZZ",
+		[]string{"junk1", "junk2", "real"},
+		func(o *ffuf.ConfigOptions) {
+			o.General.AutoCalibration = true
+			o.General.AutoCalibrationStrings = []string{"calibrate-one", "calibrate-two"}
+			// default Threads (40) — the point of this test
+		},
+		func(mm ffuf.MatcherManager) { mustMatch(t, mm, "status", "all") },
+	)
+
+	if !contains(got, "real") {
+		t.Errorf("'real' should always match; got %v", got)
+	}
+	for _, p := range got {
+		if p != "junk1" && p != "junk2" && p != "real" {
+			t.Errorf("non-wordlist payload %q in results (calibration string leaked): %v", p, got)
+		}
+	}
+}
+
 func TestRecursionDefaultStrategy(t *testing.T) {
 	target := testtarget.New()
 	defer target.Close()
