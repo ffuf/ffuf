@@ -101,6 +101,12 @@ func TestAutocalibration(t *testing.T) {
 		[]string{"junk1", "junk2", "real"},
 		func(o *ffuf.ConfigOptions) {
 			o.General.AutoCalibration = true
+			// Custom calibration strings so calibration is hermetic: this path in
+			// autoCalibrationStrings() returns them directly and never reads the
+			// strategy JSON files from AUTOCALIBDIR, which a fresh CI checkout does
+			// not have (without them, calibration silently installs no filter).
+			// Both probe /ac/<string> and return the junk baseline.
+			o.General.AutoCalibrationStrings = []string{"calibrate-one", "calibrate-two"}
 			// Single-threaded so calibration installs the junk-size filter before
 			// any wordlist request is matched. With concurrency, requests race the
 			// calibration and the result is nondeterministic.

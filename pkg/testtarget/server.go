@@ -83,17 +83,17 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 		}
 	case strings.HasPrefix(p, "/size/"):
 		if n, ok := tailInt(p, "/size/"); ok {
-			w.Write(filled(n))
+			_, _ = w.Write(filled(n))
 			return
 		}
 	case strings.HasPrefix(p, "/words/"):
 		if n, ok := tailInt(p, "/words/"); ok {
-			w.Write([]byte(words(n)))
+			_, _ = w.Write([]byte(words(n)))
 			return
 		}
 	case strings.HasPrefix(p, "/lines/"):
 		if n, ok := tailInt(p, "/lines/"); ok {
-			w.Write([]byte(lines(n)))
+			_, _ = w.Write([]byte(lines(n)))
 			return
 		}
 	case strings.HasPrefix(p, "/sleep/"):
