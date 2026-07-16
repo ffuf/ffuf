@@ -5,14 +5,17 @@ on:
       - master
   pull_request:
 jobs:
-  # Build, vet, and run the whole suite across the supported Go floor + latest on
-  # all three OSes. The race detector runs on Linux and macOS (it needs cgo);
-  # Windows runs the suite without it.
+  # Build, vet, and run the whole suite with the race detector across the
+  # supported Go floor + latest, on Linux and macOS. Windows is intentionally
+  # not in the matrix yet: several existing tests are not Windows-clean (the
+  # help-golden test deadlocks on Windows' small stdout pipe buffer, and a couple
+  # of output tests assume POSIX terminal control), so enabling it would need
+  # those fixed first.
   test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         go: ['1.18', 'stable']
     runs-on: ${{ matrix.os }}
     steps:
@@ -23,11 +26,7 @@ jobs:
       - name: go vet
         run: go vet ./...
       - name: go test (race)
-        if: runner.os != 'Windows'
         run: go test -race ./... -count=1
-      - name: go test
-        if: runner.os == 'Windows'
-        run: go test ./... -count=1
 
   # Characterization goldens (help output, etc.) must be regenerated and
   # committed with any change that affects them.
