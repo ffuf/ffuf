@@ -9,13 +9,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/ffuf/ffuf/v2/pkg/assembly"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/filter"
 	"github.com/ffuf/ffuf/v2/pkg/input"
 	"github.com/ffuf/ffuf/v2/pkg/interactive"
-	"github.com/ffuf/ffuf/v2/pkg/output"
 	"github.com/ffuf/ffuf/v2/pkg/runner"
-	"github.com/ffuf/ffuf/v2/pkg/scraper"
 )
 
 // flagRegistry describes the registered flags for the segmented help output
@@ -116,7 +115,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	job, err := prepareJob(conf)
+	job, err := assembly.BuildJob(conf)
 
 	if job.AuditLogger != nil {
 		defer job.AuditLogger.Close()
@@ -147,147 +146,43 @@ func main() {
 	job.Start()
 }
 
-func prepareJob(conf *ffuf.Config) (*ffuf.Job, error) {
-	var err error
-	job := ffuf.NewJob(conf)
-	var errs ffuf.Multierror
-	job.Input, errs = input.NewInputProvider(conf)
-	// TODO: implement error handling for runnerprovider and outputprovider
-	// We only have http runner right now
-	job.Runner = runner.NewRunnerByName("http", conf, false)
-	if len(conf.ReplayProxyURL) > 0 {
-		job.ReplayRunner = runner.NewRunnerByName("http", conf, true)
-	}
-	// We only have stdout outputprovider right now
-	job.Output = output.NewOutputProviderByName("stdout", conf)
-
-	// Initialize the audit logger if specified
-	if len(conf.AuditLog) > 0 {
-		job.AuditLogger, err = output.NewAuditLogger(conf.AuditLog)
-		if err != nil {
-			errs.Add(err)
-		} else {
-			err = job.AuditLogger.Write(conf)
-			if err != nil {
-				errs.Add(err)
-			}
-		}
-	}
-
-	// Initialize scraper
-	newscraper, scraper_err := scraper.FromDir(ffuf.SCRAPERDIR, conf.Scrapers)
-	if scraper_err.ErrorOrNil() != nil {
-		errs.Add(scraper_err.ErrorOrNil())
-	}
-	job.Scraper = newscraper
-	if conf.ScraperFile != "" {
-		err = job.Scraper.AppendFromFile(conf.ScraperFile)
-		if err != nil {
-			errs.Add(err)
-		}
-	}
-	return job, errs.ErrorOrNil()
-}
-
+// SetupFilters installs the matchers and filters onto conf.MatcherManager. The
+// matcher/filter construction itself lives in filter.FromConfig (pure, testable);
+// this shim owns only the one decision that genuinely needs the global CLI flag
+// set - whether to install the default status matcher - plus the -ignore-body
+// warning.
 func SetupFilters(parseOpts *ffuf.ConfigOptions, conf *ffuf.Config) error {
-	errs := ffuf.NewMultierror()
-	conf.MatcherManager = filter.NewMatcherManager()
-	// If any other matcher is set, ignore -mc default value
-	matcherSet := false
+	// The default status matcher is installed unless another matcher was explicitly
+	// passed on the CLI. Only the global flag set knows which flags were passed vs
+	// defaulted, so this decision cannot move into the library.
 	statusSet := false
-	warningIgnoreBody := false
+	matcherSet := false
+	// responseMatcherSet tracks the response-body matchers (ms/ml/mw) explicitly
+	// passed on the CLI. The -ignore-body warning keys off CLI-passed flags (as the
+	// original did via flag.Visit), NOT off the config value, so a config-file /
+	// .ffufrc value does not spuriously trigger it.
+	responseMatcherSet := false
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "mc" {
+		switch f.Name {
+		case "mc":
 			statusSet = true
-		}
-		if f.Name == "ms" {
+		case "ms", "ml", "mw":
 			matcherSet = true
-			warningIgnoreBody = true
-		}
-		if f.Name == "ml" {
+			responseMatcherSet = true
+		case "mr", "mt":
 			matcherSet = true
-			warningIgnoreBody = true
-		}
-		if f.Name == "mr" {
-			matcherSet = true
-		}
-		if f.Name == "mt" {
-			matcherSet = true
-		}
-		if f.Name == "mw" {
-			matcherSet = true
-			warningIgnoreBody = true
 		}
 	})
-	// Only set default matchers if no
-	if statusSet || !matcherSet {
-		if err := conf.MatcherManager.AddMatcher("status", parseOpts.Matcher.Status); err != nil {
-			errs.Add(err)
-		}
-	}
 
-	if parseOpts.Filter.Status != "" {
-		if err := conf.MatcherManager.AddFilter("status", parseOpts.Filter.Status, false); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Filter.Size != "" {
-		warningIgnoreBody = true
-		if err := conf.MatcherManager.AddFilter("size", parseOpts.Filter.Size, false); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Filter.Regexp != "" {
-		if err := conf.MatcherManager.AddFilter("regexp", parseOpts.Filter.Regexp, false); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Filter.Words != "" {
-		warningIgnoreBody = true
-		if err := conf.MatcherManager.AddFilter("word", parseOpts.Filter.Words, false); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Filter.Lines != "" {
-		warningIgnoreBody = true
-		if err := conf.MatcherManager.AddFilter("line", parseOpts.Filter.Lines, false); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Filter.Time != "" {
-		if err := conf.MatcherManager.AddFilter("time", parseOpts.Filter.Time, false); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Matcher.Size != "" {
-		if err := conf.MatcherManager.AddMatcher("size", parseOpts.Matcher.Size); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Matcher.Regexp != "" {
-		if err := conf.MatcherManager.AddMatcher("regexp", parseOpts.Matcher.Regexp); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Matcher.Words != "" {
-		if err := conf.MatcherManager.AddMatcher("word", parseOpts.Matcher.Words); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Matcher.Lines != "" {
-		if err := conf.MatcherManager.AddMatcher("line", parseOpts.Matcher.Lines); err != nil {
-			errs.Add(err)
-		}
-	}
-	if parseOpts.Matcher.Time != "" {
-		if err := conf.MatcherManager.AddMatcher("time", parseOpts.Matcher.Time); err != nil {
-			errs.Add(err)
-		}
-	}
+	mm, err := filter.FromConfig(parseOpts, statusSet || !matcherSet)
+	conf.MatcherManager = mm
+
+	warningIgnoreBody := responseMatcherSet ||
+		parseOpts.Filter.Size != "" || parseOpts.Filter.Lines != "" || parseOpts.Filter.Words != ""
 	if conf.IgnoreBody && warningIgnoreBody {
 		fmt.Printf("*** Warning: possible undesired combination of -ignore-body and the response options: fl,fs,fw,ml,ms and mw.\n")
 	}
-	return errs.ErrorOrNil()
+	return err
 }
 
 func printSearchResults(conf *ffuf.Config, pos int, exectime time.Time, hash string) {

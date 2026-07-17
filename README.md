@@ -34,7 +34,7 @@ A fast web fuzzer written in Go.
   _or_
 - `git clone https://github.com/ffuf/ffuf ; cd ffuf ; go get ; go build`
 
-1. Ffuf depends on Go 1.18 or greater.
+1. Ffuf depends on Go 1.20 or greater.
 2. A go build from a checkout shows `git-<date>-<commit>` rather than the tag. A local build isn't an official release even when you're sitting on a tag, and Go's embedded build info gives us the commit but not the tag name — so we surface the exact commit it was built from. The authoritative versioned binaries are the ones on the releases page.
 
 ## Example usage

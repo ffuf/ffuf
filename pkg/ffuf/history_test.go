@@ -90,6 +90,7 @@ func (m *fakeMatcherManager) GetMatchers() map[string]FilterProvider            
 func (m *fakeMatcherManager) FiltersForDomain(string) map[string]FilterProvider { return nil }
 func (m *fakeMatcherManager) CalibratedForDomain(string) bool                   { return false }
 func (m *fakeMatcherManager) Calibrated() bool                                  { return false }
+func (m *fakeMatcherManager) Matches(*Response, bool, string, string) bool      { return false }
 
 // TestHistoryOptions_ReflectsRecursedURL locks the recursion fix: WriteHistoryEntry
 // serializes the LIVE Config.Url (rewritten per queued job by prepareQueueJob), not

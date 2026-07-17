@@ -17,6 +17,10 @@ type MatcherManager interface {
 	FiltersForDomain(domain string) map[string]FilterProvider
 	CalibratedForDomain(domain string) bool
 	Calibrated() bool
+	// Matches reports whether resp passes the configured matchers and filters.
+	// perHost selects the per-domain filter set; matcherMode/filterMode are the
+	// and/or combination modes.
+	Matches(resp *Response, perHost bool, matcherMode string, filterMode string) bool
 }
 
 // FilterProvider is a generic interface for both Matchers and Filters

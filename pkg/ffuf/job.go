@@ -39,8 +39,7 @@ type Job struct {
 	Total        int
 	Rate         *RateThrottle
 
-	queue        *jobQueue
-	currentDepth int
+	queue *jobQueue
 
 	startTime    time.Time
 	startTimeJob time.Time
@@ -61,11 +60,20 @@ type QueueJob struct {
 	req   Request
 }
 
+// jobContext carries the per-queue-job values a worker needs, passed BY VALUE so
+// no worker reads mutable Job/Config state during execution. basereq is the
+// immutable base request for the job; depth is its recursion depth. This is what
+// makes the recursion-depth and base-request reads correct by construction rather
+// than by drain timing.
+type jobContext struct {
+	basereq Request
+	depth   int
+}
+
 func NewJob(conf *Config) *Job {
 	var j Job
 	j.Config = conf
 	j.queue = newJobQueue()
-	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
 	return &j
 }
@@ -167,7 +175,6 @@ func (j *Job) Start() {
 		j.Total = j.Input.Total()
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	defer j.Stop()
 
 	j.setRunning(true)
@@ -179,10 +186,10 @@ func (j *Job) Start() {
 	// Monitor for SIGTERM and do cleanup properly (writing the output files etc)
 	j.interruptMonitor()
 	for j.jobsInQueue() {
-		j.prepareQueueJob()
+		ctx := j.prepareQueueJob()
 		j.Reset(true)
 		j.setRunningJob(true)
-		j.startExecution()
+		j.startExecution(ctx)
 	}
 
 	err := j.Output.Finalize()
@@ -213,10 +220,12 @@ func (j *Job) jobsInQueue() bool {
 	return j.queue.hasNext()
 }
 
-func (j *Job) prepareQueueJob() {
+func (j *Job) prepareQueueJob() jobContext {
 	job, _ := j.queue.advance()
+	// Config.Url is set here on the MAIN goroutine only, so WriteHistoryEntry below
+	// (FFUFHASH) and the queued-job banner serialize the current target. Workers
+	// never read it; they use the immutable jobContext returned from here.
 	j.Config.Url = job.Url
-	j.currentDepth = job.depth
 
 	//Find all keywords present in new queued job
 	kws := j.Input.Keywords()
@@ -229,6 +238,7 @@ func (j *Job) prepareQueueJob() {
 	//And activate / disable inputproviders as needed
 	j.Input.ActivateKeywords(found_kws)
 	j.Jobhash, _ = WriteHistoryEntry(j.Config)
+	return jobContext{basereq: job.req, depth: job.depth}
 }
 
 // SkipQueue allows to skip the current job and advance to the next queued recursion job
@@ -299,7 +309,7 @@ func (j *Job) pauseCheckpoint() {
 	j.pauseMutex.RUnlock()
 }
 
-func (j *Job) startExecution() {
+func (j *Job) startExecution(ctx jobContext) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go j.runBackgroundTasks(&wg)
@@ -353,7 +363,7 @@ func (j *Job) startExecution() {
 			defer func() { <-threadlimiter }()
 			defer wg.Done()
 			threadStart := time.Now()
-			j.runTask(nextInput, nextPosition, false)
+			j.runTask(ctx, nextInput, nextPosition, false)
 			j.sleepIfNeeded()
 			threadEnd := time.Now()
 			j.Rate.Tick(threadStart, threadEnd)
@@ -416,56 +426,10 @@ func (j *Job) updateProgress() {
 	j.Output.Progress(prog)
 }
 
+// isMatch delegates the match/filter decision to the MatcherManager seam, adapting
+// the Config fields it needs. The logic itself now lives in filter.MatcherManager.
 func (j *Job) isMatch(resp Response) bool {
-	matched := false
-	var matchers map[string]FilterProvider
-	var filters map[string]FilterProvider
-	if j.Config.AutoCalibrationPerHost {
-		filters = j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*resp.Request))
-	} else {
-		filters = j.Config.MatcherManager.GetFilters()
-	}
-	matchers = j.Config.MatcherManager.GetMatchers()
-	for _, m := range matchers {
-		match, err := m.Filter(&resp)
-		if err != nil {
-			continue
-		}
-		if match {
-			matched = true
-		} else if j.Config.MatcherMode == "and" {
-			// we already know this isn't "and" match
-			return false
-
-		}
-	}
-	// The response was not matched, return before running filters
-	if !matched {
-		return false
-	}
-	for _, f := range filters {
-		fv, err := f.Filter(&resp)
-		if err != nil {
-			continue
-		}
-		if fv {
-			//	return false
-			if j.Config.FilterMode == "or" {
-				// return early, as filter matched
-				return false
-			}
-		} else {
-			if j.Config.FilterMode == "and" {
-				// return early as not all filters matched in "and" mode
-				return true
-			}
-		}
-	}
-	if len(filters) > 0 && j.Config.FilterMode == "and" {
-		// we did not return early, so all filters were matched
-		return false
-	}
-	return true
+	return j.Config.MatcherManager.Matches(&resp, j.Config.AutoCalibrationPerHost, j.Config.MatcherMode, j.Config.FilterMode)
 }
 
 func (j *Job) ffufHash(pos int) []byte {
@@ -478,8 +442,8 @@ func (j *Job) ffufHash(pos int) []byte {
 	return []byte(hashstring)
 }
 
-func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
-	basereq := j.queue.currentReq()
+func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, retried bool) {
+	basereq := ctx.basereq
 	req, err := j.Runner.Prepare(input, &basereq)
 	req.Timestamp = time.Now()
 
@@ -509,7 +473,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			// Retry once. The timeout messaging below runs only on the final
 			// failure, so a request that recovers on retry does not also print a
 			// spurious timeout notice.
-			j.runTask(input, position, true)
+			j.runTask(ctx, input, position, true)
 			return
 		}
 		j.incError()
@@ -593,7 +557,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
-			j.handleGreedyRecursionJob(resp)
+			j.handleGreedyRecursionJob(ctx, resp)
 		}
 	} else {
 		if len(resp.ScraperData) > 0 {
@@ -603,7 +567,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 
 	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && len(resp.GetRedirectLocation(false)) > 0 {
-		j.handleDefaultRecursionJob(resp)
+		j.handleDefaultRecursionJob(ctx, resp)
 	}
 }
 
@@ -617,11 +581,11 @@ func (j *Job) handleScraperResult(resp *Response, sres ScraperResult) {
 }
 
 // handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
-func (j *Job) handleGreedyRecursionJob(resp Response) {
+func (j *Job) handleGreedyRecursionJob(ctx jobContext, resp Response) {
 	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
-	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
+	if j.Config.RecursionDepth == 0 || ctx.depth < j.Config.RecursionDepth {
 		recUrl := resp.Request.Url + "/" + "FUZZ"
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
+		newJob := QueueJob{Url: recUrl, depth: ctx.depth + 1, req: RecursionRequest(j.Config, recUrl)}
 		j.queue.push(newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
@@ -631,15 +595,15 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 
 // handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
 // not been reached
-func (j *Job) handleDefaultRecursionJob(resp Response) {
+func (j *Job) handleDefaultRecursionJob(ctx jobContext, resp Response) {
 	recUrl := resp.Request.Url + "/" + "FUZZ"
 	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
 		// Not a directory, return early
 		return
 	}
-	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
+	if j.Config.RecursionDepth == 0 || ctx.depth < j.Config.RecursionDepth {
 		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
+		newJob := QueueJob{Url: recUrl, depth: ctx.depth + 1, req: RecursionRequest(j.Config, recUrl)}
 		j.queue.push(newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {

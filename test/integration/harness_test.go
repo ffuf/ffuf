@@ -15,11 +15,26 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/ffuf/ffuf/v2/pkg/assembly"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/filter"
-	"github.com/ffuf/ffuf/v2/pkg/input"
-	"github.com/ffuf/ffuf/v2/pkg/runner"
 )
+
+// TestMain points ffuf.SCRAPERDIR at an empty temp dir for the whole package.
+// BuildJob loads scraper rules from that global dir; a fresh environment (a CI
+// runner) has no populated XDG config dir, and unlike main the in-process harness
+// never runs ReadDefaultConfig to create it. Redirecting to an empty temp dir
+// keeps these tests hermetic, mirroring how the ffuf package redirects AUTOCALIBDIR.
+func TestMain(m *testing.M) {
+	tmp, err := os.MkdirTemp("", "ffuf-scraperdir-*")
+	if err != nil {
+		panic(err)
+	}
+	ffuf.SCRAPERDIR = tmp
+	code := m.Run()
+	_ = os.RemoveAll(tmp)
+	os.Exit(code)
+}
 
 // runScan runs a full ffuf job against url with the given wordlist. configure
 // tweaks the ConfigOptions (recursion, autocalibration, request options, ...)
@@ -58,13 +73,13 @@ func runScan(t *testing.T, url string, wordlist []string, configure func(*ffuf.C
 		setup(conf.MatcherManager)
 	}
 
-	job := ffuf.NewJob(conf)
-	in, ierr := input.NewInputProvider(conf)
-	if ierr.ErrorOrNil() != nil {
-		t.Fatalf("NewInputProvider: %v", ierr.ErrorOrNil())
+	// Wire the Job through the SAME assembly path main uses, then swap in the
+	// capturing output provider. This is what stops the harness from drifting from
+	// production wiring.
+	job, err := assembly.BuildJob(conf)
+	if err != nil {
+		t.Fatalf("BuildJob: %v", err)
 	}
-	job.Input = in
-	job.Runner = runner.NewRunnerByName("http", conf, false)
 	out := &capture{}
 	job.Output = out
 
