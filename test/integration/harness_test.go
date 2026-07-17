@@ -20,6 +20,22 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/filter"
 )
 
+// TestMain points ffuf.SCRAPERDIR at an empty temp dir for the whole package.
+// BuildJob loads scraper rules from that global dir; a fresh environment (a CI
+// runner) has no populated XDG config dir, and unlike main the in-process harness
+// never runs ReadDefaultConfig to create it. Redirecting to an empty temp dir
+// keeps these tests hermetic, mirroring how the ffuf package redirects AUTOCALIBDIR.
+func TestMain(m *testing.M) {
+	tmp, err := os.MkdirTemp("", "ffuf-scraperdir-*")
+	if err != nil {
+		panic(err)
+	}
+	ffuf.SCRAPERDIR = tmp
+	code := m.Run()
+	_ = os.RemoveAll(tmp)
+	os.Exit(code)
+}
+
 // runScan runs a full ffuf job against url with the given wordlist. configure
 // tweaks the ConfigOptions (recursion, autocalibration, request options, ...)
 // and setup installs the matchers/filters under test on the MatcherManager. It
