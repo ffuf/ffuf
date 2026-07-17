@@ -96,7 +96,12 @@ func (s *Stdoutput) ansiClear() string {
 }
 
 func (s *Stdoutput) Banner() {
-	version := strings.ReplaceAll(ffuf.FormattedVersion(), "<3", fmt.Sprintf("%s<3%s", ANSI_RED, ANSI_CLEAR))
+	version := ffuf.FormattedVersion()
+	if s.config.Colors {
+		// Only colorize the heart when colors are enabled; otherwise a redirected
+		// or non-terminal stderr gets raw ANSI escape bytes in the banner.
+		version = strings.ReplaceAll(version, "<3", fmt.Sprintf("%s<3%s", ANSI_RED, ANSI_CLEAR))
+	}
 	fmt.Fprintf(os.Stderr, "%s\n       %s\n%s\n\n", BANNER_HEADER, version, BANNER_SEP)
 	printOption([]byte("Method"), []byte(s.config.Method))
 	printOption([]byte("URL"), []byte(s.config.Url))
@@ -218,6 +223,22 @@ func (s *Stdoutput) SetCurrentResults(results []ffuf.Result) {
 	s.resultMutex.Lock()
 	s.CurrentResults = results
 	s.resultMutex.Unlock()
+}
+
+// FilterCurrentResults keeps only the results for which keep returns true. The
+// read-filter-write runs under resultMutex, so a concurrent Result() append is
+// not lost through a stale snapshot the way a caller-side GetCurrentResults /
+// SetCurrentResults pair would drop it.
+func (s *Stdoutput) FilterCurrentResults(keep func(ffuf.Result) bool) {
+	s.resultMutex.Lock()
+	defer s.resultMutex.Unlock()
+	filtered := make([]ffuf.Result, 0, len(s.CurrentResults))
+	for _, r := range s.CurrentResults {
+		if keep(r) {
+			filtered = append(filtered, r)
+		}
+	}
+	s.CurrentResults = filtered
 }
 
 func (s *Stdoutput) Progress(status ffuf.Progress) {
