@@ -175,7 +175,6 @@ func (j *Job) Start() {
 		j.Total = j.Input.Total()
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	defer j.Stop()
 
 	j.setRunning(true)
