@@ -258,14 +258,20 @@ func (j *Job) sleepIfNeeded() {
 // holds the write lock, every worker blocks at its pauseCheckpoint (an RLock).
 //
 // pauseStateMutex makes the paused-flag flip and the pauseMutex Lock/Unlock a
-// single atomic step. It has to: Pause runs on the interactive goroutine while
-// Resume also fires from the SIGINT handler, so a plain CAS-then-Lock would let a
-// Resume slip between Pause's flag flip and its Lock and unlock an unlocked mutex
-// (a fatal panic). Under the state mutex there is exactly one Lock per Unlock for
-// any interleaving of Pause/Resume/interrupt.
+// single atomic step, so there is exactly one Lock per Unlock and no goroutine
+// ever unlocks an unlocked mutex (a fatal panic), however Pause, Resume, and the
+// SIGINT handler interleave.
+//
+// Pausing is refused once the job is stopping (isRunning is false). Together with
+// Stop() calling Resume(), that guarantees the gate always ends OPEN after a Stop
+// regardless of ordering, so a Pause racing a Stop can never strand a worker at
+// the checkpoint with no Resume left to wake it.
 func (j *Job) Pause() {
 	j.pauseStateMutex.Lock()
 	defer j.pauseStateMutex.Unlock()
+	if !j.isRunning() {
+		return
+	}
 	if !j.paused {
 		j.paused = true
 		j.pauseMutex.Lock()
@@ -354,7 +360,11 @@ func (j *Job) startExecution() {
 		}()
 		if !j.isRunningJob() {
 			defer j.Output.Warning(j.getError())
-			return
+			// break, not return: fall through to wg.Wait() so the in-flight
+			// workers finish before Start() advances to the next queue job, which
+			// rewrites Config.Url / currentDepth / keyword-active state that those
+			// workers still read (the -maxtime-job drain race).
+			break
 		}
 	}
 	wg.Wait()
@@ -367,10 +377,8 @@ func (j *Job) interruptMonitor() {
 	go func() {
 		for range sigChan {
 			j.setError("Caught keyboard interrupt (Ctrl-C)\n")
-			// Resume if paused so the workers can observe the stop; Resume is a
-			// no-op when the job is not paused.
-			j.Resume()
-			// Stop the job
+			// Stop reopens the pause gate itself, so a worker blocked at a
+			// checkpoint wakes and observes the stop.
 			j.Stop()
 		}
 	}()
@@ -692,6 +700,10 @@ func (j *Job) CheckStop() {
 func (j *Job) Stop() {
 	j.setRunning(false)
 	j.Config.Cancel()
+	// Reopen the pause gate so no worker is left blocked at a checkpoint after a
+	// stop. Resume is a no-op when the job is not paused, and Pause refuses to
+	// close the gate once isRunning is false, so the gate always ends open.
+	j.Resume()
 }
 
 // Stop current, resume to next

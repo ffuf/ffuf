@@ -1,8 +1,10 @@
 package ffuf
 
 import (
+	"context"
 	"sync"
 	"testing"
+	"time"
 )
 
 // TestPauseGate_ConcurrentIdempotent regresses C8: the pause gate used a
@@ -12,6 +14,7 @@ import (
 // idempotent by an atomic CAS. Run under -race.
 func TestPauseGate_ConcurrentIdempotent(t *testing.T) {
 	j := &Job{Output: NewNullOutput()}
+	j.setRunning(true) // Pause refuses to engage the gate unless the job is running
 
 	// Duplicate Pause/Resume must not panic or unbalance the gate.
 	j.Pause()
@@ -54,6 +57,7 @@ func TestPauseGate_ConcurrentIdempotent(t *testing.T) {
 // and the Lock/Unlock must be one atomic step. Run under -race.
 func TestPauseGate_ConcurrentPauseResume(t *testing.T) {
 	j := &Job{Output: NewNullOutput()}
+	j.setRunning(true)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -73,4 +77,55 @@ func TestPauseGate_ConcurrentPauseResume(t *testing.T) {
 
 	// Leave the gate unlocked regardless of which side won the last iteration.
 	j.Resume()
+}
+
+// runningJobWithCancel builds a minimal running Job whose Stop() can call
+// Config.Cancel() without a nil panic.
+func runningJobWithCancel() *Job {
+	ctx, cancel := context.WithCancel(context.Background())
+	j := &Job{Output: NewNullOutput(), Config: &Config{Context: ctx, Cancel: cancel}}
+	j.setRunning(true)
+	return j
+}
+
+// TestPauseGate_StopReopensGate regresses the teardown-hang: a paused job that is
+// Stopped must reopen the gate so a worker arriving at the checkpoint is not
+// stranded with no Resume left to wake it.
+func TestPauseGate_StopReopensGate(t *testing.T) {
+	j := runningJobWithCancel()
+	j.Pause() // gate closed
+
+	j.Stop() // must reopen the gate
+
+	done := make(chan struct{})
+	go func() { j.pauseCheckpoint(); close(done) }()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("pauseCheckpoint stranded after Stop: the gate was not reopened")
+	}
+}
+
+// TestPauseGate_ConcurrentStopPauseNeverStrands hammers the exact race the review
+// found: a Pause landing around a concurrent Stop. Whatever the interleaving, the
+// gate must end open (Pause refuses once stopping, and Stop resumes), so a
+// checkpoint never blocks forever. Run under -race.
+func TestPauseGate_ConcurrentStopPauseNeverStrands(t *testing.T) {
+	for iter := 0; iter < 300; iter++ {
+		j := runningJobWithCancel()
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() { defer wg.Done(); j.Pause() }()
+		go func() { defer wg.Done(); j.Stop() }()
+		wg.Wait()
+
+		done := make(chan struct{})
+		go func() { j.pauseCheckpoint(); close(done) }()
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			t.Fatalf("iter %d: worker stranded at checkpoint after concurrent Stop/Pause", iter)
+		}
+	}
 }
