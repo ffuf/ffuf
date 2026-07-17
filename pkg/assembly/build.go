@@ -25,14 +25,14 @@ func BuildJob(conf *ffuf.Config) (*ffuf.Job, error) {
 
 	job.Input, errs = input.NewInputProvider(conf)
 
-	// Only the http runner exists today.
-	job.Runner = runner.NewRunnerByName("http", conf, false)
+	// Only the http (SimpleRunner) runner exists today.
+	job.Runner = runner.NewSimpleRunner(conf, false)
 	if len(conf.ReplayProxyURL) > 0 {
-		job.ReplayRunner = runner.NewRunnerByName("http", conf, true)
+		job.ReplayRunner = runner.NewSimpleRunner(conf, true)
 	}
 
 	// Only the stdout output provider exists today.
-	job.Output = output.NewOutputProviderByName("stdout", conf)
+	job.Output = output.NewStdoutput(conf)
 
 	if len(conf.AuditLog) > 0 {
 		job.AuditLogger, err = output.NewAuditLogger(conf.AuditLog)

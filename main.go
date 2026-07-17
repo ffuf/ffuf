@@ -197,7 +197,7 @@ func printSearchResults(conf *ffuf.Config, pos int, exectime time.Time, hash str
 	inputdata := inp.Value()
 	inputdata["FFUFHASH"] = []byte(hash)
 	basereq := ffuf.BaseRequest(conf)
-	dummyrunner := runner.NewRunnerByName("simple", conf, false)
+	dummyrunner := runner.NewSimpleRunner(conf, false)
 	ffufreq, _ := dummyrunner.Prepare(inputdata, &basereq)
 	rawreq, _ := dummyrunner.Dump(&ffufreq)
 	fmt.Printf("-------------------------------------------\n")
