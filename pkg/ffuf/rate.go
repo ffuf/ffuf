@@ -23,6 +23,11 @@ func NewRateThrottle(conf *Config) *RateThrottle {
 	if conf.Rate > 0 {
 		r.rateCounter = ring.New(int(conf.Rate * 5))
 		ratemicros := 1000000 / conf.Rate
+		if ratemicros < 1 {
+			// conf.Rate > 1000000 divides to 0; NewTicker panics on a non-positive
+			// interval. Clamp to the 1us floor (~1M req/s).
+			ratemicros = 1
+		}
 		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	} else {
 		r.rateCounter = ring.New(conf.Threads * 5)
@@ -85,6 +90,11 @@ func (r *RateThrottle) ChangeRate(rate int) {
 		period = time.Microsecond * 1
 		// reset the rate counter
 		r.rateCounter = ring.New(r.Config.Threads * 5)
+	}
+	if period <= 0 {
+		// rate > 1000000 makes 1000000/rate integer-divide to 0; a non-positive
+		// ticker interval panics. Clamp to the 1us floor (~1M req/s).
+		period = time.Microsecond
 	}
 
 	// Reset re-periodizes the existing ticker rather than replacing it, so the
