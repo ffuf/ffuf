@@ -39,7 +39,8 @@ type Job struct {
 	Total        int
 	Rate         *RateThrottle
 
-	queue *jobQueue
+	queue     *jobQueue
+	recursion *recursionManager
 
 	startTime    time.Time
 	startTimeJob time.Time
@@ -159,6 +160,9 @@ func (j *Job) Start() {
 	if j.getStartTime().IsZero() {
 		j.setStartTime(time.Now())
 	}
+	// Output is wired by the assembly before Start, so the recursion manager can
+	// capture it here.
+	j.recursion = newRecursionManager(j.Config, j.queue, j.Output)
 
 	basereq := BaseRequest(j.Config)
 
@@ -557,7 +561,7 @@ func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, ret
 		// Refresh the progress indicator as we printed something out
 		j.updateProgress()
 		if j.Config.Recursion && j.Config.RecursionStrategy == "greedy" {
-			j.handleGreedyRecursionJob(ctx, resp)
+			j.recursion.handleGreedy(ctx, resp)
 		}
 	} else {
 		if len(resp.ScraperData) > 0 {
@@ -567,7 +571,7 @@ func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, ret
 	}
 
 	if j.Config.Recursion && j.Config.RecursionStrategy == "default" && len(resp.GetRedirectLocation(false)) > 0 {
-		j.handleDefaultRecursionJob(ctx, resp)
+		j.recursion.handleDefault(ctx, resp)
 	}
 }
 
@@ -577,37 +581,6 @@ func (j *Job) handleScraperResult(resp *Response, sres ScraperResult) {
 		case "output":
 			resp.ScraperData[sres.Name] = sres.Results
 		}
-	}
-}
-
-// handleGreedyRecursionJob adds a recursion job to the queue if the maximum depth has not been reached
-func (j *Job) handleGreedyRecursionJob(ctx jobContext, resp Response) {
-	// Handle greedy recursion strategy. Match has been determined before calling handleRecursionJob
-	if j.Config.RecursionDepth == 0 || ctx.depth < j.Config.RecursionDepth {
-		recUrl := resp.Request.Url + "/" + "FUZZ"
-		newJob := QueueJob{Url: recUrl, depth: ctx.depth + 1, req: RecursionRequest(j.Config, recUrl)}
-		j.queue.push(newJob)
-		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
-	} else {
-		j.Output.Warning(fmt.Sprintf("Maximum recursion depth reached. Ignoring: %s", resp.Request.Url))
-	}
-}
-
-// handleDefaultRecursionJob adds a new recursion job to the job queue if a new directory is found and maximum depth has
-// not been reached
-func (j *Job) handleDefaultRecursionJob(ctx jobContext, resp Response) {
-	recUrl := resp.Request.Url + "/" + "FUZZ"
-	if (resp.Request.Url + "/") != resp.GetRedirectLocation(true) {
-		// Not a directory, return early
-		return
-	}
-	if j.Config.RecursionDepth == 0 || ctx.depth < j.Config.RecursionDepth {
-		// We have yet to reach the maximum recursion depth
-		newJob := QueueJob{Url: recUrl, depth: ctx.depth + 1, req: RecursionRequest(j.Config, recUrl)}
-		j.queue.push(newJob)
-		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
-	} else {
-		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
 	}
 }
 
