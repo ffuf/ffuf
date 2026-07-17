@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/assembly"
+	"github.com/ffuf/ffuf/v2/pkg/engine"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/filter"
 	"github.com/ffuf/ffuf/v2/pkg/input"
@@ -45,7 +46,7 @@ func main() {
 
 	// Handle searchhash functionality and exit
 	if opts.General.Searchhash != "" {
-		coptions, pos, err := ffuf.SearchHash(opts.General.Searchhash)
+		coptions, pos, err := engine.SearchHash(opts.General.Searchhash)
 		if err != nil {
 			fmt.Printf("[ERR] %s\n", err)
 			os.Exit(1)
@@ -58,7 +59,7 @@ func main() {
 			if err != nil {
 				continue
 			}
-			ok, reason := ffuf.HistoryReplayable(conf)
+			ok, reason := engine.HistoryReplayable(conf)
 			if ok {
 				printSearchResults(conf, pos, copt.Time, opts.General.Searchhash)
 			} else {

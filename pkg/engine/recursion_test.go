@@ -1,11 +1,15 @@
-package ffuf
+package engine
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+)
 
 func TestRecursionManager_GreedyQueuesWithinDepth(t *testing.T) {
 	q := newJobQueue()
-	rm := newRecursionManager(&Config{Method: "GET", RecursionDepth: 2}, q, NewNullOutput())
-	resp := Response{Request: &Request{Url: "http://x/admin"}}
+	rm := newRecursionManager(&ffuf.Config{Method: "GET", RecursionDepth: 2}, q, NewNullOutput())
+	resp := ffuf.Response{Request: &ffuf.Request{Url: "http://x/admin"}}
 
 	rm.handleGreedy(jobContext{depth: 0}, resp)
 
@@ -23,8 +27,8 @@ func TestRecursionManager_GreedyQueuesWithinDepth(t *testing.T) {
 
 func TestRecursionManager_GreedyRespectsMaxDepth(t *testing.T) {
 	q := newJobQueue()
-	rm := newRecursionManager(&Config{Method: "GET", RecursionDepth: 1}, q, NewNullOutput())
-	resp := Response{Request: &Request{Url: "http://x/admin"}}
+	rm := newRecursionManager(&ffuf.Config{Method: "GET", RecursionDepth: 1}, q, NewNullOutput())
+	resp := ffuf.Response{Request: &ffuf.Request{Url: "http://x/admin"}}
 
 	// depth == RecursionDepth: at the limit, nothing more is queued.
 	rm.handleGreedy(jobContext{depth: 1}, resp)
@@ -36,11 +40,11 @@ func TestRecursionManager_GreedyRespectsMaxDepth(t *testing.T) {
 
 func TestRecursionManager_DefaultSkipsNonDirectory(t *testing.T) {
 	q := newJobQueue()
-	rm := newRecursionManager(&Config{Method: "GET", RecursionDepth: 0}, q, NewNullOutput())
+	rm := newRecursionManager(&ffuf.Config{Method: "GET", RecursionDepth: 0}, q, NewNullOutput())
 
 	// A 200 with no redirect is not a directory, so the default strategy queues
 	// nothing.
-	resp := Response{Request: &Request{Url: "http://x/file"}, StatusCode: 200}
+	resp := ffuf.Response{Request: &ffuf.Request{Url: "http://x/file"}, StatusCode: 200}
 	rm.handleDefault(jobContext{depth: 0}, resp)
 
 	if q.total() != 0 {
@@ -50,11 +54,11 @@ func TestRecursionManager_DefaultSkipsNonDirectory(t *testing.T) {
 
 func TestRecursionManager_DefaultQueuesDirectory(t *testing.T) {
 	q := newJobQueue()
-	rm := newRecursionManager(&Config{Method: "GET", RecursionDepth: 0}, q, NewNullOutput())
+	rm := newRecursionManager(&ffuf.Config{Method: "GET", RecursionDepth: 0}, q, NewNullOutput())
 
 	// A 301 redirecting to url + "/" is a directory; the default strategy descends.
-	resp := Response{
-		Request:    &Request{Url: "http://x/dir"},
+	resp := ffuf.Response{
+		Request:    &ffuf.Request{Url: "http://x/dir"},
 		StatusCode: 301,
 		Headers:    map[string][]string{"Location": {"http://x/dir/"}},
 	}

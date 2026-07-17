@@ -1,4 +1,4 @@
-package ffuf
+package engine
 
 import (
 	"encoding/json"
@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-)
 
-type AutocalibrationStrategy map[string][]string
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+)
 
 func (j *Job) autoCalibrationStrings() map[string][]string {
 	// The global rand is seeded once in Job.Start; re-seeding here on every call
@@ -24,13 +24,13 @@ func (j *Job) autoCalibrationStrings() map[string][]string {
 	}
 
 	for _, strategy := range j.Config.AutoCalibrationStrategies {
-		jsonStrategy, err := os.ReadFile(filepath.Join(AUTOCALIBDIR, strategy+".json"))
+		jsonStrategy, err := os.ReadFile(filepath.Join(ffuf.AUTOCALIBDIR, strategy+".json"))
 		if err != nil {
 			j.Output.Warning(fmt.Sprintf("Skipping strategy \"%s\" because of error: %s\n", strategy, err))
 			continue
 		}
 
-		tmpStrategy := AutocalibrationStrategy{}
+		tmpStrategy := ffuf.AutocalibrationStrategy{}
 		err = json.Unmarshal(jsonStrategy, &tmpStrategy)
 		if err != nil {
 			j.Output.Warning(fmt.Sprintf("Skipping strategy \"%s\" because of error: %s\n", strategy, err))
@@ -43,58 +43,41 @@ func (j *Job) autoCalibrationStrings() map[string][]string {
 	return cInputs
 }
 
-func setupDefaultAutocalibrationStrategies() error {
-	basic_strategy := AutocalibrationStrategy{
-		"basic_admin":  []string{"admin" + RandomString(16), "admin" + RandomString(8)},
-		"htaccess":     []string{".htaccess" + RandomString(16), ".htaccess" + RandomString(8)},
-		"basic_random": []string{RandomString(16), RandomString(8)},
+func mergeMaps(m1 map[string][]string, m2 map[string][]string) map[string][]string {
+	merged := make(map[string][]string)
+	for k, v := range m1 {
+		merged[k] = v
 	}
-	basic_strategy_json, err := json.Marshal(basic_strategy)
-	if err != nil {
-		return err
+	for key, value := range m2 {
+		if _, ok := merged[key]; !ok {
+			// Key not found, add it
+			merged[key] = value
+			continue
+		}
+		for _, entry := range value {
+			if !ffuf.StrInSlice(entry, merged[key]) {
+				merged[key] = append(merged[key], entry)
+			}
+		}
 	}
-
-	advanced_strategy := AutocalibrationStrategy{
-		"basic_admin":  []string{"admin" + RandomString(16), "admin" + RandomString(8)},
-		"htaccess":     []string{".htaccess" + RandomString(16), ".htaccess" + RandomString(8)},
-		"basic_random": []string{RandomString(16), RandomString(8)},
-		"admin_dir":    []string{"admin" + RandomString(16) + "/", "admin" + RandomString(8) + "/"},
-		"random_dir":   []string{RandomString(16) + "/", RandomString(8) + "/"},
-	}
-	advanced_strategy_json, err := json.Marshal(advanced_strategy)
-	if err != nil {
-		return err
-	}
-
-	basic_strategy_file := filepath.Join(AUTOCALIBDIR, "basic.json")
-	if !FileExists(basic_strategy_file) {
-		err = os.WriteFile(filepath.Join(AUTOCALIBDIR, "basic.json"), basic_strategy_json, 0640)
-		return err
-	}
-	advanced_strategy_file := filepath.Join(AUTOCALIBDIR, "advanced.json")
-	if !FileExists(advanced_strategy_file) {
-		err = os.WriteFile(filepath.Join(AUTOCALIBDIR, "advanced.json"), advanced_strategy_json, 0640)
-		return err
-	}
-
-	return nil
+	return merged
 }
 
-func (j *Job) calibrationRequest(inputs map[string][]byte) (Response, error) {
-	basereq := BaseRequest(j.Config)
+func (j *Job) calibrationRequest(inputs map[string][]byte) (ffuf.Response, error) {
+	basereq := ffuf.BaseRequest(j.Config)
 	req, err := j.Runner.Prepare(inputs, &basereq)
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while preparing autocalibration request: %s\n", err))
 		j.incError()
 		log.Printf("%s", err)
-		return Response{}, err
+		return ffuf.Response{}, err
 	}
 	resp, err := j.Runner.Execute(&req)
 	if err != nil {
 		j.Output.Error(fmt.Sprintf("Encountered an error while executing autocalibration request: %s\n", err))
 		j.incError()
 		log.Printf("%s", err)
-		return Response{}, err
+		return ffuf.Response{}, err
 	}
 	// Only calibrate on responses that would be matched otherwise
 	if j.isMatch(resp) {
@@ -117,7 +100,7 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 		input[k] = v
 	}
 	for _, v := range cStrings {
-		responses := make([]Response, 0)
+		responses := make([]ffuf.Response, 0)
 		for _, cs := range v {
 			input[j.Config.AutoCalibrationKeyword] = []byte(cs)
 			resp, err := j.calibrationRequest(input)
@@ -153,7 +136,7 @@ func (j *Job) Calibrate(input map[string][]byte) error {
 	}
 
 	for _, v := range cInputs {
-		responses := make([]Response, 0)
+		responses := make([]ffuf.Response, 0)
 		for _, cs := range v {
 			cinput[j.Config.AutoCalibrationKeyword] = []byte(cs)
 			resp, err := j.calibrationRequest(cinput)
@@ -183,7 +166,7 @@ func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
 	return j.Calibrate(input)
 }
 
-func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
+func (j *Job) calibrateFilters(responses []ffuf.Response, perHost bool) error {
 	// Work down from the most specific common denominator
 	if len(responses) > 0 {
 		// Content length
@@ -197,14 +180,14 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		if sizeMatch {
 			if perHost {
 				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
+				for _, f := range j.Config.MatcherManager.FiltersForDomain(ffuf.HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
 					if match {
 						// Already filtered
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "size", strconv.FormatInt(baselineSize, 10))
+				_ = j.Config.MatcherManager.AddPerDomainFilter(ffuf.HostURLFromRequest(*responses[0].Request), "size", strconv.FormatInt(baselineSize, 10))
 				return nil
 			} else {
 				// Check if already filtered
@@ -231,14 +214,14 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		if wordsMatch {
 			if perHost {
 				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
+				for _, f := range j.Config.MatcherManager.FiltersForDomain(ffuf.HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
 					if match {
 						// Already filtered
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "word", strconv.FormatInt(baselineWords, 10))
+				_ = j.Config.MatcherManager.AddPerDomainFilter(ffuf.HostURLFromRequest(*responses[0].Request), "word", strconv.FormatInt(baselineWords, 10))
 				return nil
 			} else {
 				// Check if already filtered
@@ -265,14 +248,14 @@ func (j *Job) calibrateFilters(responses []Response, perHost bool) error {
 		if linesMatch {
 			if perHost {
 				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(HostURLFromRequest(*responses[0].Request)) {
+				for _, f := range j.Config.MatcherManager.FiltersForDomain(ffuf.HostURLFromRequest(*responses[0].Request)) {
 					match, _ := f.Filter(&responses[0])
 					if match {
 						// Already filtered
 						return nil
 					}
 				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(HostURLFromRequest(*responses[0].Request), "line", strconv.FormatInt(baselineLines, 10))
+				_ = j.Config.MatcherManager.AddPerDomainFilter(ffuf.HostURLFromRequest(*responses[0].Request), "line", strconv.FormatInt(baselineLines, 10))
 				return nil
 			} else {
 				// Check if already filtered

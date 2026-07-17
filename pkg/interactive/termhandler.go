@@ -7,15 +7,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ffuf/ffuf/v2/pkg/engine"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 type interactive struct {
-	Job    *ffuf.Job
+	Job    *engine.Job
 	paused bool
 }
 
-func Handle(job *ffuf.Job) error {
+func Handle(job *engine.Job) error {
 	i := interactive{job, false}
 	tty, err := termHandle()
 	if err != nil {

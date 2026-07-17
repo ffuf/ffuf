@@ -1,4 +1,4 @@
-package ffuf
+package engine
 
 import (
 	"fmt"
@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 // Job ties together Config, Runner, Input and Output
@@ -28,13 +30,13 @@ type Job struct {
 	runningJob int32
 	skipQueue  int32
 
-	AuditLogger  AuditLogger
-	Config       *Config
-	Input        InputProvider
-	Runner       RunnerProvider
-	ReplayRunner RunnerProvider
-	Scraper      Scraper
-	Output       OutputProvider
+	AuditLogger  ffuf.AuditLogger
+	Config       *ffuf.Config
+	Input        ffuf.InputProvider
+	Runner       ffuf.RunnerProvider
+	ReplayRunner ffuf.RunnerProvider
+	Scraper      ffuf.Scraper
+	Output       ffuf.OutputProvider
 	Jobhash      string
 	Total        int
 	Rate         *RateThrottle
@@ -58,7 +60,7 @@ type Job struct {
 type QueueJob struct {
 	Url   string
 	depth int
-	req   Request
+	req   ffuf.Request
 }
 
 // jobContext carries the per-queue-job values a worker needs, passed BY VALUE so
@@ -67,11 +69,11 @@ type QueueJob struct {
 // makes the recursion-depth and base-request reads correct by construction rather
 // than by drain timing.
 type jobContext struct {
-	basereq Request
+	basereq ffuf.Request
 	depth   int
 }
 
-func NewJob(conf *Config) *Job {
+func NewJob(conf *ffuf.Config) *Job {
 	var j Job
 	j.Config = conf
 	j.queue = newJobQueue()
@@ -164,18 +166,18 @@ func (j *Job) Start() {
 	// capture it here.
 	j.recursion = newRecursionManager(j.Config, j.queue, j.Output)
 
-	basereq := BaseRequest(j.Config)
+	basereq := ffuf.BaseRequest(j.Config)
 
 	if j.Config.InputMode == "sniper" {
 		// process multiple payload locations and create a queue job for each location
-		reqs := SniperRequests(&basereq, j.Config.InputProviders[0].Template)
+		reqs := ffuf.SniperRequests(&basereq, j.Config.InputProviders[0].Template)
 		for _, r := range reqs {
 			j.queue.push(QueueJob{Url: j.Config.Url, depth: 0, req: r})
 		}
 		j.Total = j.Input.Total() * len(reqs)
 	} else {
 		// Add the default job to job queue
-		j.queue.push(QueueJob{Url: j.Config.Url, depth: 0, req: BaseRequest(j.Config)})
+		j.queue.push(QueueJob{Url: j.Config.Url, depth: 0, req: ffuf.BaseRequest(j.Config)})
 		j.Total = j.Input.Total()
 	}
 
@@ -235,7 +237,7 @@ func (j *Job) prepareQueueJob() jobContext {
 	kws := j.Input.Keywords()
 	found_kws := make([]string, 0)
 	for _, k := range kws {
-		if RequestContainsKeyword(job.req, k) {
+		if ffuf.RequestContainsKeyword(job.req, k) {
 			found_kws = append(found_kws, k)
 		}
 	}
@@ -418,7 +420,7 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 }
 
 func (j *Job) updateProgress() {
-	prog := Progress{
+	prog := ffuf.Progress{
 		StartedAt:  j.getStartTimeJob(),
 		ReqCount:   j.getCounter(),
 		ReqTotal:   j.Input.Total(),
@@ -432,7 +434,7 @@ func (j *Job) updateProgress() {
 
 // isMatch delegates the match/filter decision to the MatcherManager seam, adapting
 // the Config fields it needs. The logic itself now lives in filter.MatcherManager.
-func (j *Job) isMatch(resp Response) bool {
+func (j *Job) isMatch(resp ffuf.Response) bool {
 	return j.Config.MatcherManager.Matches(&resp, j.Config.AutoCalibrationPerHost, j.Config.MatcherMode, j.Config.FilterMode)
 }
 
@@ -533,7 +535,7 @@ func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, ret
 	j.pauseCheckpoint()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
-	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
+	_ = j.CalibrateIfNeeded(ffuf.HostURLFromRequest(req), input)
 
 	// Handle scraper actions
 	if j.Scraper != nil {
@@ -575,7 +577,7 @@ func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, ret
 	}
 }
 
-func (j *Job) handleScraperResult(resp *Response, sres ScraperResult) {
+func (j *Job) handleScraperResult(resp *ffuf.Response, sres ffuf.ScraperResult) {
 	for _, a := range sres.Action {
 		switch a {
 		case "output":

@@ -145,19 +145,19 @@ func FormattedVersion() string {
 
 func CheckOrCreateConfigDir() error {
 	var err error
-	err = createConfigDir(CONFIGDIR)
+	err = CreateConfigDir(CONFIGDIR)
 	if err != nil {
 		return err
 	}
-	err = createConfigDir(HISTORYDIR)
+	err = CreateConfigDir(HISTORYDIR)
 	if err != nil {
 		return err
 	}
-	err = createConfigDir(SCRAPERDIR)
+	err = CreateConfigDir(SCRAPERDIR)
 	if err != nil {
 		return err
 	}
-	err = createConfigDir(AUTOCALIBDIR)
+	err = CreateConfigDir(AUTOCALIBDIR)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func CheckOrCreateConfigDir() error {
 	return err
 }
 
-func createConfigDir(path string) error {
+func CreateConfigDir(path string) error {
 	_, err := os.Stat(path)
 	if err != nil {
 		var pError *os.PathError
@@ -184,24 +184,4 @@ func StrInSlice(key string, slice []string) bool {
 		}
 	}
 	return false
-}
-
-func mergeMaps(m1 map[string][]string, m2 map[string][]string) map[string][]string {
-	merged := make(map[string][]string)
-	for k, v := range m1 {
-		merged[k] = v
-	}
-	for key, value := range m2 {
-		if _, ok := merged[key]; !ok {
-			// Key not found, add it
-			merged[key] = value
-			continue
-		}
-		for _, entry := range value {
-			if !StrInSlice(entry, merged[key]) {
-				merged[key] = append(merged[key], entry)
-			}
-		}
-	}
-	return merged
 }

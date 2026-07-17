@@ -1,4 +1,4 @@
-package ffuf
+package engine
 
 import (
 	"crypto/sha256"
@@ -10,14 +10,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 type ConfigOptionsHistory struct {
-	ConfigOptions
+	ffuf.ConfigOptions
 	Time time.Time `json:"time"`
 }
 
-func WriteHistoryEntry(conf *Config) (string, error) {
+func WriteHistoryEntry(conf *ffuf.Config) (string, error) {
 	if conf.Options == nil {
 		return "", errors.New("cannot write history entry: config has no source options")
 	}
@@ -30,11 +32,11 @@ func WriteHistoryEntry(conf *Config) (string, error) {
 		return "", err
 	}
 	hashstr := calculateHistoryHash(jsonoptions)
-	err = createConfigDir(filepath.Join(HISTORYDIR, hashstr))
+	err = ffuf.CreateConfigDir(filepath.Join(ffuf.HISTORYDIR, hashstr))
 	if err != nil {
 		return "", err
 	}
-	err = os.WriteFile(filepath.Join(HISTORYDIR, hashstr, "options"), jsonoptions, 0640)
+	err = os.WriteFile(filepath.Join(ffuf.HISTORYDIR, hashstr, "options"), jsonoptions, 0640)
 	return hashstr, err
 }
 
@@ -46,7 +48,7 @@ func WriteHistoryEntry(conf *Config) (string, error) {
 //     so the frozen snapshot would report the base URL, not the recursed path.
 //   - Filter/Matcher.*: autocalibration installs filters at runtime, absent from
 //     the raw input. Rebuilt from MatcherManager exactly as the old ToOptions did.
-func historyOptions(conf *Config) ConfigOptions {
+func historyOptions(conf *ffuf.Config) ffuf.ConfigOptions {
 	o := *conf.Options
 	o.HTTP.URL = conf.Url
 	if conf.MatcherManager != nil {
@@ -106,7 +108,7 @@ func SearchHash(hash string) ([]ConfigOptionsHistory, int, error) {
 	if err != nil {
 		return coptions, 0, errors.New("bad positional value in FFUFHASH")
 	}
-	all_dirs, err := os.ReadDir(HISTORYDIR)
+	all_dirs, err := os.ReadDir(ffuf.HISTORYDIR)
 	if err != nil {
 		return coptions, 0, err
 	}
@@ -119,7 +121,7 @@ func SearchHash(hash string) ([]ConfigOptionsHistory, int, error) {
 		}
 	}
 	for _, dirname := range matched_dirs {
-		copts, err := configFromHistory(filepath.Join(HISTORYDIR, dirname))
+		copts, err := configFromHistory(filepath.Join(ffuf.HISTORYDIR, dirname))
 		if err != nil {
 			continue
 		}
@@ -129,7 +131,7 @@ func SearchHash(hash string) ([]ConfigOptionsHistory, int, error) {
 	return coptions, int(position), err
 }
 
-func HistoryReplayable(conf *Config) (bool, string) {
+func HistoryReplayable(conf *ffuf.Config) (bool, string) {
 	for _, w := range conf.Wordlists {
 		if w == "-" || strings.HasPrefix(w, "-:") {
 			return false, "stdin input was used for one of the wordlists"

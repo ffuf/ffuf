@@ -1,20 +1,22 @@
-package ffuf
+package engine
 
 import (
 	"container/ring"
 	"sync"
 	"time"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 type RateThrottle struct {
 	rateCounter    *ring.Ring
-	Config         *Config
+	Config         *ffuf.Config
 	RateMutex      sync.Mutex
 	RateLimiter    *time.Ticker
 	lastAdjustment time.Time
 }
 
-func NewRateThrottle(conf *Config) *RateThrottle {
+func NewRateThrottle(conf *ffuf.Config) *RateThrottle {
 	r := &RateThrottle{
 		Config:         conf,
 		lastAdjustment: time.Now(),
