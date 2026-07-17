@@ -47,7 +47,10 @@ func FromDir(dirname string, activestr string) (ffuf.Scraper, ffuf.Multierror) {
 	scr := Scraper{Rules: make([]*ScraperRule, 0)}
 	errs := ffuf.NewMultierror()
 	activegrps := parseActiveGroups(activestr)
-	all_files, err := os.ReadDir(ffuf.SCRAPERDIR)
+	// Enumerate the directory that was passed in; the entries below are opened
+	// relative to dirname, so reading a different directory (the global
+	// ffuf.SCRAPERDIR) here would mismatch the two.
+	all_files, err := os.ReadDir(dirname)
 	if err != nil {
 		errs.Add(err)
 		return &scr, errs
