@@ -30,11 +30,13 @@ const (
 type Stdoutput struct {
 	config           *ffuf.Config
 	fuzzkeywords     []string
-	resultMutex      sync.Mutex // guards Results and CurrentResults; Result is called from worker goroutines
+	resultMutex      sync.Mutex // guards Results, CurrentResults, paused and pendingCount; Result is called from worker goroutines
 	Results          []ffuf.Result
 	CurrentResults   []ffuf.Result
 	stdoutIsTerminal bool
 	stderrIsTerminal bool
+	paused           bool // when set, Result records matches but does not print them
+	pendingCount     int  // matches recorded but not printed since the last SetPaused(true)
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -428,9 +430,40 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 	}
 	s.resultMutex.Lock()
 	s.CurrentResults = append(s.CurrentResults, sResult)
+	paused := s.paused
+	if paused {
+		s.pendingCount++
+	}
 	s.resultMutex.Unlock()
-	// Output the result
-	s.PrintResult(sResult)
+	// While the interactive console is open we still record the match above (so
+	// show, savejson and -o output stay complete) but do not stream it to the
+	// terminal - otherwise inflight requests completing after the user opens the
+	// console would scroll the banner off screen. PendingResults reports the count.
+	if !paused {
+		s.PrintResult(sResult)
+	}
+}
+
+// SetPaused toggles whether Result streams matches to the live terminal. While
+// paused (the interactive console is open) matches are still recorded but not
+// printed, so inflight requests completing cannot scroll the console off screen.
+// Entering a pause (paused == true) resets the pending counter.
+func (s *Stdoutput) SetPaused(paused bool) {
+	s.resultMutex.Lock()
+	s.paused = paused
+	if paused {
+		s.pendingCount = 0
+	}
+	s.resultMutex.Unlock()
+}
+
+// PendingResults returns the number of matches recorded but not printed since
+// the last SetPaused(true) - matches that arrived while the interactive console
+// was open.
+func (s *Stdoutput) PendingResults() int {
+	s.resultMutex.Lock()
+	defer s.resultMutex.Unlock()
+	return s.pendingCount
 }
 
 func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {

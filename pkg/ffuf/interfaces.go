@@ -80,6 +80,8 @@ type OutputProvider interface {
 	GetCurrentResults() []Result
 	SetCurrentResults(results []Result)
 	FilterCurrentResults(keep func(Result) bool)
+	SetPaused(paused bool)
+	PendingResults() int
 	Reset()
 	Cycle()
 }
