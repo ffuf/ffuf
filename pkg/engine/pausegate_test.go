@@ -1,10 +1,12 @@
-package ffuf
+package engine
 
 import (
 	"context"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 // TestPauseGate_ConcurrentIdempotent regresses C8: the pause gate used a
@@ -83,7 +85,7 @@ func TestPauseGate_ConcurrentPauseResume(t *testing.T) {
 // Config.Cancel() without a nil panic.
 func runningJobWithCancel() *Job {
 	ctx, cancel := context.WithCancel(context.Background())
-	j := &Job{Output: NewNullOutput(), Config: &Config{Context: ctx, Cancel: cancel}}
+	j := &Job{Output: NewNullOutput(), Config: &ffuf.Config{Context: ctx, Cancel: cancel}}
 	j.setRunning(true)
 	return j
 }

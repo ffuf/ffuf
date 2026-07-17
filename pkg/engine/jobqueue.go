@@ -1,4 +1,4 @@
-package ffuf
+package engine
 
 import "sync"
 

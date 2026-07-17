@@ -1,32 +1,34 @@
-package ffuf
+package engine
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 // NullOutput is a dummy output provider that does nothing
 type NullOutput struct {
-	Results []Result
+	Results []ffuf.Result
 }
 
-func NewNullOutput() *NullOutput                             { return &NullOutput{} }
-func (o *NullOutput) Banner()                                {}
-func (o *NullOutput) Finalize() error                        { return nil }
-func (o *NullOutput) Progress(status Progress)               {}
-func (o *NullOutput) Info(infostring string)                 {}
-func (o *NullOutput) Error(errstring string)                 {}
-func (o *NullOutput) Raw(output string)                      {}
-func (o *NullOutput) Warning(warnstring string)              {}
-func (o *NullOutput) Result(resp Response)                   {}
-func (o *NullOutput) PrintResult(res Result)                 {}
-func (o *NullOutput) SaveFile(filename, format string) error { return nil }
-func (o *NullOutput) GetCurrentResults() []Result            { return o.Results }
-func (o *NullOutput) SetCurrentResults(results []Result)     { o.Results = results }
-func (o *NullOutput) FilterCurrentResults(keep func(Result) bool) {
-	filtered := make([]Result, 0, len(o.Results))
+func NewNullOutput() *NullOutput                              { return &NullOutput{} }
+func (o *NullOutput) Banner()                                 {}
+func (o *NullOutput) Finalize() error                         { return nil }
+func (o *NullOutput) Progress(status ffuf.Progress)           {}
+func (o *NullOutput) Info(infostring string)                  {}
+func (o *NullOutput) Error(errstring string)                  {}
+func (o *NullOutput) Raw(output string)                       {}
+func (o *NullOutput) Warning(warnstring string)               {}
+func (o *NullOutput) Result(resp ffuf.Response)               {}
+func (o *NullOutput) PrintResult(res ffuf.Result)             {}
+func (o *NullOutput) SaveFile(filename, format string) error  { return nil }
+func (o *NullOutput) GetCurrentResults() []ffuf.Result        { return o.Results }
+func (o *NullOutput) SetCurrentResults(results []ffuf.Result) { o.Results = results }
+func (o *NullOutput) FilterCurrentResults(keep func(ffuf.Result) bool) {
+	filtered := make([]ffuf.Result, 0, len(o.Results))
 	for _, r := range o.Results {
 		if keep(r) {
 			filtered = append(filtered, r)
@@ -40,14 +42,14 @@ func (o *NullOutput) Cycle() {}
 func TestAutoCalibrationStrings(t *testing.T) {
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "ffuf-test")
-	AUTOCALIBDIR = tmpDir
+	ffuf.AUTOCALIBDIR = tmpDir
 	if err != nil {
 		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
 	// Create a test strategy file
-	strategy := AutocalibrationStrategy{
+	strategy := ffuf.AutocalibrationStrategy{
 		"test": {"foo", "bar"},
 	}
 	strategyJSON, err := json.Marshal(strategy)
@@ -62,7 +64,7 @@ func TestAutoCalibrationStrings(t *testing.T) {
 
 	// Create a test job with the strategy
 	job := &Job{
-		Config: &Config{
+		Config: &ffuf.Config{
 			AutoCalibrationStrategies: []string{"test"},
 		},
 		Output: NewNullOutput(),
@@ -87,7 +89,7 @@ func TestAutoCalibrationStrings(t *testing.T) {
 
 	// Verify that a missing strategy is skipped
 	job = &Job{
-		Config: &Config{
+		Config: &ffuf.Config{
 			AutoCalibrationStrategies: []string{"missing"},
 		},
 		Output: NewNullOutput(),
@@ -105,7 +107,7 @@ func TestAutoCalibrationStrings(t *testing.T) {
 		t.Fatalf("Failed to write malformed strategy file: %v", err)
 	}
 	job = &Job{
-		Config: &Config{
+		Config: &ffuf.Config{
 			AutoCalibrationStrategies: []string{"malformed"},
 		},
 		Output: NewNullOutput(),

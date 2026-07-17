@@ -8,6 +8,7 @@
 package assembly
 
 import (
+	"github.com/ffuf/ffuf/v2/pkg/engine"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/input"
 	"github.com/ffuf/ffuf/v2/pkg/output"
@@ -18,9 +19,9 @@ import (
 // BuildJob constructs and wires a Job from conf. It is the single source of truth
 // for how a Job is assembled. Matchers/filters are NOT installed here (they need
 // the CLI flag state); see filter.FromConfig and main.SetupFilters.
-func BuildJob(conf *ffuf.Config) (*ffuf.Job, error) {
+func BuildJob(conf *ffuf.Config) (*engine.Job, error) {
 	var err error
-	job := ffuf.NewJob(conf)
+	job := engine.NewJob(conf)
 	var errs ffuf.Multierror
 
 	job.Input, errs = input.NewInputProvider(conf)
