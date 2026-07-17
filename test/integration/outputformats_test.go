@@ -11,11 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ffuf/ffuf/v2/pkg/assembly"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 	"github.com/ffuf/ffuf/v2/pkg/filter"
-	"github.com/ffuf/ffuf/v2/pkg/input"
-	"github.com/ffuf/ffuf/v2/pkg/output"
-	"github.com/ffuf/ffuf/v2/pkg/runner"
 	"github.com/ffuf/ffuf/v2/pkg/testtarget"
 )
 
@@ -56,18 +54,15 @@ func runScanStdout(t *testing.T, url string, wordlist []string, configure func(*
 		setup(conf.MatcherManager)
 	}
 
-	job := ffuf.NewJob(conf)
-	in, ierr := input.NewInputProvider(conf)
-	if ierr.ErrorOrNil() != nil {
-		t.Fatalf("NewInputProvider: %v", ierr.ErrorOrNil())
+	// Same assembly path as production; the real stdout provider is what these
+	// tests want to exercise (file writers, result accumulation).
+	job, err := assembly.BuildJob(conf)
+	if err != nil {
+		t.Fatalf("BuildJob: %v", err)
 	}
-	job.Input = in
-	job.Runner = runner.NewRunnerByName("http", conf, false)
-	out := output.NewOutputProviderByName("stdout", conf)
-	job.Output = out
 
 	job.Start()
-	return out
+	return job.Output
 }
 
 // TestOutputConcurrentResultAccumulation drives the real stdout OutputProvider at
