@@ -42,13 +42,6 @@ func (q *jobQueue) advance() (QueueJob, int) {
 	return job, q.pos
 }
 
-// currentReq returns the request of the job at the active position (pos-1).
-func (q *jobQueue) currentReq() Request {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-	return q.jobs[q.pos-1].req
-}
-
 // position returns the active position marker.
 func (q *jobQueue) position() int {
 	q.mu.Lock()
