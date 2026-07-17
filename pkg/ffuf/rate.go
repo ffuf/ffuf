@@ -23,6 +23,11 @@ func NewRateThrottle(conf *Config) *RateThrottle {
 	if conf.Rate > 0 {
 		r.rateCounter = ring.New(int(conf.Rate * 5))
 		ratemicros := 1000000 / conf.Rate
+		if ratemicros < 1 {
+			// conf.Rate > 1000000 divides to 0; NewTicker panics on a non-positive
+			// interval. Clamp to the 1us floor (~1M req/s).
+			ratemicros = 1
+		}
 		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
 	} else {
 		r.rateCounter = ring.New(conf.Threads * 5)
@@ -64,25 +69,38 @@ func (r *RateThrottle) CurrentRate() int64 {
 	return 0
 }
 
+// CurrentConfiguredRate returns the configured rate under the lock, for callers
+// (e.g. the interactive handler) that only need to display it.
+func (r *RateThrottle) CurrentConfiguredRate() int64 {
+	r.RateMutex.Lock()
+	defer r.RateMutex.Unlock()
+	return r.Config.Rate
+}
+
 func (r *RateThrottle) ChangeRate(rate int) {
 	r.RateMutex.Lock()
 	defer r.RateMutex.Unlock()
-	ratemicros := 0 // set default to 0, avoids integer divide by 0 error
 
-	if rate != 0 {
-		ratemicros = 1000000 / rate
-	}
-
-	r.RateLimiter.Stop()
+	var period time.Duration
 	if rate > 0 {
-		r.RateLimiter = time.NewTicker(time.Microsecond * time.Duration(ratemicros))
+		period = time.Microsecond * time.Duration(1000000/rate)
 		// reset the rate counter
 		r.rateCounter = ring.New(rate * 5)
 	} else {
-		r.RateLimiter = time.NewTicker(time.Microsecond * 1)
+		period = time.Microsecond * 1
 		// reset the rate counter
 		r.rateCounter = ring.New(r.Config.Threads * 5)
 	}
+	if period <= 0 {
+		// rate > 1000000 makes 1000000/rate integer-divide to 0; a non-positive
+		// ticker interval panics. Clamp to the 1us floor (~1M req/s).
+		period = time.Microsecond
+	}
+
+	// Reset re-periodizes the existing ticker rather than replacing it, so the
+	// RateLimiter pointer is written once (at construction) and never reassigned.
+	// That is what lets the execution loop read RateLimiter.C without a lock.
+	r.RateLimiter.Reset(period)
 
 	r.Config.Rate = int64(rate)
 }

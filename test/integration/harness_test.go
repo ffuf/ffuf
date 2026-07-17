@@ -135,5 +135,16 @@ func (c *capture) GetCurrentResults() []ffuf.Result {
 	return c.results
 }
 func (c *capture) SetCurrentResults(r []ffuf.Result) { c.mu.Lock(); c.results = r; c.mu.Unlock() }
-func (c *capture) Reset()                            {}
-func (c *capture) Cycle()                            {}
+func (c *capture) FilterCurrentResults(keep func(ffuf.Result) bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	filtered := make([]ffuf.Result, 0, len(c.results))
+	for _, r := range c.results {
+		if keep(r) {
+			filtered = append(filtered, r)
+		}
+	}
+	c.results = filtered
+}
+func (c *capture) Reset() {}
+func (c *capture) Cycle() {}

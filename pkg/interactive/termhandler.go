@@ -206,10 +206,14 @@ func (i *interactive) handleInput(in []byte) {
 }
 
 func (i *interactive) refreshResults() {
-	results := make([]ffuf.Result, 0)
 	filters := i.Job.Config.MatcherManager.GetFilters()
-	for _, filter := range filters {
-		for _, res := range i.Job.Output.GetCurrentResults() {
+	// Keep a result only if it survives every active filter. The filtering runs
+	// under the output lock via FilterCurrentResults, so a match arriving mid-
+	// refresh is not dropped (the previous GetCurrentResults/SetCurrentResults
+	// pair had a read-modify-write gap that lost it, and it double-counted a
+	// result once per filter it passed).
+	i.Job.Output.FilterCurrentResults(func(res ffuf.Result) bool {
+		for _, filter := range filters {
 			fakeResp := &ffuf.Response{
 				StatusCode:    res.StatusCode,
 				ContentLines:  res.ContentLength,
@@ -217,12 +221,12 @@ func (i *interactive) refreshResults() {
 				ContentLength: res.ContentLength,
 			}
 			filterOut, _ := filter.Filter(fakeResp)
-			if !filterOut {
-				results = append(results, res)
+			if filterOut {
+				return false
 			}
 		}
-	}
-	i.Job.Output.SetCurrentResults(results)
+		return true
+	})
 }
 
 func (i *interactive) updateFilter(name, value string, replace bool) {
@@ -292,7 +296,7 @@ func (i *interactive) printHelp() {
 			ft = "(active: " + filter.Repr() + ")"
 		}
 	}
-	rate := fmt.Sprintf("(active: %d)", i.Job.Config.Rate)
+	rate := fmt.Sprintf("(active: %d)", i.Job.Rate.CurrentConfiguredRate())
 	help := `
 available commands:
  afc  [value]             - append to status code filter %s

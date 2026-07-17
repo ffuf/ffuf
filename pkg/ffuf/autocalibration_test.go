@@ -25,8 +25,17 @@ func (o *NullOutput) PrintResult(res Result)                 {}
 func (o *NullOutput) SaveFile(filename, format string) error { return nil }
 func (o *NullOutput) GetCurrentResults() []Result            { return o.Results }
 func (o *NullOutput) SetCurrentResults(results []Result)     { o.Results = results }
-func (o *NullOutput) Reset()                                 {}
-func (o *NullOutput) Cycle()                                 {}
+func (o *NullOutput) FilterCurrentResults(keep func(Result) bool) {
+	filtered := make([]Result, 0, len(o.Results))
+	for _, r := range o.Results {
+		if keep(r) {
+			filtered = append(filtered, r)
+		}
+	}
+	o.Results = filtered
+}
+func (o *NullOutput) Reset() {}
+func (o *NullOutput) Cycle() {}
 
 func TestAutoCalibrationStrings(t *testing.T) {
 	// Create a temporary directory for the test

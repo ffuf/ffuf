@@ -7,40 +7,52 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
 
 // Job ties together Config, Runner, Input and Output
 type Job struct {
-	AuditLogger          AuditLogger
-	Config               *Config
-	ErrorMutex           sync.Mutex
-	Input                InputProvider
-	Runner               RunnerProvider
-	ReplayRunner         RunnerProvider
-	Scraper              Scraper
-	Output               OutputProvider
-	Jobhash              string
-	Counter              int
-	ErrorCounter         int
-	SpuriousErrorCounter int
-	Total                int
-	Running              bool
-	RunningJob           bool
-	Paused               bool
-	Count403             int
-	Count429             int
-	Error                string
-	Rate                 *RateThrottle
-	startTime            time.Time
-	startTimeJob         time.Time
-	queuejobs            []QueueJob
-	queuepos             int
-	skipQueue            bool
-	currentDepth         int
-	calibMutex           sync.Mutex
-	pauseWg              sync.WaitGroup
+	// 64-bit atomic counters. These MUST stay first in the struct so they are
+	// 8-byte aligned on 32-bit architectures, which sync/atomic requires. Access
+	// only through the helper methods below, never directly.
+	counter              int64
+	errorCounter         int64
+	spuriousErrorCounter int64
+	count403             int64
+	count429             int64
+
+	// 32-bit atomic flags (0 = false, 1 = true). Access only through the helpers.
+	running    int32
+	runningJob int32
+	skipQueue  int32
+
+	AuditLogger  AuditLogger
+	Config       *Config
+	Input        InputProvider
+	Runner       RunnerProvider
+	ReplayRunner RunnerProvider
+	Scraper      Scraper
+	Output       OutputProvider
+	Jobhash      string
+	Total        int
+	Rate         *RateThrottle
+
+	queue        *jobQueue
+	currentDepth int
+
+	startTime    time.Time
+	startTimeJob time.Time
+	errorMsg     string
+	paused       bool // guarded by pauseStateMutex
+
+	timeMutex       sync.Mutex   // guards startTime and startTimeJob
+	errMutex        sync.Mutex   // guards errorMsg
+	inputMutex      sync.Mutex   // serializes main-loop input iteration vs interactive restart Reset
+	calibMutex      sync.Mutex   // serializes autocalibration
+	pauseStateMutex sync.Mutex   // makes the pause-flag flip and the pauseMutex Lock/Unlock one atomic step
+	pauseMutex      sync.RWMutex // pause gate: workers RLock as a speed bump, Pause takes the write Lock
 }
 
 type QueueJob struct {
@@ -52,110 +64,92 @@ type QueueJob struct {
 func NewJob(conf *Config) *Job {
 	var j Job
 	j.Config = conf
-	j.Counter = 0
-	j.ErrorCounter = 0
-	j.SpuriousErrorCounter = 0
-	j.Running = false
-	j.RunningJob = false
-	j.Paused = false
-	j.queuepos = 0
-	j.queuejobs = make([]QueueJob, 0)
+	j.queue = newJobQueue()
 	j.currentDepth = 0
 	j.Rate = NewRateThrottle(conf)
-	j.skipQueue = false
 	return &j
 }
 
-// The per-run counters and run-state flags below are mutated by the execution
-// loop and worker goroutines while the progress goroutine and the interrupt
-// handler read them concurrently. ErrorMutex serializes every access. All access
-// goes through these leaf helpers, which never call one another, so they cannot
-// deadlock (including CheckStop, which reads via getters and then calls Stop).
+// The per-run counters and run-state flags are mutated by the execution loop and
+// the worker goroutines while the progress goroutine and the interrupt handler
+// read them concurrently. Counters use sync/atomic (int64), flags use atomic
+// int32, so there is no mutex to forget and no lock-ordering to get wrong. The
+// fields are private: the only way to touch them is through these helpers.
 
-func (j *Job) incCounter()      { j.ErrorMutex.Lock(); j.Counter++; j.ErrorMutex.Unlock() }
-func (j *Job) setCounter(n int) { j.ErrorMutex.Lock(); j.Counter = n; j.ErrorMutex.Unlock() }
-func (j *Job) getCounter() int  { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Counter }
+func (j *Job) incCounter()      { atomic.AddInt64(&j.counter, 1) }
+func (j *Job) setCounter(n int) { atomic.StoreInt64(&j.counter, int64(n)) }
+func (j *Job) getCounter() int  { return int(atomic.LoadInt64(&j.counter)) }
 
-func (j *Job) getErrorCounter() int {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	return j.ErrorCounter
-}
+func (j *Job) getErrorCounter() int { return int(atomic.LoadInt64(&j.errorCounter)) }
 func (j *Job) getSpuriousErrorCounter() int {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	return j.SpuriousErrorCounter
+	return int(atomic.LoadInt64(&j.spuriousErrorCounter))
 }
-func (j *Job) getCount403() int { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Count403 }
-func (j *Job) getCount429() int { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Count429 }
+func (j *Job) getCount403() int { return int(atomic.LoadInt64(&j.count403)) }
+func (j *Job) getCount429() int { return int(atomic.LoadInt64(&j.count429)) }
 
-func (j *Job) setRunning(v bool)    { j.ErrorMutex.Lock(); j.Running = v; j.ErrorMutex.Unlock() }
-func (j *Job) isRunning() bool      { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Running }
-func (j *Job) setRunningJob(v bool) { j.ErrorMutex.Lock(); j.RunningJob = v; j.ErrorMutex.Unlock() }
-func (j *Job) isRunningJob() bool {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	return j.RunningJob
+func boolToInt32(b bool) int32 {
+	if b {
+		return 1
+	}
+	return 0
 }
-func (j *Job) setPaused(v bool) { j.ErrorMutex.Lock(); j.Paused = v; j.ErrorMutex.Unlock() }
-func (j *Job) isPaused() bool   { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Paused }
-func (j *Job) setSkipQueue(v bool) {
-	j.ErrorMutex.Lock()
-	j.skipQueue = v
-	j.ErrorMutex.Unlock()
+
+func (j *Job) setRunning(v bool)    { atomic.StoreInt32(&j.running, boolToInt32(v)) }
+func (j *Job) isRunning() bool      { return atomic.LoadInt32(&j.running) == 1 }
+func (j *Job) setRunningJob(v bool) { atomic.StoreInt32(&j.runningJob, boolToInt32(v)) }
+func (j *Job) isRunningJob() bool   { return atomic.LoadInt32(&j.runningJob) == 1 }
+func (j *Job) setSkipQueue(v bool)  { atomic.StoreInt32(&j.skipQueue, boolToInt32(v)) }
+func (j *Job) isSkipQueue() bool    { return atomic.LoadInt32(&j.skipQueue) == 1 }
+
+func (j *Job) setError(s string) { j.errMutex.Lock(); j.errorMsg = s; j.errMutex.Unlock() }
+func (j *Job) getError() string  { j.errMutex.Lock(); defer j.errMutex.Unlock(); return j.errorMsg }
+
+func (j *Job) setStartTime(t time.Time) { j.timeMutex.Lock(); j.startTime = t; j.timeMutex.Unlock() }
+func (j *Job) getStartTime() time.Time {
+	j.timeMutex.Lock()
+	defer j.timeMutex.Unlock()
+	return j.startTime
 }
-func (j *Job) isSkipQueue() bool {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	return j.skipQueue
+func (j *Job) setStartTimeJob(t time.Time) {
+	j.timeMutex.Lock()
+	j.startTimeJob = t
+	j.timeMutex.Unlock()
 }
-func (j *Job) setError(s string) { j.ErrorMutex.Lock(); j.Error = s; j.ErrorMutex.Unlock() }
-func (j *Job) getError() string  { j.ErrorMutex.Lock(); defer j.ErrorMutex.Unlock(); return j.Error }
+func (j *Job) getStartTimeJob() time.Time {
+	j.timeMutex.Lock()
+	defer j.timeMutex.Unlock()
+	return j.startTimeJob
+}
 
 // incError increments the error counter
 func (j *Job) incError() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.ErrorCounter++
-	j.SpuriousErrorCounter++
+	atomic.AddInt64(&j.errorCounter, 1)
+	atomic.AddInt64(&j.spuriousErrorCounter, 1)
 }
 
 // inc403 increments the 403 response counter
-func (j *Job) inc403() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.Count403++
-}
+func (j *Job) inc403() { atomic.AddInt64(&j.count403, 1) }
 
 // inc429 increments the 429 response counter
-func (j *Job) inc429() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.Count429++
-}
+func (j *Job) inc429() { atomic.AddInt64(&j.count429, 1) }
 
 // resetSpuriousErrors resets the spurious error counter
-func (j *Job) resetSpuriousErrors() {
-	j.ErrorMutex.Lock()
-	defer j.ErrorMutex.Unlock()
-	j.SpuriousErrorCounter = 0
-}
+func (j *Job) resetSpuriousErrors() { atomic.StoreInt64(&j.spuriousErrorCounter, 0) }
 
 // DeleteQueueItem deletes a recursion job from the queue by its index in the slice
 func (j *Job) DeleteQueueItem(index int) {
-	index = j.queuepos + index - 1
-	j.queuejobs = append(j.queuejobs[:index], j.queuejobs[index+1:]...)
+	j.queue.removeAt(index)
 }
 
 // QueuedJobs returns the slice of queued recursive jobs
 func (j *Job) QueuedJobs() []QueueJob {
-	return j.queuejobs[j.queuepos-1:]
+	return j.queue.remaining()
 }
 
 // Start the execution of the Job
 func (j *Job) Start() {
-	if j.startTime.IsZero() {
-		j.startTime = time.Now()
+	if j.getStartTime().IsZero() {
+		j.setStartTime(time.Now())
 	}
 
 	basereq := BaseRequest(j.Config)
@@ -164,12 +158,12 @@ func (j *Job) Start() {
 		// process multiple payload locations and create a queue job for each location
 		reqs := SniperRequests(&basereq, j.Config.InputProviders[0].Template)
 		for _, r := range reqs {
-			j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: r})
+			j.queue.push(QueueJob{Url: j.Config.Url, depth: 0, req: r})
 		}
 		j.Total = j.Input.Total() * len(reqs)
 	} else {
 		// Add the default job to job queue
-		j.queuejobs = append(j.queuejobs, QueueJob{Url: j.Config.Url, depth: 0, req: BaseRequest(j.Config)})
+		j.queue.push(QueueJob{Url: j.Config.Url, depth: 0, req: BaseRequest(j.Config)})
 		j.Total = j.Input.Total()
 	}
 
@@ -199,10 +193,15 @@ func (j *Job) Start() {
 
 // Reset resets the counters and wordlist position for a job
 func (j *Job) Reset(cycle bool) {
+	// inputMutex serializes this against the main loop's Input iteration, so an
+	// interactive "restart" that calls Reset while workers are live cannot race
+	// the input provider's internal position.
+	j.inputMutex.Lock()
 	j.Input.Reset()
+	j.inputMutex.Unlock()
 	j.setCounter(0)
 	j.setSkipQueue(false)
-	j.startTimeJob = time.Now()
+	j.setStartTimeJob(time.Now())
 	if cycle {
 		j.Output.Cycle()
 	} else {
@@ -211,24 +210,24 @@ func (j *Job) Reset(cycle bool) {
 }
 
 func (j *Job) jobsInQueue() bool {
-	return j.queuepos < len(j.queuejobs)
+	return j.queue.hasNext()
 }
 
 func (j *Job) prepareQueueJob() {
-	j.Config.Url = j.queuejobs[j.queuepos].Url
-	j.currentDepth = j.queuejobs[j.queuepos].depth
+	job, _ := j.queue.advance()
+	j.Config.Url = job.Url
+	j.currentDepth = job.depth
 
 	//Find all keywords present in new queued job
 	kws := j.Input.Keywords()
 	found_kws := make([]string, 0)
 	for _, k := range kws {
-		if RequestContainsKeyword(j.queuejobs[j.queuepos].req, k) {
+		if RequestContainsKeyword(job.req, k) {
 			found_kws = append(found_kws, k)
 		}
 	}
 	//And activate / disable inputproviders as needed
 	j.Input.ActivateKeywords(found_kws)
-	j.queuepos += 1
 	j.Jobhash, _ = WriteHistoryEntry(j.Config)
 }
 
@@ -255,22 +254,49 @@ func (j *Job) sleepIfNeeded() {
 	}
 }
 
-// Pause pauses the job process
+// Pause pauses the job process. The pause gate is a sync.RWMutex: while Pause
+// holds the write lock, every worker blocks at its pauseCheckpoint (an RLock).
+//
+// pauseStateMutex makes the paused-flag flip and the pauseMutex Lock/Unlock a
+// single atomic step, so there is exactly one Lock per Unlock and no goroutine
+// ever unlocks an unlocked mutex (a fatal panic), however Pause, Resume, and the
+// SIGINT handler interleave.
+//
+// Pausing is refused once the job is stopping (isRunning is false). Together with
+// Stop() calling Resume(), that guarantees the gate always ends OPEN after a Stop
+// regardless of ordering, so a Pause racing a Stop can never strand a worker at
+// the checkpoint with no Resume left to wake it.
 func (j *Job) Pause() {
-	if !j.isPaused() {
-		j.setPaused(true)
-		j.pauseWg.Add(1)
+	j.pauseStateMutex.Lock()
+	defer j.pauseStateMutex.Unlock()
+	if !j.isRunning() {
+		return
+	}
+	if !j.paused {
+		j.paused = true
+		j.pauseMutex.Lock()
 		j.Output.Info("------ PAUSING ------")
 	}
 }
 
 // Resume resumes the job process
 func (j *Job) Resume() {
-	if j.isPaused() {
-		j.setPaused(false)
+	j.pauseStateMutex.Lock()
+	defer j.pauseStateMutex.Unlock()
+	if j.paused {
+		j.paused = false
+		j.pauseMutex.Unlock()
 		j.Output.Info("------ RESUMING -----")
-		j.pauseWg.Done()
 	}
+}
+
+// pauseCheckpoint blocks while the job is paused and returns immediately
+// otherwise. Acquiring and releasing the read lock is a cheap speed bump when no
+// pause is in effect.
+func (j *Job) pauseCheckpoint() {
+	j.pauseMutex.RLock()
+	//nolint:staticcheck // intentional: RLock/RUnlock is a pause speed bump, not a critical section
+	j.pauseMutex.RUnlock()
 }
 
 func (j *Job) startExecution() {
@@ -279,9 +305,9 @@ func (j *Job) startExecution() {
 	go j.runBackgroundTasks(&wg)
 
 	// Print the base URL when starting a new recursion or sniper queue job
-	if j.queuepos > 1 {
+	if j.queue.position() > 1 {
 		if j.Config.InputMode == "sniper" {
-			j.Output.Info(fmt.Sprintf("Starting queued sniper job (%d of %d) on target: %s", j.queuepos, len(j.queuejobs), j.Config.Url))
+			j.Output.Info(fmt.Sprintf("Starting queued sniper job (%d of %d) on target: %s", j.queue.position(), j.queue.total(), j.Config.Url))
 		} else {
 			j.Output.Info(fmt.Sprintf("Starting queued job on target: %s", j.Config.Url))
 		}
@@ -290,7 +316,16 @@ func (j *Job) startExecution() {
 	//Limiter blocks after reaching the buffer, ensuring limited concurrency
 	threadlimiter := make(chan bool, j.Config.Threads)
 
-	for j.Input.Next() && !j.isSkipQueue() {
+	for {
+		// Advancing the input cursor is done under inputMutex so an interactive
+		// restart (which calls Input.Reset) cannot race it.
+		j.inputMutex.Lock()
+		hasNext := j.Input.Next()
+		j.inputMutex.Unlock()
+		if !hasNext || j.isSkipQueue() {
+			break
+		}
+
 		// Check if we should stop the process
 		j.CheckStop()
 
@@ -298,13 +333,16 @@ func (j *Job) startExecution() {
 			defer j.Output.Warning(j.getError())
 			break
 		}
-		j.pauseWg.Wait()
+		j.pauseCheckpoint()
 		// Handle the rate & thread limiting
 		threadlimiter <- true
 		// Ratelimiter handles the rate ticker
 		<-j.Rate.RateLimiter.C
+
+		j.inputMutex.Lock()
 		nextInput := j.Input.Value()
 		nextPosition := j.Input.Position()
+		j.inputMutex.Unlock()
 		// Add FFUFHASH and its value
 		nextInput["FFUFHASH"] = j.ffufHash(nextPosition)
 
@@ -322,7 +360,11 @@ func (j *Job) startExecution() {
 		}()
 		if !j.isRunningJob() {
 			defer j.Output.Warning(j.getError())
-			return
+			// break, not return: fall through to wg.Wait() so the in-flight
+			// workers finish before Start() advances to the next queue job, which
+			// rewrites Config.Url / currentDepth / keyword-active state that those
+			// workers still read (the -maxtime-job drain race).
+			break
 		}
 	}
 	wg.Wait()
@@ -335,11 +377,8 @@ func (j *Job) interruptMonitor() {
 	go func() {
 		for range sigChan {
 			j.setError("Caught keyboard interrupt (Ctrl-C)\n")
-			// resume if paused
-			if j.isPaused() {
-				j.pauseWg.Done()
-			}
-			// Stop the job
+			// Stop reopens the pause gate itself, so a worker blocked at a
+			// checkpoint wakes and observes the stop.
 			j.Stop()
 		}
 	}()
@@ -349,7 +388,7 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 	defer wg.Done()
 	totalProgress := j.Input.Total()
 	for j.getCounter() <= totalProgress && !j.isSkipQueue() {
-		j.pauseWg.Wait()
+		j.pauseCheckpoint()
 		if !j.isRunning() {
 			break
 		}
@@ -366,12 +405,12 @@ func (j *Job) runBackgroundTasks(wg *sync.WaitGroup) {
 
 func (j *Job) updateProgress() {
 	prog := Progress{
-		StartedAt:  j.startTimeJob,
+		StartedAt:  j.getStartTimeJob(),
 		ReqCount:   j.getCounter(),
 		ReqTotal:   j.Input.Total(),
 		ReqSec:     j.Rate.CurrentRate(),
-		QueuePos:   j.queuepos,
-		QueueTotal: len(j.queuejobs),
+		QueuePos:   j.queue.position(),
+		QueueTotal: j.queue.total(),
 		ErrorCount: j.getErrorCounter(),
 	}
 	j.Output.Progress(prog)
@@ -440,7 +479,7 @@ func (j *Job) ffufHash(pos int) []byte {
 }
 
 func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
-	basereq := j.queuejobs[j.queuepos-1].req
+	basereq := j.queue.currentReq()
 	req, err := j.Runner.Prepare(input, &basereq)
 	req.Timestamp = time.Now()
 
@@ -466,12 +505,15 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 	}
 
 	if err != nil {
-		if retried {
-			j.incError()
-			log.Printf("%s", err)
-		} else {
+		if !retried {
+			// Retry once. The timeout messaging below runs only on the final
+			// failure, so a request that recovers on retry does not also print a
+			// spurious timeout notice.
 			j.runTask(input, position, true)
+			return
 		}
+		j.incError()
+		log.Printf("%s", err)
 		if os.IsTimeout(err) {
 			for name := range j.Config.MatcherManager.GetMatchers() {
 				if name == "time" {
@@ -520,7 +562,7 @@ func (j *Job) runTask(input map[string][]byte, position int, retried bool) {
 			j.inc429()
 		}
 	}
-	j.pauseWg.Wait()
+	j.pauseCheckpoint()
 
 	// Handle autocalibration, must be done after the actual request to ensure sane value in req.Host
 	_ = j.CalibrateIfNeeded(HostURLFromRequest(req), input)
@@ -580,7 +622,7 @@ func (j *Job) handleGreedyRecursionJob(resp Response) {
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		recUrl := resp.Request.Url + "/" + "FUZZ"
 		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
-		j.queuejobs = append(j.queuejobs, newJob)
+		j.queue.push(newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
 		j.Output.Warning(fmt.Sprintf("Maximum recursion depth reached. Ignoring: %s", resp.Request.Url))
@@ -598,7 +640,7 @@ func (j *Job) handleDefaultRecursionJob(resp Response) {
 	if j.Config.RecursionDepth == 0 || j.currentDepth < j.Config.RecursionDepth {
 		// We have yet to reach the maximum recursion depth
 		newJob := QueueJob{Url: recUrl, depth: j.currentDepth + 1, req: RecursionRequest(j.Config, recUrl)}
-		j.queuejobs = append(j.queuejobs, newJob)
+		j.queue.push(newJob)
 		j.Output.Info(fmt.Sprintf("Adding a new job to the queue: %s", recUrl))
 	} else {
 		j.Output.Warning(fmt.Sprintf("Directory found, but recursion depth exceeded. Ignoring: %s", resp.GetRedirectLocation(true)))
@@ -634,7 +676,7 @@ func (j *Job) CheckStop() {
 
 	// Check for runtime of entire process
 	if j.Config.MaxTime > 0 {
-		dur := time.Since(j.startTime)
+		dur := time.Since(j.getStartTime())
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTime {
 			j.setError("Maximum running time for entire process reached, exiting.")
@@ -644,7 +686,7 @@ func (j *Job) CheckStop() {
 
 	// Check for runtime of current job
 	if j.Config.MaxTimeJob > 0 {
-		dur := time.Since(j.startTimeJob)
+		dur := time.Since(j.getStartTimeJob())
 		runningSecs := int(dur / time.Second)
 		if runningSecs >= j.Config.MaxTimeJob {
 			j.setError("Maximum running time for this job reached, continuing with next job if one exists.")
@@ -658,6 +700,10 @@ func (j *Job) CheckStop() {
 func (j *Job) Stop() {
 	j.setRunning(false)
 	j.Config.Cancel()
+	// Reopen the pause gate so no worker is left blocked at a checkpoint after a
+	// stop. Resume is a no-op when the job is not paused, and Pause refuses to
+	// close the gate once isRunning is false, so the gate always ends open.
+	j.Resume()
 }
 
 // Stop current, resume to next

@@ -75,6 +75,7 @@ type OutputProvider interface {
 	SaveFile(filename, format string) error
 	GetCurrentResults() []Result
 	SetCurrentResults(results []Result)
+	FilterCurrentResults(keep func(Result) bool)
 	Reset()
 	Cycle()
 }

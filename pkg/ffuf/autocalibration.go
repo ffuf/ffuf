@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 )
 
 type AutocalibrationStrategy map[string][]string
 
 func (j *Job) autoCalibrationStrings() map[string][]string {
-	rand.Seed(time.Now().UnixNano())
+	// The global rand is seeded once in Job.Start; re-seeding here on every call
+	// reset the sequence and could hand two near-simultaneous calibrations the
+	// same "random" strings.
 	cInputs := make(map[string][]string)
 
 	if len(j.Config.AutoCalibrationStrings) > 0 {
