@@ -209,3 +209,59 @@ func (f *MatcherManager) Calibrated() bool {
 	defer f.mu.RUnlock()
 	return f.IsCalibrated
 }
+
+// Matches reports whether resp passes the configured matchers and filters. It is
+// the match decision that used to live in Job.isMatch, moved here so it sits with
+// the rule data it decides over and is unit-testable without an engine. perHost
+// selects the per-domain filter set (autocalibration -ach); matcherMode/filterMode
+// are the and/or combination modes. GetFilters/GetMatchers/FiltersForDomain each
+// take the read lock and return a copy, so the ranges below never touch the live
+// maps.
+func (f *MatcherManager) Matches(resp *ffuf.Response, perHost bool, matcherMode string, filterMode string) bool {
+	matched := false
+	var filters map[string]ffuf.FilterProvider
+	if perHost {
+		filters = f.FiltersForDomain(ffuf.HostURLFromRequest(*resp.Request))
+	} else {
+		filters = f.GetFilters()
+	}
+	matchers := f.GetMatchers()
+	for _, m := range matchers {
+		match, err := m.Filter(resp)
+		if err != nil {
+			continue
+		}
+		if match {
+			matched = true
+		} else if matcherMode == "and" {
+			// we already know this isn't an "and" match
+			return false
+		}
+	}
+	// The response was not matched, return before running filters
+	if !matched {
+		return false
+	}
+	for _, flt := range filters {
+		fv, err := flt.Filter(resp)
+		if err != nil {
+			continue
+		}
+		if fv {
+			if filterMode == "or" {
+				// return early, as a filter matched
+				return false
+			}
+		} else {
+			if filterMode == "and" {
+				// return early, as not all filters matched in "and" mode
+				return true
+			}
+		}
+	}
+	if len(filters) > 0 && filterMode == "and" {
+		// we did not return early, so all filters were matched
+		return false
+	}
+	return true
+}
