@@ -65,10 +65,11 @@ func TestResultPrintsWhenNotPaused(t *testing.T) {
 	}
 }
 
-// TestSetPausedResetsPendingCounter proves entering a fresh pause zeroes the
-// counter, so the "N new matches found while paused" report reflects only the
-// current pause session.
-func TestSetPausedResetsPendingCounter(t *testing.T) {
+// TestPendingReconcilesWithFilter is the fix for the correctness gap: a held
+// result that a mid-pause filter change prunes from CurrentResults must also
+// drop out of the pending count, so the "N new matches" report can never
+// contradict what "show" displays.
+func TestPendingReconcilesWithFilter(t *testing.T) {
 	s := NewStdoutput(&ffuf.Config{})
 	s.stdoutIsTerminal = false
 
@@ -79,15 +80,48 @@ func TestSetPausedResetsPendingCounter(t *testing.T) {
 		t.Fatalf("PendingResults = %d, want 2", got)
 	}
 
-	s.SetPaused(true) // re-entering a pause resets the counter
+	// Simulate an interactive filter change that keeps only w1, as
+	// refreshResults does via FilterCurrentResults.
+	s.FilterCurrentResults(func(r ffuf.Result) bool {
+		return string(r.Input["FUZZ"]) == "w1"
+	})
+
+	if got := s.PendingResults(); got != 1 {
+		t.Errorf("PendingResults = %d after filtering out a held result, want 1 (count must track CurrentResults)", got)
+	}
+	if got := len(s.GetCurrentResults()); got != 1 {
+		t.Errorf("CurrentResults = %d, want 1", got)
+	}
+}
+
+// TestUnpauseMarksHeldSeen proves resume acknowledges held results: after
+// leaving a pause a subsequent pause with no new matches reports zero, rather
+// than re-counting results the user was already told about.
+func TestUnpauseMarksHeldSeen(t *testing.T) {
+	s := NewStdoutput(&ffuf.Config{})
+	s.stdoutIsTerminal = false
+
+	s.SetPaused(true)
+	s.Result(resp(1))
+	s.Result(resp(2))
+	if got := s.PendingResults(); got != 2 {
+		t.Fatalf("PendingResults = %d, want 2", got)
+	}
+
+	s.SetPaused(false) // resume acknowledges the held results
 	if got := s.PendingResults(); got != 0 {
-		t.Errorf("PendingResults = %d after re-pause, want 0 (counter not reset)", got)
+		t.Errorf("PendingResults = %d after resume, want 0 (held results not marked seen)", got)
+	}
+
+	s.SetPaused(true) // pause again, no new matches arrive
+	if got := s.PendingResults(); got != 0 {
+		t.Errorf("PendingResults = %d on re-pause, want 0 (old results re-counted as new)", got)
 	}
 }
 
 // TestConcurrentResultWhilePaused runs Result from many goroutines while paused
 // (as the engine's worker pool does) and asserts nothing is lost and nothing is
-// printed. Run with -race to catch a data race on paused/pendingCount directly.
+// printed. Run with -race to catch a data race on paused/Printed directly.
 func TestConcurrentResultWhilePaused(t *testing.T) {
 	s := NewStdoutput(&ffuf.Config{})
 	s.stdoutIsTerminal = false

@@ -120,4 +120,10 @@ type Result struct {
 	ResultFile       string              `json:"resultfile"`
 	Host             string              `json:"host"`
 	HTMLColor        string              `json:"-"`
+	// Printed reports whether this result has already been shown to the user
+	// (streamed live, or surfaced in the "N new matches" summary on resume). It
+	// is the single source of truth for the interactive console's pending count,
+	// so filtering a held result out of CurrentResults also drops it from the
+	// count. Not serialized to any output format.
+	Printed bool `json:"-"`
 }
