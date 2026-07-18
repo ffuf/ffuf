@@ -307,6 +307,13 @@ job from the beginning.
   <img width="250" src="_img/ffuf_waving_250.png">
 </p>
 
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) to get started, and the
+[wiki's Contributing section](https://github.com/ffuf/ffuf/wiki/Contributing) for
+the architecture and testing documentation.
+
 ## License
 
 ffuf is released under MIT license. See [LICENSE](https://github.com/ffuf/ffuf/blob/master/LICENSE).
