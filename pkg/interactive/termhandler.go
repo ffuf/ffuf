@@ -209,6 +209,19 @@ func (i *interactive) handleInput(in []byte) {
 	}
 }
 
+// resultProbe rebuilds the minimal Response needed to re-evaluate the active
+// filters against an already-collected result. ContentLines must come from the
+// result's line count, not its length: feeding ContentLength here made an
+// in-console "fl" (line count) filter match against the wrong number.
+func resultProbe(res ffuf.Result) *ffuf.Response {
+	return &ffuf.Response{
+		StatusCode:    res.StatusCode,
+		ContentLines:  res.ContentLines,
+		ContentWords:  res.ContentWords,
+		ContentLength: res.ContentLength,
+	}
+}
+
 func (i *interactive) refreshResults() {
 	filters := i.Job.Config.MatcherManager.GetFilters()
 	// Keep a result only if it survives every active filter. The filtering runs
@@ -218,13 +231,7 @@ func (i *interactive) refreshResults() {
 	// result once per filter it passed).
 	i.Job.Output.FilterCurrentResults(func(res ffuf.Result) bool {
 		for _, filter := range filters {
-			fakeResp := &ffuf.Response{
-				StatusCode:    res.StatusCode,
-				ContentLines:  res.ContentLength,
-				ContentWords:  res.ContentWords,
-				ContentLength: res.ContentLength,
-			}
-			filterOut, _ := filter.Filter(fakeResp)
+			filterOut, _ := filter.Filter(resultProbe(res))
 			if filterOut {
 				return false
 			}
