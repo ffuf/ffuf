@@ -30,11 +30,12 @@ const (
 type Stdoutput struct {
 	config           *ffuf.Config
 	fuzzkeywords     []string
-	resultMutex      sync.Mutex // guards Results and CurrentResults; Result is called from worker goroutines
+	resultMutex      sync.Mutex // guards Results, CurrentResults and paused; Result is called from worker goroutines
 	Results          []ffuf.Result
 	CurrentResults   []ffuf.Result
 	stdoutIsTerminal bool
 	stderrIsTerminal bool
+	paused           bool // when set, Result records matches but does not print them
 }
 
 func NewStdoutput(conf *ffuf.Config) *Stdoutput {
@@ -427,10 +428,54 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		Host:             resp.Request.Host,
 	}
 	s.resultMutex.Lock()
+	paused := s.paused
+	// Printed is the single source of truth for the pending count. Mark it under
+	// the same lock as the append, so a later filter change that prunes this
+	// result from CurrentResults (via FilterCurrentResults) also removes it from
+	// the pending count - the count can never contradict what "show" displays.
+	sResult.Printed = !paused
 	s.CurrentResults = append(s.CurrentResults, sResult)
 	s.resultMutex.Unlock()
-	// Output the result
-	s.PrintResult(sResult)
+	// While the interactive console is open we still record the match above (so
+	// show, savejson and -o output stay complete) but do not stream it to the
+	// terminal - otherwise inflight requests completing after the user opens the
+	// console would scroll the banner off screen.
+	if !paused {
+		s.PrintResult(sResult)
+	}
+}
+
+// SetPaused toggles whether Result streams matches to the live terminal. While
+// paused (the interactive console is open) matches are recorded but not printed,
+// so inflight requests completing cannot scroll the console off screen. Leaving
+// a pause (paused == false) marks every held result as shown, since resume
+// reports their count to the user; a subsequent pause then only counts matches
+// that are genuinely new.
+func (s *Stdoutput) SetPaused(paused bool) {
+	s.resultMutex.Lock()
+	s.paused = paused
+	if !paused {
+		for i := range s.CurrentResults {
+			s.CurrentResults[i].Printed = true
+		}
+	}
+	s.resultMutex.Unlock()
+}
+
+// PendingResults returns the number of held matches not yet shown to the user:
+// results recorded while paused that still survive the active filters. It is
+// derived from CurrentResults, so a filter change that prunes a held result
+// drops it from this count in the same operation.
+func (s *Stdoutput) PendingResults() int {
+	s.resultMutex.Lock()
+	defer s.resultMutex.Unlock()
+	n := 0
+	for _, r := range s.CurrentResults {
+		if !r.Printed {
+			n++
+		}
+	}
+	return n
 }
 
 func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {

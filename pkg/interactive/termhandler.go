@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/engine"
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -38,11 +37,14 @@ func (i *interactive) handleInput(in []byte) {
 		// Enter pressed - toggle interactive state
 		i.paused = !i.paused
 		if i.paused {
+			// Suppress live result printing BEFORE pausing dispatch, so inflight
+			// requests completing cannot scroll the banner off screen, then show
+			// the banner immediately (no drain wait).
+			i.Job.Output.SetPaused(true)
 			i.Job.Pause()
-			time.Sleep(500 * time.Millisecond)
 			i.printBanner()
 		} else {
-			i.Job.Resume()
+			i.resumeJob()
 		}
 	} else {
 		switch args[0] {
@@ -52,10 +54,11 @@ func (i *interactive) handleInput(in []byte) {
 			i.printHelp()
 		case "resume":
 			i.paused = false
-			i.Job.Resume()
+			i.resumeJob()
 		case "restart":
 			i.Job.Reset(false)
 			i.paused = false
+			i.Job.Output.SetPaused(false)
 			i.Job.Output.Info("Restarting the current ffuf job!")
 			i.Job.Resume()
 		case "show":
@@ -206,6 +209,19 @@ func (i *interactive) handleInput(in []byte) {
 	}
 }
 
+// resultProbe rebuilds the minimal Response needed to re-evaluate the active
+// filters against an already-collected result. ContentLines must come from the
+// result's line count, not its length: feeding ContentLength here made an
+// in-console "fl" (line count) filter match against the wrong number.
+func resultProbe(res ffuf.Result) *ffuf.Response {
+	return &ffuf.Response{
+		StatusCode:    res.StatusCode,
+		ContentLines:  res.ContentLines,
+		ContentWords:  res.ContentWords,
+		ContentLength: res.ContentLength,
+	}
+}
+
 func (i *interactive) refreshResults() {
 	filters := i.Job.Config.MatcherManager.GetFilters()
 	// Keep a result only if it survives every active filter. The filtering runs
@@ -215,13 +231,7 @@ func (i *interactive) refreshResults() {
 	// result once per filter it passed).
 	i.Job.Output.FilterCurrentResults(func(res ffuf.Result) bool {
 		for _, filter := range filters {
-			fakeResp := &ffuf.Response{
-				StatusCode:    res.StatusCode,
-				ContentLines:  res.ContentLength,
-				ContentWords:  res.ContentWords,
-				ContentLength: res.ContentLength,
-			}
-			filterOut, _ := filter.Filter(fakeResp)
+			filterOut, _ := filter.Filter(resultProbe(res))
 			if filterOut {
 				return false
 			}
@@ -273,12 +283,30 @@ func (i *interactive) deleteQueue(in string) {
 		}
 	}
 }
+
+// resumeJob restores live result printing and resumes the job. If any matches
+// arrived while the console was open, it reports the count first so the user
+// knows there are new (recorded but unprinted) findings to inspect with "show".
+func (i *interactive) resumeJob() {
+	if n := i.Job.Output.PendingResults(); n > 0 {
+		i.Job.Output.Info(fmt.Sprintf("%d new match(es) found while paused. Type \"show\" to display them.", n))
+	}
+	i.Job.Output.SetPaused(false)
+	i.Job.Resume()
+}
+
 func (i *interactive) printBanner() {
 	i.Job.Output.Raw("entering interactive mode\ntype \"help\" for a list of commands, or ENTER to resume.\n")
 }
 
 func (i *interactive) printPrompt() {
-	i.Job.Output.Raw("> ")
+	// Surface matches that arrived while paused right in the prompt, so a user
+	// sitting in the console sees findings queuing up.
+	if n := i.Job.Output.PendingResults(); n > 0 {
+		i.Job.Output.Raw(fmt.Sprintf("[%d new] > ", n))
+	} else {
+		i.Job.Output.Raw("> ")
+	}
 }
 
 func (i *interactive) printHelp() {

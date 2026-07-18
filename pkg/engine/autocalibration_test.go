@@ -36,8 +36,10 @@ func (o *NullOutput) FilterCurrentResults(keep func(ffuf.Result) bool) {
 	}
 	o.Results = filtered
 }
-func (o *NullOutput) Reset() {}
-func (o *NullOutput) Cycle() {}
+func (o *NullOutput) SetPaused(bool)      {}
+func (o *NullOutput) PendingResults() int { return 0 }
+func (o *NullOutput) Reset()              {}
+func (o *NullOutput) Cycle()              {}
 
 func TestAutoCalibrationStrings(t *testing.T) {
 	// Create a temporary directory for the test

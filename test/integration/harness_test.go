@@ -161,5 +161,7 @@ func (c *capture) FilterCurrentResults(keep func(ffuf.Result) bool) {
 	}
 	c.results = filtered
 }
-func (c *capture) Reset() {}
-func (c *capture) Cycle() {}
+func (c *capture) SetPaused(bool)      {}
+func (c *capture) PendingResults() int { return 0 }
+func (c *capture) Reset()              {}
+func (c *capture) Cycle()              {}
