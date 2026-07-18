@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation and usage (wiki)
+    url: https://github.com/ffuf/ffuf/wiki
+    about: The full CLI flag reference, configuration, and feature guides. Check here first, most usage questions are answered in the wiki.
+  - name: Report a security vulnerability
+    url: https://github.com/ffuf/ffuf/security/policy
+    about: Do not file security vulnerabilities as public issues. Report them privately through the security policy.

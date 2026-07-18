@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an idea or improvement for ffuf
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [wiki](https://github.com/ffuf/ffuf/wiki) and the [CLI flag reference](https://github.com/ffuf/ffuf/wiki/CLI-flags) first: ffuf may already do what you want. The [Input methods](https://github.com/ffuf/ffuf/wiki/Input-methods), [Recursion](https://github.com/ffuf/ffuf/wiki/Recursion), [Scraper](https://github.com/ffuf/ffuf/wiki/Scraper), and [Autocalibration](https://github.com/ffuf/ffuf/wiki/Autocalibration) pages cover features people often miss.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the use case, not just the feature. What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like ffuf to do? A flag, a behavior, an output format?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing flags or workarounds you tried, and why they fall short.
+    validations:
+      required: false

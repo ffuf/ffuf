@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a bug in ffuf
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please skim the [wiki](https://github.com/ffuf/ffuf/wiki) and the [CLI flag reference](https://github.com/ffuf/ffuf/wiki/CLI-flags). Many "it doesn't work" reports turn out to be configuration questions the docs already answer.
+
+        Found a security vulnerability in ffuf itself? Do not file it here. Report it privately through the [security policy](https://github.com/ffuf/ffuf/security/policy).
+  - type: input
+    id: version
+    attributes:
+      label: ffuf version
+      description: Output of `ffuf -V`. If you built from source, give the commit.
+      placeholder: "e.g. v2.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command line
+      description: The exact ffuf command you ran. Redact anything sensitive.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened?
+      description: Include the relevant output. Paste text rather than screenshots where you can.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and Go version
+      description: Your OS, and `go version` if you built from source.
+      placeholder: "e.g. Ubuntu 24.04, go1.22"
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Config file contents, wordlist characteristics, target behavior, anything that helps reproduce.
+    validations:
+      required: false
