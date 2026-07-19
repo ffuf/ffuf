@@ -198,6 +198,17 @@ func (j *Job) Start() {
 	for j.jobsInQueue() {
 		ctx := j.prepareQueueJob()
 		j.Reset(true)
+
+		// Apply --start-at-position only once at initialization for the first queued job
+		if j.Config.StartAtPosition > 0 && j.queue.position() == 1 {
+			j.inputMutex.Lock()
+			// SetPosition(next_item) skips (next_item - 1) items.
+			// To skip N items, we must pass N + 1.
+			j.Input.SetPosition(j.Config.StartAtPosition + 1)
+			j.inputMutex.Unlock()
+			j.setCounter(j.Config.StartAtPosition)
+		}
+
 		j.setRunningJob(true)
 		j.startExecution(ctx)
 	}
