@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -52,12 +53,12 @@ type HTTPOptions struct {
 	ClientKey         string   `json:"client-key" ffuf:"ck" section:"http" usage:"Client key for authentication. Client certificate needs to be defined as well for this to work"`
 	// Preflights/Postflights are not plain flags: -preflight and -preflight-var
 	// bind positionally (a -preflight-var attaches to the preceding -preflight), so
-	// they are collected by parsePreflightArgs from os.Args and only registered for
-	// help via extraFlags. They stay json-tagged for config-file loading and history.
-	Preflights     []PreflightConfig `json:"preflights"`
-	Postflights    []PreflightConfig `json:"postflights"`
-	PreflightMode  string            `json:"preflight_mode" ffuf:"preflight-mode" section:"http" usage:"Preflight execution mode: \"per-request\" or \"per-thread\""`
-	PreflightError string            `json:"preflight_error" ffuf:"preflight-error" section:"http" usage:"Preflight error handling: \"abort\" or \"ignore\""`
+	// they are appended by the extraFlags Func callbacks in flags.go rather than a
+	// tagged field. The json/toml tags carry them through config files and history.
+	Preflights     []PreflightConfig `json:"preflights" toml:"preflights"`
+	Postflights    []PreflightConfig `json:"postflights" toml:"postflights"`
+	PreflightMode  string            `json:"preflight_mode" toml:"preflight_mode" ffuf:"preflight-mode" section:"http" usage:"Preflight execution mode: \"per-request\" or \"per-thread\""`
+	PreflightError string            `json:"preflight_error" toml:"preflight_error" ffuf:"preflight-error" section:"http" usage:"Preflight error handling: \"abort\" or \"ignore\""`
 }
 
 type GeneralOptions struct {
@@ -208,6 +209,21 @@ func cloneStrings(s []string) []string {
 		return nil
 	}
 	return append([]string(nil), s...)
+}
+
+// clonePreflights deep-copies a preflight/postflight slice, including each entry's
+// Vars slice, so the retained options snapshot shares no backing array with the
+// caller's options (matching the cloneStrings invariant for the other slice fields).
+func clonePreflights(in []PreflightConfig) []PreflightConfig {
+	if in == nil {
+		return nil
+	}
+	out := make([]PreflightConfig, len(in))
+	for i, pf := range in {
+		out[i] = pf
+		out[i].Vars = append([]VarExtract(nil), pf.Vars...)
+	}
+	return out
 }
 
 // ConfigFromOptions parses the values in ConfigOptions struct, ensures that the values are sane,
@@ -592,16 +608,26 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errs.Add(fmt.Errorf("-preflight-error must be \"abort\" or \"ignore\", got %q", parseOpts.HTTP.PreflightError))
 	}
 
-	for i, pf := range conf.Preflights {
-		if _, err := os.Stat(pf.RequestFile); err != nil {
-			errs.Add(fmt.Errorf("preflight request file #%d %q: %s", i+1, pf.RequestFile, err))
+	// Validate that each preflight/postflight file exists and precompile every
+	// extraction regex once here (invalid regex is a config error, not a runtime
+	// per-request abort; the runner reuses Compiled so the hot path never recompiles).
+	compileFlights := func(kind string, flights []PreflightConfig) {
+		for i := range flights {
+			if _, err := os.Stat(flights[i].RequestFile); err != nil {
+				errs.Add(fmt.Errorf("%s request file #%d %q: %s", kind, i+1, flights[i].RequestFile, err))
+			}
+			for j := range flights[i].Vars {
+				re, cerr := regexp.Compile(flights[i].Vars[j].Regex)
+				if cerr != nil {
+					errs.Add(fmt.Errorf("%s #%d var %q: invalid regex %q: %s", kind, i+1, flights[i].Vars[j].Name, flights[i].Vars[j].Regex, cerr))
+					continue
+				}
+				flights[i].Vars[j].Compiled = re
+			}
 		}
 	}
-	for i, pf := range conf.Postflights {
-		if _, err := os.Stat(pf.RequestFile); err != nil {
-			errs.Add(fmt.Errorf("postflight request file #%d %q: %s", i+1, pf.RequestFile, err))
-		}
-	}
+	compileFlights("preflight", conf.Preflights)
+	compileFlights("postflight", conf.Postflights)
 
 	// Check that fmode and mmode have sane values
 	valid_opmodes := []string{"and", "or"}
@@ -694,6 +720,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	optsCopy.Input.Inputcommands = cloneStrings(parseOpts.Input.Inputcommands)
 	optsCopy.General.AutoCalibrationStrings = cloneStrings(parseOpts.General.AutoCalibrationStrings)
 	optsCopy.General.AutoCalibrationStrategies = cloneStrings(parseOpts.General.AutoCalibrationStrategies)
+	optsCopy.HTTP.Preflights = clonePreflights(parseOpts.HTTP.Preflights)
+	optsCopy.HTTP.Postflights = clonePreflights(parseOpts.HTTP.Postflights)
 	conf.Options = &optsCopy
 	return &conf, errs.ErrorOrNil()
 }
