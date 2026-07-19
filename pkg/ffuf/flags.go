@@ -109,6 +109,22 @@ var extraFlags = []extraFlag{
 	{"k", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
 		_ = fs.Bool("k", false, "Dummy flag for backwards compatibility")
 	}},
+	// Preflight/postflight files bind positionally (a -preflight-var attaches to the
+	// preceding -preflight), which the field-binding registry can't express, so they
+	// are registered here for help and to satisfy flag.Parse; the values are read
+	// from os.Args by parsePreflightArgs in main.
+	{"preflight", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("preflight", "Raw HTTP request file to run before each fuzzing request (repeatable, order matters)", func(string) error { return nil })
+	}},
+	{"preflight-var", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("preflight-var", "Extract a variable from the preceding -preflight response: \"NAME:regex\" (repeatable)", func(string) error { return nil })
+	}},
+	{"postflight", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("postflight", "Raw HTTP request file to run after each fuzzing request (repeatable, order matters)", func(string) error { return nil })
+	}},
+	{"postflight-var", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("postflight-var", "Extract a variable from the preceding -postflight response: \"NAME:regex\" (repeatable)", func(string) error { return nil })
+	}},
 }
 
 // RegisterFlags is the single source of truth for CLI flag registration. It walks

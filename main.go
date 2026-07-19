@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/assembly"
@@ -30,7 +31,66 @@ func ParseFlags(opts *ffuf.ConfigOptions) *ffuf.ConfigOptions {
 	flagRegistry = ffuf.RegisterFlags(flag.CommandLine, opts)
 	flag.Usage = Usage
 	flag.Parse()
+	// -preflight/-preflight-var (and postflight) bind positionally: each
+	// -preflight-var attaches to the most recent -preflight. Go's flag package
+	// can't express that, so the ordered slices are built from a raw argv scan.
+	opts.HTTP.Preflights, opts.HTTP.Postflights = parsePreflightArgs(os.Args[1:])
 	return opts
+}
+
+// parsePreflightArgs scans raw CLI args in order, building the preflight and
+// postflight chains. Each -preflight-var / -postflight-var attaches to the most
+// recently seen -preflight / -postflight entry.
+func parsePreflightArgs(args []string) (preflights, postflights []ffuf.PreflightConfig) {
+	preflights = make([]ffuf.PreflightConfig, 0)
+	postflights = make([]ffuf.PreflightConfig, 0)
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if !strings.HasPrefix(arg, "-") {
+			continue
+		}
+		arg = strings.TrimPrefix(strings.TrimPrefix(arg, "-"), "-") // accept -flag and --flag
+		var name, val string
+		if idx := strings.IndexByte(arg, '='); idx >= 0 {
+			name, val = arg[:idx], arg[idx+1:]
+		} else {
+			name = arg
+			if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+				i++
+				val = args[i]
+			}
+		}
+
+		switch name {
+		case "preflight":
+			preflights = append(preflights, ffuf.PreflightConfig{RequestFile: val, Vars: make([]ffuf.VarExtract, 0)})
+		case "postflight":
+			postflights = append(postflights, ffuf.PreflightConfig{RequestFile: val, Vars: make([]ffuf.VarExtract, 0)})
+		case "preflight-var":
+			appendVar(&preflights, "-preflight-var", val)
+		case "postflight-var":
+			appendVar(&postflights, "-postflight-var", val)
+		}
+	}
+	return preflights, postflights
+}
+
+// appendVar attaches a "NAME:regex" extraction to the last entry in chain,
+// warning (and skipping) if there is no preceding -preflight/-postflight or the
+// value is malformed.
+func appendVar(chain *[]ffuf.PreflightConfig, flagName, val string) {
+	if len(*chain) == 0 {
+		fmt.Fprintf(os.Stderr, "Warning: %s %q has no preceding %s, ignoring\n", flagName, val, strings.TrimSuffix(flagName, "-var"))
+		return
+	}
+	idx := strings.IndexByte(val, ':')
+	if idx <= 0 {
+		fmt.Fprintf(os.Stderr, "Warning: %s value %q must be \"NAME:regex\", ignoring\n", flagName, val)
+		return
+	}
+	last := &(*chain)[len(*chain)-1]
+	last.Vars = append(last.Vars, ffuf.VarExtract{Name: val[:idx], Regex: val[idx+1:]})
 }
 
 func main() {

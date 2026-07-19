@@ -9,6 +9,12 @@ HTTP OPTIONS:
   -d                  POST data
   -http2              Use HTTP2 protocol (default: false)
   -ignore-body        Do not fetch the response content. (default: false)
+  -postflight         Raw HTTP request file to run after each fuzzing request (repeatable, order matters)
+  -postflight-var     Extract a variable from the preceding -postflight response: "NAME:regex" (repeatable)
+  -preflight          Raw HTTP request file to run before each fuzzing request (repeatable, order matters)
+  -preflight-error    Preflight error handling: "abort" or "ignore" (default: abort)
+  -preflight-mode     Preflight execution mode: "per-request" or "per-thread" (default: per-request)
+  -preflight-var      Extract a variable from the preceding -preflight response: "NAME:regex" (repeatable)
   -r                  Follow redirects (default: false)
   -raw                Do not encode URI (default: false)
   -recursion          Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)

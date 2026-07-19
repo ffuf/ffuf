@@ -71,7 +71,11 @@
   ],
   "http2": false,
   "client-cert": "/tmp/cert.pem",
-  "client-key": "/tmp/key.pem"
+  "client-key": "/tmp/key.pem",
+  "preflights": [],
+  "postflights": [],
+  "preflight_mode": "per-request",
+  "preflight_error": "abort"
 }
 
 --- matchers after SetupFilters ---

@@ -1,20 +1,25 @@
 package runner
 
 import (
+	"bufio"
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/http/httputil"
 	"net/textproto"
 	"net/url"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -28,6 +33,44 @@ const MAX_DOWNLOAD_SIZE = 5242880
 type SimpleRunner struct {
 	config *ffuf.Config
 	client *http.Client
+	lanes  *lanePool
+}
+
+// preflightLane holds the variables extracted by a per-thread preflight chain.
+// A lane is checked out of the pool for the duration of one Execute call, so its
+// map is only ever touched by a single goroutine at a time.
+type preflightLane struct {
+	vars        map[string]string
+	initialized bool
+}
+
+// lanePool hands out preflightLanes for per-thread preflight mode. ffuf runs a
+// fresh goroutine per request (bounded to -t concurrent), so there is no
+// persistent worker to pin per-thread state to; instead a request borrows a lane
+// for the length of its Execute call and returns it. Lanes are reused, so a
+// per-thread preflight chain runs once per lane and its vars are amortized across
+// every request that later borrows that lane. The free list grows on demand, so a
+// checkout never blocks and cannot deadlock.
+type lanePool struct {
+	mu   sync.Mutex
+	free []*preflightLane
+}
+
+func (p *lanePool) get() *preflightLane {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if n := len(p.free); n > 0 {
+		l := p.free[n-1]
+		p.free = p.free[:n-1]
+		return l
+	}
+	return &preflightLane{}
+}
+
+func (p *lanePool) put(l *preflightLane) {
+	p.mu.Lock()
+	p.free = append(p.free, l)
+	p.mu.Unlock()
 }
 
 func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
@@ -54,6 +97,7 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 	}
 
 	simplerunner.config = conf
+	simplerunner.lanes = &lanePool{}
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
@@ -102,6 +146,14 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 }
 
 func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
+	// Run the preflight chain first: it may inject extracted variables into this
+	// request's URL, headers and body before it is built.
+	appliedVars, releaseLane, pferr := r.runPreflights(req)
+	defer releaseLane()
+	if pferr != nil {
+		return ffuf.Response{}, pferr
+	}
+
 	var httpreq *http.Request
 	var err error
 	var rawreq []byte
@@ -212,7 +264,224 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (ffuf.Response, error) {
 	resp.Duration = firstByteTime
 	resp.Timestamp = start.Add(firstByteTime)
 
+	r.runPostflights(appliedVars)
 	return resp, nil
+}
+
+// parsePreflightRequest reads a Burp-style raw HTTP request file and builds an
+// *http.Request. Main-config headers are inherited (so auth carries over) and any
+// already-known vars are substituted into the request before it is built.
+func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]string) (*http.Request, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("preflight: could not open %q: %s", filename, err)
+	}
+	defer f.Close()
+	reader := bufio.NewReader(f)
+
+	// First line: METHOD path HTTP/version
+	firstLine, err := reader.ReadString('\n')
+	if err != nil && firstLine == "" {
+		return nil, fmt.Errorf("preflight: could not read request line from %q: %s", filename, err)
+	}
+	parts := strings.SplitN(strings.TrimSpace(firstLine), " ", 3)
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("preflight: malformed request line in %q", filename)
+	}
+	method, path := parts[0], parts[1]
+
+	// Headers, seeded with the main config headers so auth etc. is inherited.
+	headers := make(map[string]string)
+	for k, v := range r.config.Headers {
+		headers[k] = v
+	}
+	var host string
+	for {
+		line, rerr := reader.ReadString('\n')
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" || rerr != nil {
+			break
+		}
+		p := strings.SplitN(line, ":", 2)
+		if len(p) != 2 {
+			continue
+		}
+		k, v := strings.TrimSpace(p[0]), strings.TrimSpace(p[1])
+		if strings.EqualFold(k, "content-length") {
+			continue // let net/http compute it
+		}
+		if strings.EqualFold(k, "host") {
+			host = v
+			continue // set via Request.Host, not a header
+		}
+		headers[textproto.CanonicalMIMEHeaderKey(k)] = v
+	}
+
+	body, _ := io.ReadAll(reader)
+	body = bytes.TrimRight(body, "\r\n") // trim trailing newline editors add
+
+	// Substitute known variables into method, path, headers, host and body.
+	for name, val := range vars {
+		method = strings.ReplaceAll(method, name, val)
+		path = strings.ReplaceAll(path, name, val)
+		body = []byte(strings.ReplaceAll(string(body), name, val))
+		host = strings.ReplaceAll(host, name, val)
+		for h, v := range headers {
+			headers[h] = strings.ReplaceAll(v, name, val)
+		}
+	}
+
+	// Build the full URL, deriving scheme/host from the main target when the raw
+	// request uses a relative path.
+	var rawURL string
+	if strings.HasPrefix(path, "http") {
+		rawURL = path
+	} else {
+		scheme := "https"
+		if u, uerr := url.Parse(r.config.Url); uerr == nil && u.Scheme != "" {
+			scheme = u.Scheme
+			if host == "" {
+				host = u.Host
+			}
+		}
+		rawURL = scheme + "://" + host + path
+	}
+
+	httpreq, err := http.NewRequestWithContext(r.config.Context, method, rawURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("preflight: could not build request from %q: %s", filename, err)
+	}
+	if host != "" {
+		httpreq.Host = host
+	}
+	if _, ok := headers["User-Agent"]; !ok {
+		headers["User-Agent"] = fmt.Sprintf("%s v%s", "Fuzz Faster U Fool", ffuf.Version())
+	}
+	for k, v := range headers {
+		httpreq.Header.Set(k, v)
+	}
+	return httpreq, nil
+}
+
+// runPreflightChain executes an ordered chain of requests, accumulating extracted
+// variables. inheritVars seeds the map (e.g. with vars from an earlier step). The
+// result is returned; no shared state is touched. On error it honours
+// -preflight-error: "ignore" returns the vars gathered so far, "abort" errors.
+func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVars map[string]string) (map[string]string, error) {
+	vars := make(map[string]string, len(inheritVars))
+	for k, v := range inheritVars {
+		vars[k] = v
+	}
+	ignore := r.config.PreflightError == "ignore"
+
+	for _, pf := range chain {
+		httpreq, err := r.parsePreflightRequest(pf.RequestFile, vars)
+		if err != nil {
+			if ignore {
+				log.Printf("preflight ignored error building request from %q: %s", pf.RequestFile, err)
+				return vars, nil
+			}
+			return nil, err
+		}
+		resp, err := r.client.Do(httpreq)
+		if err != nil {
+			if ignore {
+				log.Printf("preflight ignored error executing %q: %s", pf.RequestFile, err)
+				return vars, nil
+			}
+			return nil, fmt.Errorf("preflight: request %q failed: %s", pf.RequestFile, err)
+		}
+		body, err := io.ReadAll(io.LimitReader(resp.Body, int64(MAX_DOWNLOAD_SIZE)+1))
+		resp.Body.Close()
+		if err != nil {
+			if ignore {
+				log.Printf("preflight ignored error reading response from %q: %s", pf.RequestFile, err)
+				return vars, nil
+			}
+			return nil, fmt.Errorf("preflight: reading response body from %q failed: %s", pf.RequestFile, err)
+		}
+
+		for _, ve := range pf.Vars {
+			re, cerr := regexp.Compile(ve.Regex)
+			if cerr != nil {
+				if ignore {
+					log.Printf("preflight ignored invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
+					continue
+				}
+				return nil, fmt.Errorf("preflight: invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
+			}
+			matches := re.FindSubmatch(body)
+			if len(matches) < 2 {
+				if ignore {
+					log.Printf("preflight: regex %q did not match var %s in response from %q", ve.Regex, ve.Name, pf.RequestFile)
+					continue
+				}
+				return nil, fmt.Errorf("preflight: regex %q did not capture var %s from response of %q", ve.Regex, ve.Name, pf.RequestFile)
+			}
+			vars[ve.Name] = string(matches[1])
+			log.Printf("preflight: extracted %s from %q", ve.Name, pf.RequestFile)
+		}
+	}
+	return vars, nil
+}
+
+// applyVars substitutes extracted variable keywords into a single request's URL,
+// headers and body. It mutates only the request passed in.
+func (r *SimpleRunner) applyVars(req *ffuf.Request, vars map[string]string) {
+	for name, val := range vars {
+		req.Url = strings.ReplaceAll(req.Url, name, val)
+		req.Data = []byte(strings.ReplaceAll(string(req.Data), name, val))
+		for h, v := range req.Headers {
+			req.Headers[h] = strings.ReplaceAll(v, name, val)
+		}
+	}
+}
+
+// runPreflights resolves the variables for this request per -preflight-mode
+// (fresh per request, or once per lane and amortized in per-thread mode) and
+// applies them. It returns the applied vars so postflight can chain off them, and
+// a cleanup func the caller must defer (it returns a borrowed lane, if any).
+func (r *SimpleRunner) runPreflights(req *ffuf.Request) (applied map[string]string, cleanup func(), err error) {
+	cleanup = func() {}
+	if len(r.config.Preflights) == 0 {
+		return nil, cleanup, nil
+	}
+	if r.config.PreflightMode == "per-thread" {
+		lane := r.lanes.get()
+		cleanup = func() { r.lanes.put(lane) }
+		if !lane.initialized {
+			v, ferr := r.runPreflightChain(r.config.Preflights, nil)
+			if ferr != nil {
+				cleanup()
+				return nil, func() {}, ferr
+			}
+			lane.vars = v
+			lane.initialized = true
+		}
+		applied = lane.vars
+	} else {
+		v, ferr := r.runPreflightChain(r.config.Preflights, nil)
+		if ferr != nil {
+			return nil, cleanup, ferr
+		}
+		applied = v
+	}
+	if len(applied) > 0 {
+		r.applyVars(req, applied)
+	}
+	return applied, cleanup, nil
+}
+
+// runPostflights executes the postflight chain after the main request, seeded
+// with the vars applied to it so chained extractions work. Postflight failure is
+// non-fatal: the main result is always kept, the error is only logged.
+func (r *SimpleRunner) runPostflights(seedVars map[string]string) {
+	if len(r.config.Postflights) == 0 {
+		return
+	}
+	if _, ferr := r.runPreflightChain(r.config.Postflights, seedVars); ferr != nil {
+		log.Printf("postflight error (result still recorded): %s", ferr)
+	}
 }
 
 func (r *SimpleRunner) Dump(req *ffuf.Request) ([]byte, error) {

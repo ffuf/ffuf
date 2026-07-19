@@ -2,6 +2,7 @@
 - master
   - New
     - Added audit logging functionality
+    - Added preflight/postflight requests: raw HTTP request files run before/after each fuzzing request (`-preflight`/`-postflight`), with regex variable extraction (`-preflight-var "NAME:regex"`) injected into the main request, a per-request or amortized per-thread mode (`-preflight-mode`), and abort/ignore error handling (`-preflight-error`)
   - Changed
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case

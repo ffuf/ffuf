@@ -66,5 +66,9 @@ error: 1 errors occured.
   ],
   "http2": false,
   "client-cert": "",
-  "client-key": ""
+  "client-key": "",
+  "preflights": [],
+  "postflights": [],
+  "preflight_mode": "per-request",
+  "preflight_error": "abort"
 }

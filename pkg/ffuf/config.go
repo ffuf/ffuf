@@ -4,6 +4,21 @@ import (
 	"context"
 )
 
+// VarExtract names a variable to capture from a preflight/postflight response
+// using the first capture group of Regex. The captured value is substituted into
+// the keyword Name wherever it appears in later requests.
+type VarExtract struct {
+	Name  string `json:"name"`
+	Regex string `json:"regex"`
+}
+
+// PreflightConfig is one raw HTTP request file executed around the fuzzing
+// request, with optional variable extractions from its response.
+type PreflightConfig struct {
+	RequestFile string       `json:"request_file"`
+	Vars        []VarExtract `json:"vars"`
+}
+
 type Config struct {
 	AuditLog                  string                `json:"auditlog"`
 	AutoCalibration           bool                  `json:"autocalibration"`
@@ -68,6 +83,10 @@ type Config struct {
 	Http2                     bool                  `json:"http2"`
 	ClientCert                string                `json:"client-cert"`
 	ClientKey                 string                `json:"client-key"`
+	Preflights                []PreflightConfig     `json:"preflights"`
+	Postflights               []PreflightConfig     `json:"postflights"`
+	PreflightMode             string                `json:"preflight_mode"`
+	PreflightError            string                `json:"preflight_error"`
 	// Options retains the raw ConfigOptions this Config was built from, so the
 	// configuration can be re-serialized (FFUFHASH history and similar features)
 	// directly, with no hand-maintained reverse mapper. Set by ConfigFromOptions;

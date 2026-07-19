@@ -50,6 +50,14 @@ type HTTPOptions struct {
 	Http2             bool     `json:"http2" ffuf:"http2" section:"http" usage:"Use HTTP2 protocol"`
 	ClientCert        string   `json:"client-cert" ffuf:"cc" section:"http" usage:"Client cert for authentication. Client key needs to be defined as well for this to work"`
 	ClientKey         string   `json:"client-key" ffuf:"ck" section:"http" usage:"Client key for authentication. Client certificate needs to be defined as well for this to work"`
+	// Preflights/Postflights are not plain flags: -preflight and -preflight-var
+	// bind positionally (a -preflight-var attaches to the preceding -preflight), so
+	// they are collected by parsePreflightArgs from os.Args and only registered for
+	// help via extraFlags. They stay json-tagged for config-file loading and history.
+	Preflights     []PreflightConfig `json:"preflights"`
+	Postflights    []PreflightConfig `json:"postflights"`
+	PreflightMode  string            `json:"preflight_mode" ffuf:"preflight-mode" section:"http" usage:"Preflight execution mode: \"per-request\" or \"per-thread\""`
+	PreflightError string            `json:"preflight_error" ffuf:"preflight-error" section:"http" usage:"Preflight error handling: \"abort\" or \"ignore\""`
 }
 
 type GeneralOptions struct {
@@ -151,6 +159,10 @@ func NewConfigOptions() *ConfigOptions {
 	c.General.StopOnErrors = false
 	c.General.Threads = 40
 	c.General.Verbose = false
+	c.HTTP.Preflights = make([]PreflightConfig, 0)
+	c.HTTP.Postflights = make([]PreflightConfig, 0)
+	c.HTTP.PreflightMode = "per-request"
+	c.HTTP.PreflightError = "abort"
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false
 	c.HTTP.IgnoreBody = false
@@ -559,6 +571,37 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+	conf.Preflights = parseOpts.HTTP.Preflights
+	conf.Postflights = parseOpts.HTTP.Postflights
+
+	switch parseOpts.HTTP.PreflightMode {
+	case "", "per-request":
+		conf.PreflightMode = "per-request"
+	case "per-thread":
+		conf.PreflightMode = "per-thread"
+	default:
+		errs.Add(fmt.Errorf("-preflight-mode must be \"per-request\" or \"per-thread\", got %q", parseOpts.HTTP.PreflightMode))
+	}
+
+	switch parseOpts.HTTP.PreflightError {
+	case "", "abort":
+		conf.PreflightError = "abort"
+	case "ignore":
+		conf.PreflightError = "ignore"
+	default:
+		errs.Add(fmt.Errorf("-preflight-error must be \"abort\" or \"ignore\", got %q", parseOpts.HTTP.PreflightError))
+	}
+
+	for i, pf := range conf.Preflights {
+		if _, err := os.Stat(pf.RequestFile); err != nil {
+			errs.Add(fmt.Errorf("preflight request file #%d %q: %s", i+1, pf.RequestFile, err))
+		}
+	}
+	for i, pf := range conf.Postflights {
+		if _, err := os.Stat(pf.RequestFile); err != nil {
+			errs.Add(fmt.Errorf("postflight request file #%d %q: %s", i+1, pf.RequestFile, err))
+		}
+	}
 
 	// Check that fmode and mmode have sane values
 	valid_opmodes := []string{"and", "or"}

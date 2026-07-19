@@ -73,7 +73,11 @@
   ],
   "http2": false,
   "client-cert": "",
-  "client-key": ""
+  "client-key": "",
+  "preflights": [],
+  "postflights": [],
+  "preflight_mode": "per-request",
+  "preflight_error": "abort"
 }
 
 --- matchers after SetupFilters ---
