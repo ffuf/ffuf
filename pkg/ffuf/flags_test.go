@@ -53,6 +53,7 @@ func TestRegisterFlags_Wellformed(t *testing.T) {
 		// Input
 		"D": true, "e": true, "enc": true, "ic": true, "input-cmd": true, "input-num": true,
 		"input-shell": true, "mode": true, "request": true, "request-proto": true, "w": true,
+		"start-at-position": true,
 		// Output
 		"audit-log": true, "debug-log": true, "o": true, "od": true, "of": true, "or": true,
 		// Compat aliases

@@ -62,6 +62,7 @@ error: 1 errors occured.
   "url": "https://example.org/FUZZ",
   "verbose": false,
   "wordlists": [],
+  "start_at_position": 0,
   "http2": false,
   "client-cert": "",
   "client-key": "",

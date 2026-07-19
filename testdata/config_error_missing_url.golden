@@ -64,6 +64,7 @@ error: 1 errors occured.
   "wordlists": [
     "/tmp/wl.txt"
   ],
+  "start_at_position": 0,
   "http2": false,
   "client-cert": "",
   "client-key": "",
