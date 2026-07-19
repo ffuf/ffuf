@@ -159,7 +159,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 	// skipped when the request itself errors.
 	defer func() {
 		if err == nil {
-			r.runPostflights(appliedVars)
+			r.runPostflights(req.Input, appliedVars)
 		}
 	}()
 	if pferr != nil {
@@ -286,7 +286,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 // parsePreflightRequest reads a Burp-style raw HTTP request file and builds an
 // *http.Request. Main-config headers are inherited (so auth carries over) and any
 // already-known vars are substituted into the request before it is built.
-func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]string) (*http.Request, error) {
+func (r *SimpleRunner) parsePreflightRequest(filename string, input map[string][]byte, vars map[string]string) (*http.Request, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("preflight: could not open %q: %s", filename, err)
@@ -337,10 +337,12 @@ func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]st
 	body, _ := io.ReadAll(reader)
 	body = bytes.TrimRight(body, "\r\n") // trim trailing newline editors add
 
-	// Substitute known variables into method, path, headers, host and body, in a
-	// single deterministic pass.
-	if len(vars) > 0 {
-		rep := varsReplacer(vars)
+	// Substitute the fuzzing input keywords AND the extracted variables into the
+	// request, in one deterministic pass. Input keywords (FUZZ, custom wordlist
+	// keywords, FFUFHASH) give preflight/postflight the same keyword treatment as
+	// the main request; extracted vars chain from earlier steps.
+	rep := mergedReplacer(input, vars)
+	if rep != nil {
 		method = rep.Replace(method)
 		path = rep.Replace(path)
 		body = []byte(rep.Replace(string(body)))
@@ -361,11 +363,13 @@ func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]st
 			scheme = u.Scheme
 			if host == "" {
 				host = u.Host
+				if rep != nil {
+					host = rep.Replace(host) // resolve keywords in the derived (vhost) host
+				}
 			}
 		}
-		// A relative-path preflight whose host was derived from the target template
-		// during host/vhost fuzzing would carry an unsubstituted keyword; fail loudly
-		// rather than send the request to a literal "FUZZ.example.com".
+		// If a keyword still survives here it had no value in the current input, so
+		// the request would go to a literal "FUZZ.example.com"; fail loudly instead.
 		if kw, ok := r.hostHasKeyword(host); ok {
 			return nil, fmt.Errorf("preflight %q: derived target host %q still contains fuzz keyword %q; give the preflight file an absolute URL or a Host header", filename, host, kw)
 		}
@@ -392,7 +396,7 @@ func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]st
 // variables. inheritVars seeds the map (e.g. with vars from an earlier step). The
 // result is returned; no shared state is touched. On error it honours
 // -preflight-error: "ignore" returns the vars gathered so far, "abort" errors.
-func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVars map[string]string) (map[string]string, error) {
+func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, input map[string][]byte, inheritVars map[string]string) (map[string]string, error) {
 	vars := make(map[string]string, len(inheritVars))
 	for k, v := range inheritVars {
 		vars[k] = v
@@ -400,7 +404,7 @@ func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVa
 	ignore := r.config.PreflightError == "ignore"
 
 	for _, pf := range chain {
-		httpreq, err := r.parsePreflightRequest(pf.RequestFile, vars)
+		httpreq, err := r.parsePreflightRequest(pf.RequestFile, input, vars)
 		if err != nil {
 			if ignore {
 				log.Printf("preflight ignored error building request from %q: %s", pf.RequestFile, err)
@@ -478,6 +482,24 @@ func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVa
 // simultaneous pass, so a replaced value is never rescanned. That makes
 // substitution independent of map iteration order and free of value-contains-name
 // cascades.
+// mergedReplacer builds one deterministic replacer over both the fuzzing input
+// keywords and the extracted preflight variables, so a preflight/postflight
+// request gets the same keyword substitution as the main request. Returns nil
+// when there is nothing to substitute.
+func mergedReplacer(input map[string][]byte, vars map[string]string) *strings.Replacer {
+	if len(input) == 0 && len(vars) == 0 {
+		return nil
+	}
+	all := make(map[string]string, len(input)+len(vars))
+	for k, v := range input {
+		all[k] = string(v)
+	}
+	for k, v := range vars { // an extracted var wins over an input keyword on a name clash
+		all[k] = v
+	}
+	return varsReplacer(all)
+}
+
 func varsReplacer(vars map[string]string) *strings.Replacer {
 	names := make([]string, 0, len(vars))
 	for k := range vars {
@@ -544,7 +566,7 @@ func (r *SimpleRunner) runPreflights(req *ffuf.Request) (applied map[string]stri
 		lane := r.lanes.get()
 		cleanup = func() { r.lanes.put(lane) }
 		if !lane.initialized {
-			v, ferr := r.runPreflightChain(r.config.Preflights, nil)
+			v, ferr := r.runPreflightChain(r.config.Preflights, req.Input, nil)
 			if ferr != nil {
 				cleanup()
 				return nil, func() {}, ferr
@@ -554,7 +576,7 @@ func (r *SimpleRunner) runPreflights(req *ffuf.Request) (applied map[string]stri
 		}
 		applied = lane.vars
 	} else {
-		v, ferr := r.runPreflightChain(r.config.Preflights, nil)
+		v, ferr := r.runPreflightChain(r.config.Preflights, req.Input, nil)
 		if ferr != nil {
 			return nil, cleanup, ferr
 		}
@@ -569,11 +591,11 @@ func (r *SimpleRunner) runPreflights(req *ffuf.Request) (applied map[string]stri
 // runPostflights executes the postflight chain after the main request, seeded
 // with the vars applied to it so chained extractions work. Postflight failure is
 // non-fatal: the main result is always kept, the error is only logged.
-func (r *SimpleRunner) runPostflights(seedVars map[string]string) {
+func (r *SimpleRunner) runPostflights(input map[string][]byte, seedVars map[string]string) {
 	if len(r.config.Postflights) == 0 {
 		return
 	}
-	if _, ferr := r.runPreflightChain(r.config.Postflights, seedVars); ferr != nil {
+	if _, ferr := r.runPreflightChain(r.config.Postflights, input, seedVars); ferr != nil {
 		log.Printf("postflight error (result still recorded): %s", ferr)
 	}
 }
