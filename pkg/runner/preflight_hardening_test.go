@@ -87,7 +87,7 @@ func TestPostflightRunsOnIgnoredBody(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "3")
-		w.Write([]byte("abc"))
+		_, _ = w.Write([]byte("abc"))
 	})
 	mux.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt64(&postHits, 1)
