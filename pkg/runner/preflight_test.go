@@ -64,7 +64,7 @@ func TestPreflightVarsSubstitutedIntoMainRequest(t *testing.T) {
 	}}
 
 	r := newTestRunner(conf)
-	vars, err := r.runPreflightChain(conf.Preflights, nil)
+	vars, err := r.runPreflightChain(conf.Preflights, nil, nil)
 	if err != nil {
 		t.Fatalf("runPreflightChain: %s", err)
 	}
@@ -253,7 +253,7 @@ func TestPreflightErrorAbort(t *testing.T) {
 		Vars:        []ffuf.VarExtract{{Name: "X", Regex: `token=(\w+)`}},
 	}}
 	r := newTestRunner(conf)
-	if _, err := r.runPreflightChain(conf.Preflights, nil); err == nil {
+	if _, err := r.runPreflightChain(conf.Preflights, nil, nil); err == nil {
 		t.Error("expected an error when the extraction regex does not match in abort mode")
 	}
 }
@@ -272,7 +272,7 @@ func TestPreflightErrorIgnore(t *testing.T) {
 		Vars:        []ffuf.VarExtract{{Name: "X", Regex: `token=(\w+)`}},
 	}}
 	r := newTestRunner(conf)
-	vars, err := r.runPreflightChain(conf.Preflights, nil)
+	vars, err := r.runPreflightChain(conf.Preflights, nil, nil)
 	if err != nil {
 		t.Fatalf("ignore mode should not error, got: %s", err)
 	}
