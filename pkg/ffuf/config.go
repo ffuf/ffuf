@@ -2,7 +2,26 @@ package ffuf
 
 import (
 	"context"
+	"regexp"
 )
+
+// VarExtract names a variable to capture from a preflight/postflight response
+// using the first capture group of Regex. The captured value is substituted into
+// the keyword Name wherever it appears in later requests.
+type VarExtract struct {
+	Name  string `json:"name" toml:"name"`
+	Regex string `json:"regex" toml:"regex"`
+	// Compiled is the precompiled Regex. ConfigFromOptions sets it once so the hot
+	// path never recompiles per request; nil when a VarExtract is built directly.
+	Compiled *regexp.Regexp `json:"-" toml:"-"`
+}
+
+// PreflightConfig is one raw HTTP request file executed around the fuzzing
+// request, with optional variable extractions from its response.
+type PreflightConfig struct {
+	RequestFile string       `json:"request_file" toml:"request_file"`
+	Vars        []VarExtract `json:"vars" toml:"vars"`
+}
 
 type Config struct {
 	AuditLog                  string                `json:"auditlog"`
@@ -68,6 +87,14 @@ type Config struct {
 	Http2                     bool                  `json:"http2"`
 	ClientCert                string                `json:"client-cert"`
 	ClientKey                 string                `json:"client-key"`
+	Preflights                []PreflightConfig     `json:"preflights"`
+	Postflights               []PreflightConfig     `json:"postflights"`
+	PreflightMode             string                `json:"preflight_mode"`
+	PreflightError            string                `json:"preflight_error"`
+	// RateLimitFunc blocks until the shared rate limiter allows another request.
+	// The engine sets it so preflight/postflight requests (sent from the runner,
+	// outside the dispatch loop) also honor -rate and -p. Nil means unmetered.
+	RateLimitFunc func() `json:"-" toml:"-"`
 	// Options retains the raw ConfigOptions this Config was built from, so the
 	// configuration can be re-serialized (FFUFHASH history and similar features)
 	// directly, with no hand-maintained reverse mapper. Set by ConfigFromOptions;

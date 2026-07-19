@@ -2,6 +2,7 @@ package ffuf
 
 import (
 	"flag"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -109,6 +110,66 @@ var extraFlags = []extraFlag{
 	{"k", SectionCompat, true, func(fs *flag.FlagSet, o *ConfigOptions) {
 		_ = fs.Bool("k", false, "Dummy flag for backwards compatibility")
 	}},
+	// Preflight/postflight files bind positionally: a -preflight-var attaches to the
+	// preceding -preflight. That can't be a plain tagged field, so they are Func
+	// flags whose callbacks append to the option struct in command-line order. Using
+	// flag.Parse's own tokenization (rather than a separate os.Args scan) keeps them
+	// consistent with every other flag and lets config-file values survive: the CLI
+	// appends to whatever a config file loaded, it does not clobber it.
+	{"preflight", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("preflight", "Raw HTTP request file to run before each fuzzing request (repeatable, order matters)", func(v string) error {
+			if v == "" {
+				return fmt.Errorf("-preflight requires a request file path")
+			}
+			o.HTTP.Preflights = append(o.HTTP.Preflights, PreflightConfig{RequestFile: v})
+			return nil
+		})
+	}},
+	{"preflight-var", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("preflight-var", "Extract a variable from the preceding -preflight response: \"NAME:regex\" (repeatable)", func(v string) error {
+			return appendFlightVar(&o.HTTP.Preflights, "-preflight-var", "-preflight", v)
+		})
+	}},
+	{"postflight", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("postflight", "Raw HTTP request file to run after each fuzzing request (repeatable, order matters)", func(v string) error {
+			if v == "" {
+				return fmt.Errorf("-postflight requires a request file path")
+			}
+			o.HTTP.Postflights = append(o.HTTP.Postflights, PreflightConfig{RequestFile: v})
+			return nil
+		})
+	}},
+	{"postflight-var", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("postflight-var", "Extract a variable from the preceding -postflight response: \"NAME:regex\" (repeatable)", func(v string) error {
+			return appendFlightVar(&o.HTTP.Postflights, "-postflight-var", "-postflight", v)
+		})
+	}},
+}
+
+// appendFlightVar attaches a "NAME:regex" extraction to the last entry in a
+// preflight/postflight chain. It errors (so flag.Parse surfaces it) when there is
+// no preceding file flag or the spec is malformed, rather than silently dropping.
+func appendFlightVar(chain *[]PreflightConfig, varFlag, fileFlag, spec string) error {
+	if len(*chain) == 0 {
+		return fmt.Errorf("%s %q has no preceding %s", varFlag, spec, fileFlag)
+	}
+	name, regex, ok := parseVarSpec(spec)
+	if !ok {
+		return fmt.Errorf("%s value %q must be \"NAME:regex\" with a non-empty name and regex", varFlag, spec)
+	}
+	last := &(*chain)[len(*chain)-1]
+	last.Vars = append(last.Vars, VarExtract{Name: name, Regex: regex})
+	return nil
+}
+
+// parseVarSpec splits a "NAME:regex" spec on the FIRST colon, so the regex may
+// itself contain colons. Both the name and the regex must be non-empty.
+func parseVarSpec(spec string) (name, regex string, ok bool) {
+	idx := strings.IndexByte(spec, ':')
+	if idx <= 0 || idx == len(spec)-1 {
+		return "", "", false
+	}
+	return spec[:idx], spec[idx+1:], true
 }
 
 // RegisterFlags is the single source of truth for CLI flag registration. It walks

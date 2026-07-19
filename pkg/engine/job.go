@@ -78,6 +78,10 @@ func NewJob(conf *ffuf.Config) *Job {
 	j.Config = conf
 	j.queue = newJobQueue()
 	j.Rate = NewRateThrottle(conf)
+	// Let the runner meter preflight/postflight requests against the same rate
+	// limiter as the main dispatch loop, so -rate/-p bound total outgoing volume
+	// rather than only the fuzzing requests.
+	conf.RateLimitFunc = func() { <-j.Rate.RateLimiter.C }
 	return &j
 }
 
