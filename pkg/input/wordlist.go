@@ -130,33 +130,29 @@ func (w *WordlistInput) readFile(path string) error {
 	reader := bufio.NewScanner(file)
 	re := regexp.MustCompile(`(?i)%ext%`)
 	for reader.Scan() {
+		text := reader.Text()
+
+		// Strip comments before anything else so a commented-out line (or a
+		// trailing "# ..." comment) can never leak into the generated
+		// candidates, regardless of whether it also contains "%ext%".
+		if w.config.IgnoreWordlistComments {
+			text, ok = stripComments(text)
+			if !ok {
+				continue
+			}
+		}
+
 		if w.config.DirSearchCompat && len(w.config.Extensions) > 0 {
-			text := []byte(reader.Text())
-			if re.Match(text) {
+			btext := []byte(text)
+			if re.Match(btext) {
 				for _, ext := range w.config.Extensions {
-					contnt := re.ReplaceAll(text, []byte(ext))
+					contnt := re.ReplaceAll(btext, []byte(ext))
 					data = append(data, []byte(contnt))
 				}
 			} else {
-				text := reader.Text()
-
-				if w.config.IgnoreWordlistComments {
-					text, ok = stripComments(text)
-					if !ok {
-						continue
-					}
-				}
 				data = append(data, []byte(text))
 			}
 		} else {
-			text := reader.Text()
-
-			if w.config.IgnoreWordlistComments {
-				text, ok = stripComments(text)
-				if !ok {
-					continue
-				}
-			}
 			data = append(data, []byte(text))
 			if w.keyword == "FUZZ" && len(w.config.Extensions) > 0 {
 				for _, ext := range w.config.Extensions {
