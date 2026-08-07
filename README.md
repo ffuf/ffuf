@@ -23,7 +23,8 @@ A fast web fuzzer written in Go.
 - If you are on Windows with [Scoop](https://scoop.sh/), ffuf can be installed with: `scoop install ffuf`
 
   _or_
-- If you are on Windows with [Winget](https://learn.microsoft.com/en-us/windows/package-manager/), ffuf can be installed with: `winget install ffuf.ffuf`
+- If you are on Windows with [Winget](https://learn.microsoft.com/en-us/windows/package-manager/), ffuf can be installed with: `winget install ffuf.ffuf`  
+  After install, open a **new** terminal so `PATH` picks up the shim (or run `refreshenv` if you use Chocolatey).
 
   _or_
 - If you are on macOS with [homebrew](https://brew.sh), ffuf can be installed with: `brew install ffuf`
