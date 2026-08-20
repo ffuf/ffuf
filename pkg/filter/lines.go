@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -42,7 +43,9 @@ func (f *LineFilter) MarshalJSON() ([]byte, error) {
 }
 
 func (f *LineFilter) Filter(response *ffuf.Response) (bool, error) {
-	linesSize := len(strings.Split(string(response.Data), "\n"))
+	// bytes.Count(...)+1 matches len(strings.Split(...)) for a single-byte
+	// separator without allocating a []string of the whole body. See runner.
+	linesSize := bytes.Count(response.Data, []byte("\n")) + 1
 	for _, iv := range f.Value {
 		if iv.Min <= int64(linesSize) && int64(linesSize) <= iv.Max {
 			return true, nil

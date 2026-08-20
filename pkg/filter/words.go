@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -42,7 +43,9 @@ func (f *WordFilter) MarshalJSON() ([]byte, error) {
 }
 
 func (f *WordFilter) Filter(response *ffuf.Response) (bool, error) {
-	wordsSize := len(strings.Split(string(response.Data), " "))
+	// bytes.Count(...)+1 matches len(strings.Split(...)) for a single-byte
+	// separator without allocating a []string of the whole body. See runner.
+	wordsSize := bytes.Count(response.Data, []byte(" ")) + 1
 	for _, iv := range f.Value {
 		if iv.Min <= int64(wordsSize) && int64(wordsSize) <= iv.Max {
 			return true, nil

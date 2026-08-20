@@ -273,8 +273,13 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 		resp.Data = respbody
 	}
 
-	wordsSize := len(strings.Split(string(resp.Data), " "))
-	linesSize := len(strings.Split(string(resp.Data), "\n"))
+	// Count words and lines without materializing a []string. For a single-byte
+	// separator len(strings.Split(s, sep)) == bytes.Count(s, sep)+1, but Split
+	// allocates one string header (~16 bytes) per element. On a max-size body
+	// (MAX_DOWNLOAD_SIZE) full of separators that is tens of MB of transient
+	// garbage per response, times the thread count; bytes.Count is O(1) extra.
+	wordsSize := bytes.Count(resp.Data, []byte(" ")) + 1
+	linesSize := bytes.Count(resp.Data, []byte("\n")) + 1
 	resp.ContentWords = int64(wordsSize)
 	resp.ContentLines = int64(linesSize)
 	resp.Duration = firstByteTime
