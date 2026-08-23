@@ -5,7 +5,9 @@ detailed engineering documentation lives in the wiki.
 
 ## Before you start
 
-- ffuf needs Go 1.20 or newer.
+- ffuf needs Go 1.25 or newer. On an older toolchain the default `GOTOOLCHAIN=auto` silently
+  downloads Go 1.25 at build time; set `GOTOOLCHAIN=local` to get a plain version error instead of
+  a download.
 - Build: `go build` at the repo root produces the `ffuf` binary.
 - Test: `go test -race ./...`. The race detector is what CI gates on, so run it
   before you push.
