@@ -99,6 +99,7 @@ type InputOptions struct {
 	Request                string   `json:"request_file" ffuf:"request" section:"input" usage:"File containing the raw http request"`
 	RequestProto           string   `json:"request_proto" ffuf:"request-proto" section:"input" usage:"Protocol to use along with raw request"`
 	Wordlists              []string `json:"wordlists" ffuf:"w" kind:"wordlist" section:"input" usage:"Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'"`
+	StartAtPosition        int      `json:"start_at_position" ffuf:"start-at-position" section:"input" usage:"Skip the first N entries in the wordlist and start fuzzing from that position."`
 }
 
 type OutputOptions struct {
@@ -186,6 +187,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.Input.InputNum = 100
 	c.Input.Request = ""
 	c.Input.RequestProto = "https"
+	c.Input.StartAtPosition = 0
 	c.Matcher.Mode = "or"
 	c.Matcher.Lines = ""
 	c.Matcher.Regexp = ""
@@ -587,6 +589,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+	conf.StartAtPosition = parseOpts.Input.StartAtPosition
 	conf.Preflights = parseOpts.HTTP.Preflights
 	conf.Postflights = parseOpts.HTTP.Postflights
 

@@ -36,6 +36,13 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 			errs.Add(err)
 		}
 	}
+	// Apply --start-at-position: fail early if out of bounds. Setting position happens in job.go.
+	if conf.StartAtPosition > 0 {
+		if conf.StartAtPosition >= mainip.Total() {
+			errs.Add(fmt.Errorf("--start-at-position %d is beyond the total number of inputs (%d)", conf.StartAtPosition, mainip.Total()))
+			return &mainip, errs
+		}
+	}
 	return &mainip, errs
 }
 

@@ -80,6 +80,7 @@ INPUT OPTIONS:
   -mode               Multi-wordlist operation mode. Available modes: clusterbomb, pitchfork, sniper (default: clusterbomb)
   -request            File containing the raw http request
   -request-proto      Protocol to use along with raw request (default: https)
+  -start-at-position  Skip the first N entries in the wordlist and start fuzzing from that position. (default: 0)
   -w                  Wordlist file path and (optional) keyword separated by colon. eg. '/path/to/wordlist:KEYWORD'
 
 OUTPUT OPTIONS:
