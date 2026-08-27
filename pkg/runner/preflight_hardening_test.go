@@ -121,14 +121,14 @@ func TestPreflightRejectsControlCharValue(t *testing.T) {
 	confAbort := newTestConfig(srv.URL)
 	confAbort.PreflightError = "abort"
 	confAbort.Preflights = []ffuf.PreflightConfig{{RequestFile: reqFile, Vars: []ffuf.VarExtract{{Name: "T", Regex: `token=(.+)`}}}}
-	if _, err := newTestRunner(confAbort).runPreflightChain(confAbort.Preflights, nil); err == nil {
+	if _, err := newTestRunner(confAbort).runPreflightChain(confAbort.Preflights, nil, nil); err == nil {
 		t.Error("abort mode: expected an error for a control-char value")
 	}
 
 	confIgnore := newTestConfig(srv.URL)
 	confIgnore.PreflightError = "ignore"
 	confIgnore.Preflights = []ffuf.PreflightConfig{{RequestFile: reqFile, Vars: []ffuf.VarExtract{{Name: "T", Regex: `token=(.+)`}}}}
-	vars, err := newTestRunner(confIgnore).runPreflightChain(confIgnore.Preflights, nil)
+	vars, err := newTestRunner(confIgnore).runPreflightChain(confIgnore.Preflights, nil, nil)
 	if err != nil {
 		t.Fatalf("ignore mode should not error: %s", err)
 	}
@@ -142,7 +142,7 @@ func TestPreflightRejectsControlCharValue(t *testing.T) {
 func TestParsePreflightKeepsLastHeader(t *testing.T) {
 	r := newTestRunner(newTestConfig("http://example.com/"))
 	f := writeTempRequest(t, "GET / HTTP/1.1\r\nHost: example.com\r\nX-Last: kept")
-	req, err := r.parsePreflightRequest(f, nil)
+	req, err := r.parsePreflightRequest(f, nil, nil)
 	if err != nil {
 		t.Fatalf("parsePreflightRequest: %s", err)
 	}

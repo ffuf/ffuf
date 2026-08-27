@@ -818,6 +818,22 @@ func keywordPresent(keyword string, conf *Config) bool {
 			return true
 		}
 	}
+	// A keyword used only in a preflight/postflight request file also counts, so its
+	// wordlist isn't dropped when the keyword isn't in the main request.
+	if keywordInFlights(keyword, conf.Preflights) || keywordInFlights(keyword, conf.Postflights) {
+		return true
+	}
+	return false
+}
+
+// keywordInFlights reports whether keyword appears in any preflight/postflight
+// request file.
+func keywordInFlights(keyword string, flights []PreflightConfig) bool {
+	for _, pf := range flights {
+		if data, err := os.ReadFile(pf.RequestFile); err == nil && strings.Contains(string(data), keyword) {
+			return true
+		}
+	}
 	return false
 }
 

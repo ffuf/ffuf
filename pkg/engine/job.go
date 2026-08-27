@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -237,11 +238,14 @@ func (j *Job) prepareQueueJob() jobContext {
 	// never read it; they use the immutable jobContext returned from here.
 	j.Config.Url = job.Url
 
-	//Find all keywords present in new queued job
+	//Find all keywords present in the new queued job, including in the preflight/
+	//postflight request files so a keyword used only there still activates its
+	//wordlist.
 	kws := j.Input.Keywords()
+	flightBlob := preflightBlob(j.Config)
 	found_kws := make([]string, 0)
 	for _, k := range kws {
-		if ffuf.RequestContainsKeyword(job.req, k) {
+		if ffuf.RequestContainsKeyword(job.req, k) || strings.Contains(flightBlob, k) {
 			found_kws = append(found_kws, k)
 		}
 	}
@@ -249,6 +253,24 @@ func (j *Job) prepareQueueJob() jobContext {
 	j.Input.ActivateKeywords(found_kws)
 	j.Jobhash, _ = WriteHistoryEntry(j.Config)
 	return jobContext{basereq: job.req, depth: job.depth}
+}
+
+// preflightBlob concatenates the raw content of every preflight/postflight
+// request file, so keyword activation can detect a fuzzing keyword used only in
+// those files rather than in the main request template.
+func preflightBlob(conf *ffuf.Config) string {
+	var b strings.Builder
+	read := func(flights []ffuf.PreflightConfig) {
+		for _, pf := range flights {
+			if data, err := os.ReadFile(pf.RequestFile); err == nil {
+				b.Write(data)
+				b.WriteByte('\n')
+			}
+		}
+	}
+	read(conf.Preflights)
+	read(conf.Postflights)
+	return b.String()
 }
 
 // SkipQueue allows to skip the current job and advance to the next queued recursion job
