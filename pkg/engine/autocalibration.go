@@ -166,110 +166,117 @@ func (j *Job) CalibrateIfNeeded(host string, input map[string][]byte) error {
 	return j.Calibrate(input)
 }
 
-func (j *Job) calibrateFilters(responses []ffuf.Response, perHost bool) error {
-	// Work down from the most specific common denominator
-	if len(responses) > 0 {
-		// Content length
-		baselineSize := responses[0].ContentLength
-		sizeMatch := true
-		for _, r := range responses {
-			if baselineSize != r.ContentLength {
-				sizeMatch = false
+// registerCalibrationFilter adds a calibration-derived filter (name/value) for
+// the current scope (global, or per-host when perHost is set), unless a filter
+// already installed for that scope would filter the sample response - in which
+// case a new, redundant filter is skipped.
+func (j *Job) registerCalibrationFilter(name, value string, perHost bool, sample ffuf.Response) error {
+	if perHost {
+		host := ffuf.HostURLFromRequest(*sample.Request)
+		for _, f := range j.Config.MatcherManager.FiltersForDomain(host) {
+			if match, _ := f.Filter(&sample); match {
+				return nil // Already filtered
 			}
 		}
-		if sizeMatch {
-			if perHost {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(ffuf.HostURLFromRequest(*responses[0].Request)) {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(ffuf.HostURLFromRequest(*responses[0].Request), "size", strconv.FormatInt(baselineSize, 10))
-				return nil
-			} else {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.GetFilters() {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
-				_ = j.Config.MatcherManager.AddFilter("size", strconv.FormatInt(baselineSize, 10), false)
-				return nil
-			}
-		}
-
-		// Content words
-		baselineWords := responses[0].ContentWords
-		wordsMatch := true
-		for _, r := range responses {
-			if baselineWords != r.ContentWords {
-				wordsMatch = false
-			}
-		}
-		if wordsMatch {
-			if perHost {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(ffuf.HostURLFromRequest(*responses[0].Request)) {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(ffuf.HostURLFromRequest(*responses[0].Request), "word", strconv.FormatInt(baselineWords, 10))
-				return nil
-			} else {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.GetFilters() {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
-				_ = j.Config.MatcherManager.AddFilter("word", strconv.FormatInt(baselineWords, 10), false)
-				return nil
-			}
-		}
-
-		// Content lines
-		baselineLines := responses[0].ContentLines
-		linesMatch := true
-		for _, r := range responses {
-			if baselineLines != r.ContentLines {
-				linesMatch = false
-			}
-		}
-		if linesMatch {
-			if perHost {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.FiltersForDomain(ffuf.HostURLFromRequest(*responses[0].Request)) {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
-				_ = j.Config.MatcherManager.AddPerDomainFilter(ffuf.HostURLFromRequest(*responses[0].Request), "line", strconv.FormatInt(baselineLines, 10))
-				return nil
-			} else {
-				// Check if already filtered
-				for _, f := range j.Config.MatcherManager.GetFilters() {
-					match, _ := f.Filter(&responses[0])
-					if match {
-						// Already filtered
-						return nil
-					}
-				}
-				_ = j.Config.MatcherManager.AddFilter("line", strconv.FormatInt(baselineLines, 10), false)
-				return nil
-			}
+		return j.Config.MatcherManager.AddPerDomainFilter(host, name, value)
+	}
+	for _, f := range j.Config.MatcherManager.GetFilters() {
+		if match, _ := f.Filter(&sample); match {
+			return nil // Already filtered
 		}
 	}
+	return j.Config.MatcherManager.AddFilter(name, value, false)
+}
+
+func (j *Job) calibrateFilters(responses []ffuf.Response, perHost bool) error {
+	if len(responses) == 0 {
+		return fmt.Errorf("No common filtering values found")
+	}
+
+	// Work down from the most specific common denominator.
+
+	// Content length
+	baselineSize := responses[0].ContentLength
+	sizeMatch := true
+	for _, r := range responses {
+		if baselineSize != r.ContentLength {
+			sizeMatch = false
+			break
+		}
+	}
+	if sizeMatch {
+		return j.registerCalibrationFilter("size", strconv.FormatInt(baselineSize, 10), perHost, responses[0])
+	}
+
+	// Content words
+	baselineWords := responses[0].ContentWords
+	wordsMatch := true
+	for _, r := range responses {
+		if baselineWords != r.ContentWords {
+			wordsMatch = false
+			break
+		}
+	}
+	if wordsMatch {
+		return j.registerCalibrationFilter("word", strconv.FormatInt(baselineWords, 10), perHost, responses[0])
+	}
+
+	// Content lines
+	baselineLines := responses[0].ContentLines
+	linesMatch := true
+	for _, r := range responses {
+		if baselineLines != r.ContentLines {
+			linesMatch = false
+			break
+		}
+	}
+	if linesMatch {
+		return j.registerCalibrationFilter("line", strconv.FormatInt(baselineLines, 10), perHost, responses[0])
+	}
+
+	// Dynamic (reflected) size: none of the dimensions above were constant,
+	// which is exactly what happens with a custom error page that echoes the
+	// requested value back into the body - e.g. an nginx/Express/Flask 404
+	// handler rendering "Cannot find /adminXXXXXXXXXXXXXXXX". Content-Length
+	// then tracks len(fuzz value) plus a fixed offset instead of being
+	// constant outright. Detect that relationship by subtracting each
+	// response's fuzz-value length from its ContentLength: if the *normalized*
+	// value is constant, the page is a reflected-but-otherwise-static 404, and
+	// a DynamicSizeFilter (pkg/filter/dynamicsize.go) can recognize it for any
+	// future fuzzed value, not just the calibration strings used here.
+	if offset, ok := j.reflectedSizeOffset(responses); ok {
+		value := fmt.Sprintf("%d:%s", offset, j.Config.AutoCalibrationKeyword)
+		return j.registerCalibrationFilter("dynamicsize", value, perHost, responses[0])
+	}
+
 	return fmt.Errorf("No common filtering values found")
+}
+
+// reflectedSizeOffset checks whether every response's ContentLength equals a
+// constant offset plus the length of the calibration value that produced it
+// (i.e. the fuzzed value was reflected into the response body). It returns
+// that offset and true when the relationship holds for every response, or
+// (0, false) when responses are missing the calibration input or the
+// normalized sizes disagree.
+func (j *Job) reflectedSizeOffset(responses []ffuf.Response) (int64, bool) {
+	keyword := j.Config.AutoCalibrationKeyword
+	var offset int64
+	for i, r := range responses {
+		if r.Request == nil {
+			return 0, false
+		}
+		fuzzval, ok := r.Request.Input[keyword]
+		if !ok {
+			return 0, false
+		}
+		normalized := r.ContentLength - int64(len(fuzzval))
+		if i == 0 {
+			offset = normalized
+			continue
+		}
+		if normalized != offset {
+			return 0, false
+		}
+	}
+	return offset, true
 }
