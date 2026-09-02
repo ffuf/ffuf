@@ -8,6 +8,7 @@
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
     - Fix terminal control characters being written to stdout/stderr when they're redirected to a file or pipe
+    - Bump `golang.org/x/net` 0.7.0 -> 0.58.0 and `golang.org/x/sys` 0.5.0 -> 0.47.0, clearing nine `golang.org/x/net/html` advisories that the scraper reaches through goquery on every response body. Raises the Go floor to 1.25.
   
 - v2.1.0
   - New

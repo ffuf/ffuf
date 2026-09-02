@@ -200,7 +200,7 @@ func TestInjectKeyword(t *testing.T) {
 
 	result := injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
 	if result != expected {
-		t.Errorf("injectKeyword returned unexpected result: " + result)
+		t.Errorf("injectKeyword returned unexpected result: %s", result)
 	}
 
 	if injectKeyword(input, "FUZZ", -32, 44) != input {
@@ -221,7 +221,7 @@ func TestInjectKeyword(t *testing.T) {
 
 	result = injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
 	if result != expected {
-		t.Errorf("injectKeyword returned unexpected result: " + result)
+		t.Errorf("injectKeyword returned unexpected result: %s", result)
 	}
 
 	input = "feature=aaa&thingie=bbb&array[§0§]=baz"
@@ -230,7 +230,7 @@ func TestInjectKeyword(t *testing.T) {
 
 	result = injectKeyword(input, "FUZZ", offsetTuple[0], offsetTuple[1])
 	if result != expected {
-		t.Errorf("injectKeyword returned unexpected result: " + result)
+		t.Errorf("injectKeyword returned unexpected result: %s", result)
 	}
 }
 
