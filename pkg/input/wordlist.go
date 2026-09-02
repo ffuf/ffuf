@@ -107,7 +107,7 @@ func (w *WordlistInput) validFile(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	f.Close()
+	_ = f.Close()
 	return true, nil
 }
 
@@ -123,7 +123,7 @@ func (w *WordlistInput) readFile(path string) error {
 			return err
 		}
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var data [][]byte
 	var ok bool

@@ -24,7 +24,7 @@ func NewAuditLogger(filename string) (*AuditLogger, error) {
 }
 
 func (logger *AuditLogger) Close() {
-	logger.file.Close()
+	_ = logger.file.Close()
 }
 
 func (logger *AuditLogger) Write(data interface{}) error {

@@ -95,9 +95,9 @@ func writeWordlist(t *testing.T, words []string) string {
 	if err != nil {
 		t.Fatalf("temp wordlist: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	for _, w := range words {
-		fmt.Fprintln(f, w)
+		_, _ = fmt.Fprintln(f, w)
 	}
 	return f.Name()
 }

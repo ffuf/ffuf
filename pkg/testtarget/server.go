@@ -78,7 +78,7 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/status/"):
 		if code, ok := tailInt(p, "/status/"); ok {
 			w.WriteHeader(code)
-			fmt.Fprintf(w, "status %d", code)
+			_, _ = fmt.Fprintf(w, "status %d", code)
 			return
 		}
 	case strings.HasPrefix(p, "/size/"):
@@ -99,17 +99,17 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/sleep/"):
 		if ms, ok := tailInt(p, "/sleep/"); ok {
 			time.Sleep(time.Duration(ms) * time.Millisecond)
-			fmt.Fprintf(w, "slept %d", ms)
+			_, _ = fmt.Fprintf(w, "slept %d", ms)
 			return
 		}
 	case strings.HasPrefix(p, "/reflect/"):
 		val := strings.TrimPrefix(p, "/reflect/")
-		fmt.Fprintf(w, "reflected: %s", val)
+		_, _ = fmt.Fprintf(w, "reflected: %s", val)
 		return
 	case strings.HasPrefix(p, "/redirect/"):
 		if n, ok := tailInt(p, "/redirect/"); ok {
 			if n <= 0 {
-				fmt.Fprint(w, "arrived")
+				_, _ = fmt.Fprint(w, "arrived")
 			} else {
 				w.Header().Set("Location", fmt.Sprintf("/redirect/%d", n-1))
 				w.WriteHeader(http.StatusFound)
@@ -121,39 +121,39 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 	case p == "/ac/real":
 		// Distinctly larger/wordier than the soft-404 baseline so a calibrated
 		// size or word filter lets it through while the junk is filtered.
-		fmt.Fprint(w, "REAL content that is meaningfully larger than the junk baseline response")
+		_, _ = fmt.Fprint(w, "REAL content that is meaningfully larger than the junk baseline response")
 		return
 	case strings.HasPrefix(p, "/ac/"):
 		// Any other /ac/* path (including ffuf's random calibration probes)
 		// returns a constant small body: the classic soft-404.
-		fmt.Fprint(w, "junk")
+		_, _ = fmt.Fprint(w, "junk")
 		return
 
 	// --- request-gated endpoints ----------------------------------------
 	case p == "/needs-header":
 		if r.Header.Get("X-Test") == "yes" {
-			fmt.Fprint(w, "header ok")
+			_, _ = fmt.Fprint(w, "header ok")
 			return
 		}
 		forbidden(w)
 		return
 	case p == "/needs-cookie":
 		if c, err := r.Cookie("SESSION"); err == nil && c.Value != "" {
-			fmt.Fprint(w, "cookie ok")
+			_, _ = fmt.Fprint(w, "cookie ok")
 			return
 		}
 		forbidden(w)
 		return
 	case p == "/needs-method":
 		if r.Method == http.MethodPost {
-			fmt.Fprint(w, "method ok")
+			_, _ = fmt.Fprint(w, "method ok")
 			return
 		}
 		forbidden(w)
 		return
 	case p == "/needs-body":
 		if strings.Contains(body, "token") {
-			fmt.Fprint(w, "body ok")
+			_, _ = fmt.Fprint(w, "body ok")
 			return
 		}
 		forbidden(w)
@@ -166,10 +166,10 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 		switch strings.TrimPrefix(p, "/map/") {
 		case "ok":
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, "mapped alpha")
+			_, _ = fmt.Fprint(w, "mapped alpha")
 		case "bad":
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "mapped gamma")
+			_, _ = fmt.Fprint(w, "mapped gamma")
 		default:
 			notFound(w)
 		}
@@ -177,13 +177,13 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 
 	// --- recursion tree (greedy strategy) -------------------------------
 	case p == "/":
-		fmt.Fprint(w, "root")
+		_, _ = fmt.Fprint(w, "root")
 		return
 	case p == "/admin":
-		fmt.Fprint(w, "admin directory")
+		_, _ = fmt.Fprint(w, "admin directory")
 		return
 	case p == "/admin/secret":
-		fmt.Fprint(w, "the secret")
+		_, _ = fmt.Fprint(w, "the secret")
 		return
 
 	// --- redirect-based directory (default recursion strategy) ----------
@@ -194,10 +194,10 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMovedPermanently)
 		return
 	case p == "/rdir/":
-		fmt.Fprint(w, "rdir index")
+		_, _ = fmt.Fprint(w, "rdir index")
 		return
 	case p == "/rdir/found":
-		fmt.Fprint(w, "found under rdir")
+		_, _ = fmt.Fprint(w, "found under rdir")
 		return
 	}
 
@@ -206,9 +206,12 @@ func (t *Target) handle(w http.ResponseWriter, r *http.Request) {
 
 func forbidden(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusForbidden)
-	fmt.Fprint(w, "forbidden")
+	_, _ = fmt.Fprint(w, "forbidden")
 }
-func notFound(w http.ResponseWriter) { w.WriteHeader(http.StatusNotFound); fmt.Fprint(w, "not found") }
+func notFound(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNotFound)
+	_, _ = fmt.Fprint(w, "not found")
+}
 
 // maxTailInt bounds every path-derived integer. It is far above anything the
 // tests use and keeps the value that reaches size/word/line allocation from
