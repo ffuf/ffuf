@@ -20,7 +20,7 @@ const (
   {{end}}` // The template format is not pretty but follows the markdown guide
 )
 
-func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) error {
+func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) (err error) {
 	ti := time.Now()
 
 	keywords := make([]string, 0)
@@ -85,7 +85,13 @@ func writeMarkdown(filename string, config *ffuf.Config, results []ffuf.Result) 
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	// A failed Close on a file we just wrote means the output is short or
+	// missing; report it rather than returning nil over a truncated file.
+	defer func() {
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+	}()
 
 	templateName := "output.md"
 	t := template.New(templateName).Delims("{{", "}}")
