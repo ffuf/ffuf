@@ -25,7 +25,7 @@ func NewInputProvider(conf *ffuf.Config) (ffuf.InputProvider, ffuf.Multierror) {
 		}
 	}
 	if !validmode {
-		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
+		errs.Add(fmt.Errorf("input mode (-mode) %s not recognized", conf.InputMode))
 		return &MainInputProvider{}, errs
 	}
 	mainip := MainInputProvider{Config: conf, msbIterator: 0, Encoders: make(map[string]*pencode.Chain)}
