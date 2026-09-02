@@ -10,7 +10,7 @@ import (
 func TestAuditLogger(t *testing.T) {
 	file, _ := os.CreateTemp("", "prefix")
 	filename := file.Name()
-	file.Close()
+	_ = file.Close()
 	audit, err := NewAuditLogger(filename)
 
 	if err != nil {
@@ -67,7 +67,7 @@ func TestAuditLogWrite(t *testing.T) {
 
 	file, _ := os.CreateTemp("", "prefix")
 	filename := file.Name()
-	file.Close()
+	_ = file.Close()
 	audit, err := NewAuditLogger(filename)
 
 	if err != nil {

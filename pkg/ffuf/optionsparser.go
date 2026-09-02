@@ -733,7 +733,7 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 	if err != nil {
 		return fmt.Errorf("could not open request file: %s", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	r := bufio.NewReader(file)
 

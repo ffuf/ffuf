@@ -60,7 +60,7 @@ func TestEndpoints(t *testing.T) {
 		if resp.StatusCode != c.status {
 			t.Errorf("GET %s: status %d, want %d", c.path, resp.StatusCode, c.status)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 
 	// /size/50 body is exactly 50 bytes.
@@ -69,7 +69,7 @@ func TestEndpoints(t *testing.T) {
 		t.Fatalf("GET /size/50: %v", err)
 	}
 	b, _ := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if len(b) != 50 {
 		t.Errorf("/size/50 body = %d bytes, want 50", len(b))
 	}
@@ -84,7 +84,7 @@ func TestEndpoints(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Errorf("/needs-header with X-Test: got %d, want 200", resp.StatusCode)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Requests were recorded.
 	if tt.Count() == 0 {

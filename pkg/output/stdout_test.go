@@ -36,7 +36,7 @@ func captureStream(t *testing.T, stream **os.File, fn func()) string {
 
 	fn()
 
-	w.Close()
+	_ = w.Close()
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
 		t.Fatalf("failed to read captured output: %s", err)
