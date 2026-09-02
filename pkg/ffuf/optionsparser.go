@@ -263,7 +263,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		}
 	}
 	if !validmode {
-		errs.Add(fmt.Errorf("Input mode (-mode) %s not recognized", conf.InputMode))
+		errs.Add(fmt.Errorf("input mode (-mode) %s not recognized", conf.InputMode))
 	}
 
 	template := ""
@@ -391,7 +391,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	}
 
 	if len(conf.InputProviders) == 0 {
-		errs.Add(fmt.Errorf("Either -w or --input-cmd flag is required"))
+		errs.Add(fmt.Errorf("either -w or --input-cmd flag is required"))
 	}
 
 	// Prepare the request using body
@@ -448,28 +448,28 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				conf.Headers[strings.TrimSpace(hs[0])] = strings.TrimSpace(hs[1])
 			}
 		} else {
-			errs.Add(fmt.Errorf("Header defined by -H needs to have a value. \":\" should be used as a separator"))
+			errs.Add(fmt.Errorf("header defined by -H needs to have a value. \":\" should be used as a separator"))
 		}
 	}
 
 	//Prepare delay
 	d := strings.Split(parseOpts.General.Delay, "-")
 	if len(d) > 2 {
-		errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
+		errs.Add(fmt.Errorf("delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
 	} else if len(d) == 2 {
 		conf.Delay.IsRange = true
 		conf.Delay.HasDelay = true
 		conf.Delay.Min, err = strconv.ParseFloat(d[0], 64)
 		conf.Delay.Max, err2 = strconv.ParseFloat(d[1], 64)
 		if err != nil || err2 != nil {
-			errs.Add(fmt.Errorf("Delay range min and max values need to be valid floats. For example: 0.1-0.5"))
+			errs.Add(fmt.Errorf("delay range min and max values need to be valid floats. For example: 0.1-0.5"))
 		}
 	} else if len(parseOpts.General.Delay) > 0 {
 		conf.Delay.IsRange = false
 		conf.Delay.HasDelay = true
 		conf.Delay.Min, err = strconv.ParseFloat(parseOpts.General.Delay, 64)
 		if err != nil {
-			errs.Add(fmt.Errorf("Delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
+			errs.Add(fmt.Errorf("delay needs to be either a single float: \"0.1\" or a range of floats, delimited by dash: \"0.1-0.8\""))
 		}
 	}
 
@@ -477,7 +477,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if len(parseOpts.HTTP.ProxyURL) > 0 {
 		u, err := url.Parse(parseOpts.HTTP.ProxyURL)
 		if err != nil || u.Opaque != "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5") {
-			errs.Add(fmt.Errorf("Bad proxy url (-x) format. Expected http, https or socks5 url"))
+			errs.Add(fmt.Errorf("bad proxy url (-x) format. Expected http, https or socks5 url"))
 		} else {
 			conf.ProxyURL = parseOpts.HTTP.ProxyURL
 		}
@@ -487,7 +487,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	if len(parseOpts.HTTP.ReplayProxyURL) > 0 {
 		u, err := url.Parse(parseOpts.HTTP.ReplayProxyURL)
 		if err != nil || u.Opaque != "" || (u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "socks5" && u.Scheme != "socks5h") {
-			errs.Add(fmt.Errorf("Bad replay-proxy url (-replay-proxy) format. Expected http, https or socks5 url"))
+			errs.Add(fmt.Errorf("bad replay-proxy url (-replay-proxy) format. Expected http, https or socks5 url"))
 		} else {
 			conf.ReplayProxyURL = parseOpts.HTTP.ReplayProxyURL
 		}
@@ -505,7 +505,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 			}
 		}
 		if !found {
-			errs.Add(fmt.Errorf("Unknown output file format (-of): %s", parseOpts.Output.OutputFormat))
+			errs.Add(fmt.Errorf("unknown output file format (-of): %s", parseOpts.Output.OutputFormat))
 		}
 	}
 
@@ -691,7 +691,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	// If sniper mode, ensure there is no FUZZ keyword
 	if conf.InputMode == "sniper" {
 		if keywordPresent("FUZZ", &conf) {
-			errs.Add(fmt.Errorf("FUZZ keyword defined, but we are using sniper mode."))
+			errs.Add(fmt.Errorf("FUZZ keyword defined, but we are using sniper mode"))
 		}
 	}
 
@@ -705,7 +705,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 
 	// Make verbose mutually exclusive with json
 	if parseOpts.General.Verbose && parseOpts.General.Json {
-		errs.Add(fmt.Errorf("Cannot have -json and -v"))
+		errs.Add(fmt.Errorf("cannot have -json and -v"))
 	}
 	// Retain the source options so the configuration can be re-serialized later
 	// (history / FFUFHASH) without a hand-maintained reverse mapper. Deep-copy the

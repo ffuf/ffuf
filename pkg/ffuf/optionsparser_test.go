@@ -87,7 +87,7 @@ func TestTemplatePresent(t *testing.T) {
 
 func TestProxyParsing(t *testing.T) {
 	configOptions := NewConfigOptions()
-	errorString := "Bad proxy url (-x) format. Expected http, https or socks5 url"
+	errorString := "bad proxy url (-x) format. Expected http, https or socks5 url"
 
 	// http should work
 	configOptions.HTTP.ProxyURL = "http://127.0.0.1:8080"
@@ -134,7 +134,7 @@ func TestProxyParsing(t *testing.T) {
 
 func TestReplayProxyParsing(t *testing.T) {
 	configOptions := NewConfigOptions()
-	errorString := "Bad replay-proxy url (-replay-proxy) format. Expected http, https or socks5 url"
+	errorString := "bad replay-proxy url (-replay-proxy) format. Expected http, https or socks5 url"
 
 	// http should work
 	configOptions.HTTP.ReplayProxyURL = "http://127.0.0.1:8080"
