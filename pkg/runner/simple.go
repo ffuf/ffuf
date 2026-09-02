@@ -134,7 +134,7 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
 		headers := make(map[string]string, len(req.Headers))
 		for h, v := range req.Headers {
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
+			CanonicalHeader := textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
 			headers[CanonicalHeader] = strings.ReplaceAll(v, keyword, string(inputitem))
 		}
 		req.Headers = headers
