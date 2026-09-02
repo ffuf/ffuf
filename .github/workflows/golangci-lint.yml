@@ -11,22 +11,17 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v3
+      # checkout must precede setup-go: setup-go v4+ caches by default and
+      # resolves go.sum from the working tree.
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25"
-      - uses: actions/checkout@v3
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v9
         with:
-          # golangci-lint < v1.45 cannot parse Go 1.18+ compiler export data,
-          # so it is pinned to the last v1 release that supports modern Go.
-          version: v1.64.8
-
-          # Optional: working directory, useful for monorepos
-          # working-directory: somedir
-
-          # Optional: golangci-lint command line arguments.
-          # args: --issues-exit-code=0
-
-          # Optional: show only new issues if it's a pull request. The default value is `false`.
-          # only-new-issues: true
+          # v1 ended at v1.64.8, which is built with go1.24 and refuses a
+          # module targeting go1.25. v2 is the only line that can lint this
+          # module. Linter set and exclusions are held at the v1 defaults in
+          # .golangci.yml so this is a toolchain bump, not a policy change.
+          version: v2.13.2

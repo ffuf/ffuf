@@ -1,0 +1,25 @@
+version: "2"
+
+linters:
+  # v1's default set was errcheck, gosimple, govet, ineffassign, staticcheck,
+  # unused. v2 folds gosimple into staticcheck, so this is the same set.
+  default: standard
+
+  settings:
+    staticcheck:
+      # v2's staticcheck also absorbed stylecheck (ST*) and quickfix (QF*),
+      # neither of which v1 ran by default. Kept off so the toolchain bump does
+      # not smuggle in a lint-policy change.
+      checks:
+        - all
+        - -ST*
+        - -QF*
+
+  exclusions:
+    # v1 applied these by default (exclude-use-default: true). v2 makes them
+    # opt-in; this is the documented v1-equivalent set.
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
