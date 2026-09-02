@@ -253,4 +253,3 @@ func (i *MainInputProvider) Total() int {
 	}
 	return count
 }
-
