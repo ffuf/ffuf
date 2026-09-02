@@ -308,7 +308,7 @@ func (s *Stdoutput) Raw(output string) {
 
 func (s *Stdoutput) writeToAll(filename string, config *ffuf.Config, res []ffuf.Result) error {
 	var err error
-	var BaseFilename string = s.config.OutputFile
+	BaseFilename := s.config.OutputFile
 
 	// Go through each type of write, adding
 	// the suffix to each output file.
