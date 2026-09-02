@@ -4,6 +4,9 @@ on:
     branches:
       - master
   pull_request:
+permissions:
+  contents: read
+
 jobs:
   # Build, vet, and run the whole suite with the race detector across the
   # supported Go floor + latest, on Linux and macOS. Windows is intentionally
