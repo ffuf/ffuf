@@ -19,7 +19,7 @@ func NewWordFilter(value string) (ffuf.FilterProvider, error) {
 	for _, sv := range strings.Split(value, ",") {
 		vr, err := ffuf.ValueRangeFromString(sv)
 		if err != nil {
-			return &WordFilter{}, fmt.Errorf("Word filter or matcher (-fw / -mw): invalid value: %s", sv)
+			return &WordFilter{}, fmt.Errorf("word filter or matcher (-fw / -mw): invalid value: %s", sv)
 		}
 		intranges = append(intranges, vr)
 	}

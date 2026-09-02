@@ -84,7 +84,7 @@ func main() {
 			log.SetOutput(io.Discard)
 		} else {
 			log.SetOutput(f)
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 		}
 	} else {
 		log.SetOutput(io.Discard)

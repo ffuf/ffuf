@@ -24,12 +24,12 @@ func NewTimeFilter(value string) (ffuf.FilterProvider, error) {
 	lt = strings.HasPrefix(value, "<")
 
 	if (!lt && !gt) || (lt && gt) {
-		return &TimeFilter{}, fmt.Errorf("Time filter or matcher (-ft / -mt): invalid value: %s", value)
+		return &TimeFilter{}, fmt.Errorf("time filter or matcher (-ft / -mt): invalid value: %s", value)
 	}
 
 	milliseconds, err := strconv.ParseInt(value[1:], 10, 64)
 	if err != nil {
-		return &TimeFilter{}, fmt.Errorf("Time filter or matcher (-ft / -mt): invalid value: %s", value)
+		return &TimeFilter{}, fmt.Errorf("time filter or matcher (-ft / -mt): invalid value: %s", value)
 	}
 	return &TimeFilter{ms: milliseconds, gt: gt, lt: lt, valueRaw: value}, nil
 }

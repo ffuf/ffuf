@@ -11,16 +11,26 @@ import (
 
 var staticheaders = []string{"url", "redirectlocation", "position", "status_code", "content_length", "content_words", "content_lines", "content_type", "duration", "resultfile", "Ffufhash"}
 
-func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) error {
+func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bool) (err error) {
 	header := make([]string, 0)
 	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
 	w := csv.NewWriter(f)
-	defer w.Flush()
+	// Flush before Close, and surface both. csv.Writer buffers, so a write
+	// error (a full disk, say) is only observable via w.Error() after the
+	// flush -- previously both this and the Close error were discarded.
+	defer func() {
+		w.Flush()
+		if werr := w.Error(); err == nil {
+			err = werr
+		}
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+	}()
 
 	for _, inputprovider := range config.InputProviders {
 		header = append(header, inputprovider.Keyword)

@@ -17,7 +17,7 @@ type RegexpFilter struct {
 func NewRegexpFilter(value string) (ffuf.FilterProvider, error) {
 	re, err := regexp.Compile(value)
 	if err != nil {
-		return &RegexpFilter{}, fmt.Errorf("Regexp filter or matcher (-fr / -mr): invalid value: %s", value)
+		return &RegexpFilter{}, fmt.Errorf("regexp filter or matcher (-fr / -mr): invalid value: %s", value)
 	}
 	return &RegexpFilter{Value: re, valueRaw: value}, nil
 }

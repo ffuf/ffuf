@@ -16,7 +16,7 @@ import (
 // Execute refuse to send, so inherited credentials never reach another host.
 func TestHostPinBlocksHostChange(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "host=evil.example")
+		_, _ = fmt.Fprint(w, "host=evil.example")
 	}))
 	defer srv.Close()
 	reqFile := writeTempRequest(t, fmt.Sprintf("GET / HTTP/1.1\nHost: %s\n\n", srv.Listener.Addr().String()))
@@ -113,7 +113,7 @@ func TestPostflightRunsOnIgnoredBody(t *testing.T) {
 // control character (defense-in-depth against a poisoned token).
 func TestPreflightRejectsControlCharValue(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "token=aaa\rbbb") // bare CR inside the captured value
+		_, _ = fmt.Fprint(w, "token=aaa\rbbb") // bare CR inside the captured value
 	}))
 	defer srv.Close()
 	reqFile := writeTempRequest(t, fmt.Sprintf("GET / HTTP/1.1\nHost: %s\n\n", srv.Listener.Addr().String()))

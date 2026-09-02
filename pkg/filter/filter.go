@@ -97,7 +97,7 @@ func NewFilterByName(name string, value string) (ffuf.FilterProvider, error) {
 	if name == "time" {
 		return NewTimeFilter(value)
 	}
-	return nil, fmt.Errorf("Could not create filter with name %s", name)
+	return nil, fmt.Errorf("could not create filter with name %s", name)
 }
 
 // AddFilter adds a new filter to MatcherManager

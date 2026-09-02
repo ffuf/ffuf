@@ -1,5 +1,5 @@
 error: 1 errors occured.
-	* Either -w or --input-cmd flag is required
+	* either -w or --input-cmd flag is required
 
 {
   "auditlog": "",

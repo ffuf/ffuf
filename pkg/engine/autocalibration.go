@@ -83,7 +83,7 @@ func (j *Job) calibrationRequest(inputs map[string][]byte) (ffuf.Response, error
 	if j.isMatch(resp) {
 		return resp, nil
 	}
-	return resp, fmt.Errorf("Response wouldn't be matched")
+	return resp, fmt.Errorf("response wouldn't be matched")
 }
 
 // CalibrateForHost runs autocalibration for a specific host
@@ -92,7 +92,7 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 		return nil
 	}
 	if baseinput[j.Config.AutoCalibrationKeyword] == nil {
-		return fmt.Errorf("Autocalibration keyword \"%s\" not found in the request.", j.Config.AutoCalibrationKeyword)
+		return fmt.Errorf("autocalibration keyword \"%s\" not found in the request", j.Config.AutoCalibrationKeyword)
 	}
 	cStrings := j.autoCalibrationStrings()
 	input := make(map[string][]byte)
@@ -271,5 +271,5 @@ func (j *Job) calibrateFilters(responses []ffuf.Response, perHost bool) error {
 			}
 		}
 	}
-	return fmt.Errorf("No common filtering values found")
+	return fmt.Errorf("no common filtering values found")
 }

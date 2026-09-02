@@ -8,6 +8,10 @@
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
     - Fix terminal control characters being written to stdout/stderr when they're redirected to a file or pipe
+    - Bump `golang.org/x/net` 0.7.0 -> 0.58.0 and `golang.org/x/sys` 0.5.0 -> 0.47.0, clearing nine `golang.org/x/net/html` advisories that the scraper reaches through goquery on every response body. Raises the Go floor to 1.25.
+    - Fix `-o` silently reporting success over a truncated or empty output file. The CSV, HTML and Markdown writers discarded the error from closing the file they had just written, and the CSV writer additionally discarded the buffered `csv.Writer` flush error, so a disk filling up mid-results produced a partial file and a zero exit
+    - Bump `github.com/adrg/xdg` 0.4.0 -> 0.5.3, which moves `gopkg.in/yaml.v3` off a version inside CVE-2022-28948. Not reachable from ffuf, but it is what SCA scanners reading `go.sum` report
+    - Error messages now start lowercase and carry no trailing full stop, following Go convention. Only the leading character changes; wording is otherwise identical
   
 - v2.1.0
   - New
