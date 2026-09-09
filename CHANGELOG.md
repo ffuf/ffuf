@@ -1,14 +1,32 @@
 ## Changelog
-- master
+- v2.3.0
   - New
-    - Added audit logging functionality
     - Added preflight/postflight requests: raw HTTP request files run before/after each fuzzing request (`-preflight`/`-postflight`), with regex variable extraction (`-preflight-var "NAME:regex"`) injected into the main request, a per-request or amortized per-thread mode (`-preflight-mode`), and abort/ignore error handling (`-preflight-error`)
   - Changed
+    - Security: the response snapshot taken for `-od` and `-audit-log` read the whole response body with no size limit, before the `MAX_DOWNLOAD_SIZE` cap was applied, so a scanned target could exhaust the scanner's memory and disk with a response of its choosing. The body is now bounded before anything reads it, response headers are bounded as well, and `-ignore-body` now also applies to chunked responses. This path was not covered by the fix for CVE-2026-73232
+    - Fix interactive console being scrolled off screen by inflight results
+    - Fix terminal control characters being written to stdout/stderr when they're redirected to a file or pipe
+    - Fix scraper `FromDir` reading the global scraper directory instead of the dirname it was given
+    - Fix concurrency defects in MatcherManager, the recursion queue and the pause gate
+    - Fix autocalibration mutating the caller's input map
+    - Fix Stdoutput result accumulation not being synchronized
+    - Count response words and lines without allocating an intermediate slice
+    - Internal: split `pkg/ffuf` into a kernel plus `pkg/engine`, extract recursion policy into a recursion manager, and move to a declarative flag/config architecture where adding a flag is a single tagged field
+
+- v2.2.1
+  - Changed
+    - Derive the release version from the git tag; builds from a source checkout report `git-<date>-<hash>`
+    - CI: migrate goreleaser to v2, add the tag-triggered release workflow, and pin the GPG signing subkey fingerprint
+
+- v2.2.0
+  - New
+    - Added audit logging functionality
+  - Changed
+    - Security: bound the decompressed response body size to prevent a gzip-bomb OOM (CVE-2026-73232)
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
     - Fix a bug in -or, causing output to not to be written in any case
     - Fix panic when setting rate to 0 in the interactive console
-    - Fix terminal control characters being written to stdout/stderr when they're redirected to a file or pipe
-  
+
 - v2.1.0
   - New
     - autocalibration-strategy refactored to support extensible strategy configuration
