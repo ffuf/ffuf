@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -81,22 +82,82 @@ func HostURLFromRequest(req Request) string {
 
 // Version returns the ffuf version string.
 //
-// Release builds have their version injected via -ldflags by goreleaser: VERSION
-// is set to the git tag and VERSION_APPENDIX is emptied, so they report a plain
-// semantic version like "2.2.0" with no manual constant bump required.
+// It resolves through four sources, in this order:
 //
-// Builds from a source checkout (VERSION_APPENDIX still set) instead report a
-// "git-<UTC date>-<short commit>" identifier derived from the VCS metadata that
-// `go build` embeds into the binary, e.g. "git-20260613-aabbccdd". When that
-// metadata is unavailable it falls back to VERSION+VERSION_APPENDIX.
+//  1. Release builds have VERSION injected via -ldflags by goreleaser and
+//     VERSION_APPENDIX emptied, so they report a plain semantic version like
+//     "2.2.0" with no manual constant bump required.
+//  2. Builds from a source checkout report a "git-<UTC date>-<short commit>"
+//     identifier derived from the VCS metadata `go build` embeds, e.g.
+//     "git-20260613-aabbccdd". VCS metadata takes precedence over the module
+//     version below, because a working tree can sit on a tagged commit while
+//     carrying uncommitted changes.
+//  3. Binaries produced by `go install github.com/ffuf/ffuf/v2@vX.Y.Z` carry no
+//     VCS metadata, but the toolchain records the module version they were built
+//     from, so report that.
+//  4. Failing all of those, VERSION+VERSION_APPENDIX, which is a placeholder
+//     rather than a real version.
 func Version() string {
-	if VERSION_APPENDIX == "" {
-		return VERSION
+	v, _ := resolveVersion()
+	return v
+}
+
+var (
+	versionOnce     sync.Once
+	resolvedVersion string
+	versionReleased bool
+)
+
+// resolveVersion resolves the version once and caches it. Version() sits on the
+// per-request path since it fills in the default User-Agent, and both metadata
+// lookups below parse data embedded in the binary, so resolving on every call
+// spends microseconds per request on a value that cannot change.
+func resolveVersion() (string, bool) {
+	versionOnce.Do(func() {
+		resolvedVersion, versionReleased = selectVersion(VERSION, VERSION_APPENDIX, gitVersion(), moduleVersion())
+	})
+	return resolvedVersion, versionReleased
+}
+
+// selectVersion picks which of the available version sources to report, and
+// reports whether the result identifies a released version.
+//
+// VCS metadata deliberately outranks the module version: a working tree can sit
+// on a tagged commit while carrying uncommitted changes, and the toolchain
+// records the tag as the module version regardless, so preferring it would let a
+// dirty build claim to be a clean release.
+func selectVersion(injected, appendix, git, module string) (version string, released bool) {
+	if appendix == "" {
+		return injected, true
 	}
-	if v := gitVersion(); v != "" {
-		return v
+	if git != "" {
+		return git, false
 	}
-	return fmt.Sprintf("%s%s", VERSION, VERSION_APPENDIX)
+	if module != "" {
+		return module, true
+	}
+	return injected + appendix, false
+}
+
+// moduleVersion returns the version of the main module this binary was built
+// from, as recorded by `go install module@version`. It returns "" when there is
+// no real version to report, which is the case for a plain `go build` in a
+// working tree.
+func moduleVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	return normalizeModuleVersion(info.Main.Version)
+}
+
+// normalizeModuleVersion strips the module version's leading "v" and rejects the
+// placeholders the toolchain uses when no version is available.
+func normalizeModuleVersion(v string) string {
+	if v == "" || v == "(devel)" {
+		return ""
+	}
+	return strings.TrimPrefix(v, "v")
 }
 
 // gitVersion assembles a "git-<date>-<shorthash>" string from the VCS metadata
@@ -133,14 +194,15 @@ func gitVersion() string {
 	return fmt.Sprintf("git-%s-%s%s", stamp.UTC().Format("20060102"), revision, dirty)
 }
 
-// FormattedVersion returns the version prepared for display. Release builds are
-// prefixed with "v" (e.g. "v2.2.0"); development builds are returned unprefixed
-// (e.g. "git-20260613-aabbccdd") since a "v" reads as noise there.
+// FormattedVersion returns the version prepared for display. Released versions
+// are prefixed with "v" (e.g. "v2.2.0"); development builds are returned
+// unprefixed (e.g. "git-20260613-aabbccdd") since a "v" reads as noise there.
 func FormattedVersion() string {
-	if VERSION_APPENDIX == "" {
-		return "v" + Version()
+	v, released := resolveVersion()
+	if released {
+		return "v" + v
 	}
-	return Version()
+	return v
 }
 
 func CheckOrCreateConfigDir() error {
