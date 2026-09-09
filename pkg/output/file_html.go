@@ -106,12 +106,12 @@ const (
         <tbody>
 			{{range $result := .Results}}
                 <div style="display:none">
-|result_raw|{{ $result.StatusCode }}{{ range $keyword, $value := $result.Input }}|{{ $value | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
+|result_raw|{{ $result.StatusCode }}{{ $input := $result.Input }}{{ range $keyword := $.Keys }}|{{ index $input $keyword | printf "%s" }}{{ end }}|{{ $result.Url }}|{{ $result.RedirectLocation }}|{{ $result.Position }}|{{ $result.ContentLength }}|{{ $result.ContentWords }}|{{ $result.ContentLines }}|{{ $result.ContentType }}|{{ $result.Duration }}|{{ $result.ResultFile }}|{{ $result.ScraperData }}|{{ $result.FfufHash }}|
                 </div>
                 <tr class="result-{{ $result.StatusCode }}" style="background-color: {{ $result.HTMLColor }};">
                     <td><font color="black" class="status-code">{{ $result.StatusCode }}</font></td>
-                    {{ range $keyword, $value := $result.Input }}
-                        <td>{{ $value | printf "%s" }}</td>
+                    {{ $input := $result.Input }}{{ range $keyword := $.Keys }}
+                        <td>{{ index $input $keyword | printf "%s" }}</td>
                     {{ end }}
                     <td><a href="{{ $result.Url }}">{{ $result.Url }}</a></td>
                     <td><a href="{{ $result.RedirectLocation }}">{{ $result.RedirectLocation }}</a></td>

@@ -30,6 +30,11 @@ func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bo
 	if err := w.Write(header); err != nil {
 		return err
 	}
+	keywords := make([]string, 0)
+	for _, inputprovider := range config.InputProviders {
+		keywords = append(keywords, inputprovider.Keyword)
+	}
+
 	for _, r := range res {
 		if encode {
 			inputs := make(map[string][]byte, len(r.Input))
@@ -39,7 +44,7 @@ func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bo
 			r.Input = inputs
 		}
 
-		err := w.Write(toCSV(r))
+		err := w.Write(toCSV(r, keywords))
 		if err != nil {
 			return err
 		}
@@ -51,15 +56,14 @@ func base64encode(in []byte) string {
 	return base64.StdEncoding.EncodeToString(in)
 }
 
-func toCSV(r ffuf.Result) []string {
+func toCSV(r ffuf.Result, keywords []string) []string {
 	res := make([]string, 0)
 	ffufhash := ""
-	for k, v := range r.Input {
-		if k == "FFUFHASH" {
-			ffufhash = string(v)
-		} else {
-			res = append(res, string(v))
-		}
+	if hash, ok := r.Input["FFUFHASH"]; ok {
+		ffufhash = string(hash)
+	}
+	for _, k := range keywords {
+		res = append(res, string(r.Input[k]))
 	}
 	res = append(res, r.Url)
 	res = append(res, r.RedirectLocation)
