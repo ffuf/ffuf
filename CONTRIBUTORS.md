@@ -51,4 +51,5 @@
 * [Skyehopper](https://github.com/Skyehopper)
 * [SolomonSklash](https://github.com/SolomonSklash)
 * [TomNomNom](https://github.com/tomnomnom)
+* [TheZakMan](http://github.com/thezakman)
 * [xfgusta](https://github.com/xfgusta)
