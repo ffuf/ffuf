@@ -103,11 +103,17 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
-			ForceAttemptHTTP2:   conf.Http2,
-			Proxy:               proxyURL,
-			MaxIdleConns:        1000,
-			MaxIdleConnsPerHost: 500,
-			MaxConnsPerHost:     500,
+			ForceAttemptHTTP2: conf.Http2,
+			Proxy:             proxyURL,
+			// Response headers are not covered by MAX_DOWNLOAD_SIZE, and Go's default
+			// ceiling is 10 MB. A hostile target could spend that on every response,
+			// and the headers are retained per response and copied into resp.Raw, the
+			// scraper's source string and the audit log. 1 MB is far above anything a
+			// real server sends (nginx and Apache cap a header line at 8 KB).
+			MaxResponseHeaderBytes: 1 << 20,
+			MaxIdleConns:           1000,
+			MaxIdleConnsPerHost:    500,
+			MaxConnsPerHost:        500,
 			DialContext: (&net.Dialer{
 				Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
 			}).DialContext,
@@ -229,15 +235,39 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 	resp = ffuf.NewResponse(httpresp, req)
 	defer httpresp.Body.Close()
 
-	// Check if we should download the resource or not
-	size, err := strconv.Atoi(httpresp.Header.Get("Content-Length"))
-	if err == nil {
+	// Record the server-declared length first, so it is set before any early return
+	// below and the size filters still observe it.
+	if size, serr := strconv.Atoi(httpresp.Header.Get("Content-Length")); serr == nil {
 		resp.ContentLength = int64(size)
-		if (r.config.IgnoreBody) || (size > MAX_DOWNLOAD_SIZE) {
+		if size > MAX_DOWNLOAD_SIZE {
 			resp.Cancelled = true
 			return resp, nil
 		}
 	}
+
+	// -ignore-body has to hold regardless of framing. Keeping this check inside the
+	// Content-Length branch above meant it was silently skipped for chunked
+	// responses, which carry no Content-Length.
+	if r.config.IgnoreBody {
+		resp.Cancelled = true
+		return resp, nil
+	}
+
+	// Bound the body at the source, before anything reads it. The Content-Length
+	// guard above cannot fire when the header is absent, which is the case for
+	// chunked responses and for any response the transport transparently decoded,
+	// and httputil.DumpResponse below drains the entire body with no bound of its
+	// own.
+	//
+	// This does not replace the LimitReader further down, and which stream each of
+	// them bounds depends on the path. Where the transport decoded the body itself,
+	// both bound the same decompressed stream. Where Content-Encoding survived and
+	// we decode manually, this one bounds the compressed bytes and that one bounds
+	// what they expand to, so that case needs both.
+	httpresp.Body = struct {
+		io.Reader
+		io.Closer
+	}{io.LimitReader(httpresp.Body, int64(MAX_DOWNLOAD_SIZE)+1), httpresp.Body}
 
 	if len(r.config.OutputDirectory) > 0 || len(r.config.AuditLog) > 0 {
 		rawresp, _ := httputil.DumpResponse(httpresp, true)
@@ -266,6 +296,10 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 	limited := io.LimitReader(bodyReader, int64(MAX_DOWNLOAD_SIZE)+1)
 	if respbody, rerr := io.ReadAll(limited); rerr == nil {
 		if len(respbody) > MAX_DOWNLOAD_SIZE {
+			// The snapshot taken above holds a body truncated at the cap, which would
+			// be written out as a well-formed response that merely looks complete.
+			// Drop it rather than store a misleading artifact.
+			resp.Raw = ""
 			resp.Cancelled = true
 			return resp, nil
 		}
