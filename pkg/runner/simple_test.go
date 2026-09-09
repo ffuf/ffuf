@@ -179,9 +179,13 @@ func allocatedBy(fn func()) uint64 {
 // feature enabled, a body far over the cap must not be materialised.
 func TestExecute_SnapshotIsBoundedWithOutputFeatures(t *testing.T) {
 	const body = 64 << 20 // 64 MiB against a 5 MiB cap
-	// Generous ceiling: the bounded path allocates a small multiple of the cap,
-	// the unbounded one allocates several times the body.
-	const allocCeiling = 64 << 20
+	// The ceiling is a multiple of the body, not an absolute figure. The test origin
+	// runs in this process and allocates the body it streams, so roughly one body's
+	// worth is charged here no matter how little the client reads; the race detector
+	// adds more on top. The signal is the multiple: bounded stays near that floor,
+	// unbounded allocates several times the body because it buffers, copies and
+	// re-serialises it.
+	const allocCeiling = 2 * body
 
 	cases := []struct {
 		name   string
@@ -207,7 +211,8 @@ func TestExecute_SnapshotIsBoundedWithOutputFeatures(t *testing.T) {
 			})
 
 			if allocated > allocCeiling {
-				t.Errorf("allocated %d bytes for a %d byte body, want at most %d", allocated, body, allocCeiling)
+				t.Errorf("allocated %d bytes for a %d byte body, want at most %d; the snapshot is reading past the cap",
+					allocated, body, allocCeiling)
 			}
 			if len(resp.Raw) > MAX_DOWNLOAD_SIZE {
 				t.Errorf("resp.Raw is %d bytes, must not exceed MAX_DOWNLOAD_SIZE (%d)", len(resp.Raw), MAX_DOWNLOAD_SIZE)
