@@ -38,7 +38,7 @@ func TestRegisterFlags_Wellformed(t *testing.T) {
 		"http2": true, "ignore-body": true, "r": true, "raw": true, "recursion": true,
 		"recursion-depth": true, "recursion-strategy": true, "replay-proxy": true,
 		"sni": true, "timeout": true, "u": true, "x": true,
-		"preflight-mode": true, "preflight-error": true,
+		"preflight-mode": true, "preflight-error": true, "preflight-anyhost": true,
 		"preflight": true, "preflight-var": true, "postflight": true, "postflight-var": true,
 		// General
 		"V": true, "ac": true, "acc": true, "ach": true, "ack": true, "acs": true,

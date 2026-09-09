@@ -55,10 +55,11 @@ type HTTPOptions struct {
 	// bind positionally (a -preflight-var attaches to the preceding -preflight), so
 	// they are appended by the extraFlags Func callbacks in flags.go rather than a
 	// tagged field. The json/toml tags carry them through config files and history.
-	Preflights     []PreflightConfig `json:"preflights" toml:"preflights"`
-	Postflights    []PreflightConfig `json:"postflights" toml:"postflights"`
-	PreflightMode  string            `json:"preflight_mode" toml:"preflight_mode" ffuf:"preflight-mode" section:"http" usage:"Preflight execution mode: \"per-request\" or \"per-thread\""`
-	PreflightError string            `json:"preflight_error" toml:"preflight_error" ffuf:"preflight-error" section:"http" usage:"Preflight error handling: \"abort\" or \"ignore\""`
+	Preflights       []PreflightConfig `json:"preflights" toml:"preflights"`
+	Postflights      []PreflightConfig `json:"postflights" toml:"postflights"`
+	PreflightMode    string            `json:"preflight_mode" toml:"preflight_mode" ffuf:"preflight-mode" section:"http" usage:"Preflight execution mode: \"per-request\" or \"per-thread\""`
+	PreflightError   string            `json:"preflight_error" toml:"preflight_error" ffuf:"preflight-error" section:"http" usage:"Preflight error handling: \"abort\" or \"ignore\""`
+	PreflightAnyHost bool              `json:"preflight_anyhost" toml:"preflight_anyhost" ffuf:"preflight-anyhost" section:"http" usage:"Allow a -preflight-var value to change a flight request's scheme, host or port. Off by default: those values come from the scanned target."`
 }
 
 type GeneralOptions struct {
@@ -164,6 +165,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.Postflights = make([]PreflightConfig, 0)
 	c.HTTP.PreflightMode = "per-request"
 	c.HTTP.PreflightError = "abort"
+	c.HTTP.PreflightAnyHost = false
 	c.HTTP.Data = ""
 	c.HTTP.FollowRedirects = false
 	c.HTTP.IgnoreBody = false
@@ -587,6 +589,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Verbose = parseOpts.General.Verbose
 	conf.Json = parseOpts.General.Json
 	conf.Http2 = parseOpts.HTTP.Http2
+	conf.PreflightAnyHost = parseOpts.HTTP.PreflightAnyHost
 	conf.Preflights = parseOpts.HTTP.Preflights
 	conf.Postflights = parseOpts.HTTP.Postflights
 

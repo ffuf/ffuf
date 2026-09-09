@@ -117,7 +117,7 @@ var extraFlags = []extraFlag{
 	// consistent with every other flag and lets config-file values survive: the CLI
 	// appends to whatever a config file loaded, it does not clobber it.
 	{"preflight", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Func("preflight", "Raw HTTP request file to run before each fuzzing request (repeatable, order matters)", func(v string) error {
+		fs.Func("preflight", "Raw HTTP request file to run before each fuzzing request (repeatable, order matters). Inherits main config headers, including -H auth and -b cookies.", func(v string) error {
 			if v == "" {
 				return fmt.Errorf("-preflight requires a request file path")
 			}
@@ -131,7 +131,7 @@ var extraFlags = []extraFlag{
 		})
 	}},
 	{"postflight", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Func("postflight", "Raw HTTP request file to run after each fuzzing request (repeatable, order matters)", func(v string) error {
+		fs.Func("postflight", "Raw HTTP request file to run after each fuzzing request (repeatable, order matters). Inherits main config headers, including -H auth and -b cookies.", func(v string) error {
 			if v == "" {
 				return fmt.Errorf("-postflight requires a request file path")
 			}
