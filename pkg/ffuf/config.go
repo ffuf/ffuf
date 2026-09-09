@@ -91,6 +91,7 @@ type Config struct {
 	Postflights               []PreflightConfig     `json:"postflights"`
 	PreflightMode             string                `json:"preflight_mode"`
 	PreflightError            string                `json:"preflight_error"`
+	PreflightAnyHost          bool                  `json:"preflight_anyhost"`
 	// RateLimitFunc blocks until the shared rate limiter allows another request.
 	// The engine sets it so preflight/postflight requests (sent from the runner,
 	// outside the dispatch loop) also honor -rate and -p. Nil means unmetered.

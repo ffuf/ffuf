@@ -1,4 +1,9 @@
 ## Changelog
+- master
+  - Changed
+    - A value captured by `-preflight-var` can no longer change the scheme, host or port of a later preflight/postflight request. Those requests inherit the main configuration's headers, so a captured value picking the destination let a scanned target choose where the operator's credentials were sent. Destinations the operator writes in the flight file, including an absolute URL to a separate identity provider, are unaffected: the check only fires when substitution is what moved the request. Pass `-preflight-anyhost` to opt back in for discovery-driven flows, such as reading `token_endpoint` out of `/.well-known/openid-configuration`
+    - `-preflight` and `-postflight` help text now states that these requests inherit the main configuration's headers, including `-H` auth headers and `-b` cookies
+
 - v2.3.0
   - New
     - Added preflight/postflight requests: raw HTTP request files run before/after each fuzzing request (`-preflight`/`-postflight`), with regex variable extraction (`-preflight-var "NAME:regex"`) injected into the main request, a per-request or amortized per-thread mode (`-preflight-mode`), and abort/ignore error handling (`-preflight-error`)

@@ -77,7 +77,8 @@
   "preflights": [],
   "postflights": [],
   "preflight_mode": "per-request",
-  "preflight_error": "abort"
+  "preflight_error": "abort",
+  "preflight_anyhost": false
 }
 
 --- matchers after SetupFilters ---

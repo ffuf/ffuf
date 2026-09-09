@@ -376,6 +376,10 @@ func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]st
 	body, _ := io.ReadAll(reader)
 	body = bytes.TrimRight(body, "\r\n") // trim trailing newline editors add
 
+	// Record where the operator's own file says this request goes, before any
+	// captured value is substituted in.
+	authoredScheme, authoredHost := r.flightAuthority(path, host)
+
 	// Substitute known variables into method, path, headers, host and body, in a
 	// single deterministic pass.
 	if len(vars) > 0 {
@@ -386,6 +390,21 @@ func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]st
 		host = rep.Replace(host)
 		for h, v := range headers {
 			headers[h] = rep.Replace(v)
+		}
+	}
+
+	// Captured values come from the scanned target, and flight requests carry the
+	// main configuration's headers, so letting a captured value pick the
+	// destination hands the target somewhere to send the operator's credentials.
+	// An operator-authored destination is untouched by this: it only fires when
+	// substitution is what moved the request, which is why comparing against the
+	// pre-substitution authority is the check rather than pinning to the target
+	// host. Discovery-driven flows that genuinely need the target to name the next
+	// host opt in with -preflight-anyhost.
+	if len(vars) > 0 && !r.config.PreflightAnyHost {
+		gotScheme, gotHost := r.flightAuthority(path, host)
+		if gotScheme != authoredScheme || gotHost != authoredHost {
+			return nil, fmt.Errorf("preflight %q: a captured variable changed the request destination from %s://%s to %s://%s; captured values come from the scanned target, so this is refused. Pass -preflight-anyhost if the target is meant to choose the destination", filename, authoredScheme, authoredHost, gotScheme, gotHost)
 		}
 	}
 
@@ -536,6 +555,27 @@ func varsReplacer(vars map[string]string) *strings.Replacer {
 }
 
 // hostOf returns the authority (host[:port]) of a URL, or "" if it cannot be parsed.
+// flightAuthority reports the scheme and host a flight request would be sent to,
+// given the request-line path and Host header from its file. It mirrors the URL
+// construction below, so the two stay in step.
+func (r *SimpleRunner) flightAuthority(path, host string) (scheme, authority string) {
+	if strings.HasPrefix(path, "http") {
+		u, err := url.Parse(path)
+		if err != nil {
+			return "", ""
+		}
+		return u.Scheme, u.Host
+	}
+	scheme = "https"
+	if u, uerr := url.Parse(r.config.Url); uerr == nil && u.Scheme != "" {
+		scheme = u.Scheme
+		if host == "" {
+			host = u.Host
+		}
+	}
+	return scheme, host
+}
+
 func hostOf(rawurl string) string {
 	u, err := url.Parse(rawurl)
 	if err != nil {
