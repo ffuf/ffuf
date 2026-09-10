@@ -45,7 +45,7 @@ More elaborate documentation that goes through many features with a lot of examp
 available in the ffuf wiki at [https://github.com/ffuf/ffuf/wiki](https://github.com/ffuf/ffuf/wiki)
 
 For more extensive documentation, with real life usage examples and tips, be sure to check out the awesome guide:
-"[Everything you need to know about FFUF](https://codingo.io/tools/ffuf/bounty/2020/09/17/everything-you-need-to-know-about-ffuf.html)" by 
+"[Everything you need to know about FFUF](https://codingo.com/ffuf)" by 
 Michael Skelton ([@codingo](https://github.com/codingo)).
 
 You can also practise your ffuf scans against a live host with different lessons and use cases either locally by using the docker container https://github.com/adamtlangley/ffufme or against the live hosted version at http://ffuf.me created by Adam Langley [@adamtlangley](https://twitter.com/adamtlangley).  
