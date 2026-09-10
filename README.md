@@ -127,7 +127,7 @@ radamsa -n 1000 -o %n.txt example1.txt example2.txt
 # This results into files 1.txt ... 1000.txt
 # Now we can just read the payload data in a loop from file for ffuf
 
-ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST -u https://ffuf.io.fi/ -mc all -fc 400
+ffuf --input-cmd 'cat $FFUF_NUM.txt' -H "Content-Type: application/json" -X POST -d "FUZZ" -u https://ffuf.io.fi/ -mc all -fc 400
 ```
 
 ### Configuration files
