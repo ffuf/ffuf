@@ -44,6 +44,7 @@
 * [p0dalirius](https://github.com/p0dalirius)
 * [putsi](https://github.com/putsi)
 * [SakiiR](https://github.com/SakiiR)
+* [satanonsteroids2024-zzz](https://github.com/satanonsteroids2024-zzz)
 * [seblw](https://github.com/seblw)
 * [Serizao](https://github.com/Serizao)
 * [Shaked](https://github.com/Shaked)
