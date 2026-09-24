@@ -1,0 +1,17 @@
+# golangci-lint v2. This reproduces the v1 defaults the project was linted with
+# (errcheck, gosimple, govet, ineffassign, staticcheck, unused and the v1
+# default exclusions), so moving to v2 changes the toolchain, not the policy.
+version: "2"
+linters:
+  default: standard
+  settings:
+    staticcheck:
+      # v1 ran staticcheck (SA) and gosimple (S); v2 merges them and would also
+      # turn on stylecheck (ST) and quickfix (QF).
+      checks: ["all", "-ST*", "-QF*"]
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
