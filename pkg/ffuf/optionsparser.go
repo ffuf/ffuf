@@ -611,8 +611,8 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errs.Add(fmt.Errorf("-preflight-error must be \"abort\" or \"ignore\", got %q", parseOpts.HTTP.PreflightError))
 	}
 
-	// Validate that each preflight/postflight file exists and precompile every
-	// extraction regex once here (invalid regex is a config error, not a runtime
+	// Validate that each preflight/postflight file exists, check every by-name
+	// source, and precompile every extraction regex once here (invalid regex is a config error, not a runtime
 	// per-request abort; the runner reuses Compiled so the hot path never recompiles).
 	compileFlights := func(kind string, flights []PreflightConfig) {
 		for i := range flights {
@@ -620,6 +620,20 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 				errs.Add(fmt.Errorf("%s request file #%d %q: %s", kind, i+1, flights[i].RequestFile, err))
 			}
 			for j := range flights[i].Vars {
+				ve := &flights[i].Vars[j]
+				if ve.Source != "" {
+					// Selected by name (-preflight-var-auto or a config file source/key).
+					if ve.Regex != "" {
+						errs.Add(fmt.Errorf("%s #%d var %q: set either regex or source, not both", kind, i+1, ve.Name))
+					} else if verr := ValidateVarSource(ve.Source, ve.Key); verr != nil {
+						errs.Add(fmt.Errorf("%s #%d var %q: %s", kind, i+1, ve.Name, verr))
+					}
+					continue
+				}
+				if ve.Regex == "" {
+					errs.Add(fmt.Errorf("%s #%d var %q: needs a regex or a source", kind, i+1, ve.Name))
+					continue
+				}
 				re, cerr := regexp.Compile(flights[i].Vars[j].Regex)
 				if cerr != nil {
 					errs.Add(fmt.Errorf("%s #%d var %q: invalid regex %q: %s", kind, i+1, flights[i].Vars[j].Name, flights[i].Vars[j].Regex, cerr))

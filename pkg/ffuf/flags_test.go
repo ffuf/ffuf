@@ -31,7 +31,7 @@ func TestRegisterFlags_Wellformed(t *testing.T) {
 
 	// The full expected flag surface. Unlike a bare count, this catches a net-zero
 	// add-and-remove, a rename, or a duplicate — update it DELIBERATELY when the CLI
-	// surface changes. 78 visible flags + 7 hidden compat (4 aliases + 3 dummies).
+	// surface changes. 80 visible flags + 7 hidden compat (4 aliases + 3 dummies).
 	expected := map[string]bool{
 		// HTTP
 		"H": true, "X": true, "b": true, "cc": true, "ck": true, "d": true,
@@ -40,6 +40,7 @@ func TestRegisterFlags_Wellformed(t *testing.T) {
 		"sni": true, "timeout": true, "u": true, "x": true,
 		"preflight-mode": true, "preflight-error": true, "preflight-anyhost": true,
 		"preflight": true, "preflight-var": true, "postflight": true, "postflight-var": true,
+		"preflight-var-auto": true, "postflight-var-auto": true,
 		// General
 		"V": true, "ac": true, "acc": true, "ach": true, "ack": true, "acs": true,
 		"c": true, "config": true, "json": true, "maxtime": true, "maxtime-job": true,
