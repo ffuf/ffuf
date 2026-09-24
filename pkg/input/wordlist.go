@@ -9,6 +9,8 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
+const maxWordlistLineSize = 512 * 1024
+
 type WordlistInput struct {
 	active   bool
 	config   *ffuf.Config
@@ -128,6 +130,10 @@ func (w *WordlistInput) readFile(path string) error {
 	var data [][]byte
 	var ok bool
 	reader := bufio.NewScanner(file)
+	// Scanner defaults to 64 KiB tokens, which rejects valid large request-body
+	// payloads. Keep a finite ceiling to avoid unbounded allocation while
+	// supporting the large wordlist entries reported in #557 and #567.
+	reader.Buffer(nil, maxWordlistLineSize)
 	re := regexp.MustCompile(`(?i)%ext%`)
 	for reader.Scan() {
 		if w.config.DirSearchCompat && len(w.config.Extensions) > 0 {
