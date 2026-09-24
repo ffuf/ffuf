@@ -522,13 +522,19 @@ func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVa
 						return nil, fmt.Errorf("preflight: invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
 					}
 				}
+				// The body is searched first, so a regex that matched before headers
+				// were searched still captures the same text. Only a regex that finds
+				// nothing in the body gets to look at the headers.
 				matches := re.FindSubmatch(body)
 				if len(matches) < 2 {
+					matches = re.FindSubmatch(fr.headerBlock())
+				}
+				if len(matches) < 2 {
 					if ignore {
-						log.Printf("preflight: regex %q did not match var %s in response from %q", ve.Regex, ve.Name, pf.RequestFile)
+						log.Printf("preflight: regex %q did not match var %s in the body or headers of the response from %q", ve.Regex, ve.Name, pf.RequestFile)
 						continue
 					}
-					return nil, fmt.Errorf("preflight: regex %q did not capture var %s from response of %q", ve.Regex, ve.Name, pf.RequestFile)
+					return nil, fmt.Errorf("preflight: regex %q did not capture var %s from the body or headers of the response of %q", ve.Regex, ve.Name, pf.RequestFile)
 				}
 				val = string(matches[1])
 			}

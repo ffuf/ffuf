@@ -126,7 +126,7 @@ var extraFlags = []extraFlag{
 		})
 	}},
 	{"preflight-var", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Func("preflight-var", "Extract a variable from the preceding -preflight response: \"NAME:regex\" (repeatable)", func(v string) error {
+		fs.Func("preflight-var", "Extract a variable from the preceding -preflight response: \"NAME:regex\", matched against the body, then the headers (repeatable)", func(v string) error {
 			return appendFlightVar(&o.HTTP.Preflights, "-preflight-var", "-preflight", v)
 		})
 	}},
@@ -140,7 +140,7 @@ var extraFlags = []extraFlag{
 		})
 	}},
 	{"postflight-var", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
-		fs.Func("postflight-var", "Extract a variable from the preceding -postflight response: \"NAME:regex\" (repeatable)", func(v string) error {
+		fs.Func("postflight-var", "Extract a variable from the preceding -postflight response: \"NAME:regex\", matched against the body, then the headers (repeatable)", func(v string) error {
 			return appendFlightVar(&o.HTTP.Postflights, "-postflight-var", "-postflight", v)
 		})
 	}},
