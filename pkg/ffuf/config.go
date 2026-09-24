@@ -20,8 +20,9 @@ const (
 var VarSources = []string{VarSourceForm, VarSourceMeta, VarSourceCookie, VarSourceHeader}
 
 // VarExtract names a variable to capture from a preflight/postflight response.
-// The value is either the first capture group of Regex run against the body, or,
-// when Source is set, the form field, meta tag, cookie or header called Key.
+// The value is either the first capture group of Regex, run against the body and
+// then, if that finds nothing, the headers; or, when Source is set, the form
+// field, meta tag, cookie or header called Key.
 // The captured value is substituted into the keyword Name wherever it appears in
 // later requests.
 type VarExtract struct {

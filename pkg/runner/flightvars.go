@@ -12,15 +12,30 @@ import (
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
-// flightResponse is what a by-name variable can be read from: one preflight or
+// flightResponse is what a variable can be read from: one preflight or
 // postflight response. The HTML is parsed at most once, and only when a form or
-// meta lookup needs it.
+// meta lookup needs it; the header block is likewise built on first use.
 type flightResponse struct {
-	body    []byte
-	header  http.Header
-	doc     *goquery.Document
-	docErr  error
-	docDone bool
+	body      []byte
+	header    http.Header
+	doc       *goquery.Document
+	docErr    error
+	docDone   bool
+	headers   []byte
+	headersOK bool
+}
+
+// headerBlock returns the response headers as "Name: value\r\n" lines, one per
+// value, for -preflight-var regexes to search. Names are canonical
+// ("X-Csrf-Token") and sorted, since the wire order is not kept. Header.Write
+// turns any newline inside a value into a space.
+func (fr *flightResponse) headerBlock() []byte {
+	if !fr.headersOK {
+		var buf bytes.Buffer
+		_ = fr.header.Write(&buf)
+		fr.headers, fr.headersOK = buf.Bytes(), true
+	}
+	return fr.headers
 }
 
 func (fr *flightResponse) document() (*goquery.Document, error) {
