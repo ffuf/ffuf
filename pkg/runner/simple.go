@@ -143,7 +143,7 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
 		headers := make(map[string]string, len(req.Headers))
 		for h, v := range req.Headers {
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
+			CanonicalHeader := textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
 			headers[CanonicalHeader] = strings.ReplaceAll(v, keyword, string(inputitem))
 		}
 		req.Headers = headers
@@ -236,7 +236,7 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 	req.Timestamp = start
 
 	resp = ffuf.NewResponse(httpresp, req)
-	defer httpresp.Body.Close()
+	defer func() { _ = httpresp.Body.Close() }()
 
 	// Record the server-declared length first, so it is set before any early return
 	// below and the size filters still observe it.
@@ -333,7 +333,7 @@ func (r *SimpleRunner) parsePreflightRequest(filename string, vars map[string]st
 	if err != nil {
 		return nil, fmt.Errorf("preflight: could not open %q: %s", filename, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	reader := bufio.NewReader(f)
 
 	// First line: METHOD path HTTP/version
@@ -483,7 +483,7 @@ func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVa
 			return nil, fmt.Errorf("preflight: request %q failed: %s", pf.RequestFile, err)
 		}
 		body, err := io.ReadAll(io.LimitReader(resp.Body, int64(MAX_DOWNLOAD_SIZE)+1))
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			if ignore {
 				log.Printf("preflight ignored error reading response from %q: %s", pf.RequestFile, err)

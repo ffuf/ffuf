@@ -21,7 +21,7 @@ func Handle(job *engine.Job) error {
 	if err != nil {
 		return err
 	}
-	defer tty.Close()
+	defer func() { _ = tty.Close() }()
 	inreader := bufio.NewScanner(tty)
 	inreader.Split(bufio.ScanLines)
 	for inreader.Scan() {

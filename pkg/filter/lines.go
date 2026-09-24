@@ -19,7 +19,7 @@ func NewLineFilter(value string) (ffuf.FilterProvider, error) {
 	for _, sv := range strings.Split(value, ",") {
 		vr, err := ffuf.ValueRangeFromString(sv)
 		if err != nil {
-			return &LineFilter{}, fmt.Errorf("Line filter or matcher (-fl / -ml): invalid value: %s", sv)
+			return &LineFilter{}, fmt.Errorf("line filter or matcher (-fl / -ml): invalid value: %s", sv)
 		}
 		intranges = append(intranges, vr)
 	}

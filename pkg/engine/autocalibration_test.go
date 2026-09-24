@@ -48,7 +48,7 @@ func TestAutoCalibrationStrings(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create a test strategy file
 	strategy := ffuf.AutocalibrationStrategy{

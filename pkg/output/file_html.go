@@ -200,7 +200,7 @@ func colorizeResults(results []ffuf.Result) []ffuf.Result {
 	return newResults
 }
 
-func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) error {
+func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) (err error) {
 	results = colorizeResults(results)
 
 	ti := time.Now()
@@ -266,7 +266,13 @@ func writeHTML(filename string, config *ffuf.Config, results []ffuf.Result) erro
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	// A failed Close on a file we just wrote means the output is short or
+	// missing; report it rather than returning nil over a truncated file.
+	defer func() {
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+	}()
 
 	templateName := "output.html"
 	t := template.New(templateName).Delims("{{", "}}")

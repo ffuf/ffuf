@@ -6,6 +6,10 @@
     - A config-file preflight/postflight var with neither a regex nor a source is now a config error instead of failing on every request
     - A value captured by `-preflight-var` can no longer change the scheme, host or port of a later preflight/postflight request. Those requests inherit the main configuration's headers, so a captured value picking the destination let a scanned target choose where the operator's credentials were sent. Destinations the operator writes in the flight file, including an absolute URL to a separate identity provider, are unaffected: the check only fires when substitution is what moved the request. Pass `-preflight-anyhost` to opt back in for discovery-driven flows, such as reading `token_endpoint` out of `/.well-known/openid-configuration`
     - `-preflight` and `-postflight` help text now states that these requests inherit the main configuration's headers, including `-H` auth headers and `-b` cookies
+    - Bump `golang.org/x/net` 0.7.0 -> 0.58.0 and `golang.org/x/sys` 0.5.0 -> 0.47.0, clearing nine `golang.org/x/net/html` advisories that the scraper reaches through goquery on every response body. Raises the Go floor to 1.25.
+    - Fix `-o` silently reporting success over a truncated or empty output file. The CSV, HTML and Markdown writers discarded the error from closing the file they had just written, and the CSV writer additionally discarded the buffered `csv.Writer` flush error, so a disk filling up mid-results produced a partial file and a zero exit
+    - Bump `github.com/adrg/xdg` 0.4.0 -> 0.5.3, which moves `gopkg.in/yaml.v3` off a version inside CVE-2022-28948. Not reachable from ffuf, but it is what SCA scanners reading `go.sum` report
+    - Error messages now start lowercase and carry no trailing full stop, following Go convention. Only the leading character changes; wording is otherwise identical
 
 - v2.3.0
   - New

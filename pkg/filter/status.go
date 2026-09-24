@@ -23,7 +23,7 @@ func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
 		} else {
 			vr, err := ffuf.ValueRangeFromString(sv)
 			if err != nil {
-				return &StatusFilter{}, fmt.Errorf("Status filter or matcher (-fc / -mc): invalid value %s", sv)
+				return &StatusFilter{}, fmt.Errorf("status filter or matcher (-fc / -mc): invalid value %s", sv)
 			}
 			intranges = append(intranges, vr)
 		}

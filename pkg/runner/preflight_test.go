@@ -43,7 +43,7 @@ func writeTempRequest(t *testing.T, content string) string {
 		t.Fatalf("could not create temp request file: %s", err)
 	}
 	_, _ = f.WriteString(content)
-	f.Close()
+	_ = f.Close()
 	return f.Name()
 }
 
@@ -52,7 +52,7 @@ func writeTempRequest(t *testing.T, content string) string {
 // headers and body wherever its keyword appears.
 func TestPreflightVarsSubstitutedIntoMainRequest(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `<input name="csrf" value="tok123">`)
+		_, _ = fmt.Fprint(w, `<input name="csrf" value="tok123">`)
 	}))
 	defer srv.Close()
 
@@ -104,7 +104,7 @@ func newPreflightServer() *preflightServer {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/preflight", func(w http.ResponseWriter, r *http.Request) {
 		n := atomic.AddInt64(&ps.preflightHits, 1)
-		fmt.Fprintf(w, "token=TOK%d;", n)
+		_, _ = fmt.Fprintf(w, "token=TOK%d;", n)
 	})
 	mux.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
 		ps.mu.Lock()
@@ -242,7 +242,7 @@ func TestConcurrentPerThreadRaceSafe(t *testing.T) {
 // TestPreflightErrorAbort makes a non-matching extraction fatal in abort mode.
 func TestPreflightErrorAbort(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "no token here")
+		_, _ = fmt.Fprint(w, "no token here")
 	}))
 	defer srv.Close()
 	reqFile := writeTempRequest(t, fmt.Sprintf("GET / HTTP/1.1\nHost: %s\n\n", srv.Listener.Addr().String()))
@@ -261,7 +261,7 @@ func TestPreflightErrorAbort(t *testing.T) {
 // TestPreflightErrorIgnore makes the same failure non-fatal in ignore mode.
 func TestPreflightErrorIgnore(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "no token here")
+		_, _ = fmt.Fprint(w, "no token here")
 	}))
 	defer srv.Close()
 	reqFile := writeTempRequest(t, fmt.Sprintf("GET / HTTP/1.1\nHost: %s\n\n", srv.Listener.Addr().String()))
