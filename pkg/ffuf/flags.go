@@ -144,6 +144,67 @@ var extraFlags = []extraFlag{
 			return appendFlightVar(&o.HTTP.Postflights, "-postflight-var", "-postflight", v)
 		})
 	}},
+	{"preflight-var-auto", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("preflight-var-auto", "Extract a variable from the preceding -preflight response by name: \"NAME:key\" tries form field, meta tag, cookie and header; \"NAME:[form|meta|cookie|header]key\" pins the source (repeatable)", func(v string) error {
+			return appendFlightVarAuto(&o.HTTP.Preflights, "-preflight-var-auto", "-preflight", v)
+		})
+	}},
+	{"postflight-var-auto", SectionHTTP, false, func(fs *flag.FlagSet, o *ConfigOptions) {
+		fs.Func("postflight-var-auto", "Extract a variable from the preceding -postflight response by name, like -preflight-var-auto (repeatable)", func(v string) error {
+			return appendFlightVarAuto(&o.HTTP.Postflights, "-postflight-var-auto", "-postflight", v)
+		})
+	}},
+}
+
+// appendFlightVarAuto attaches a "NAME:key" or "NAME:[source]key" extraction to
+// the last entry in a preflight/postflight chain. The source tag lives only on
+// this flag: "[header]X" is a valid regex, so -preflight-var can't take it.
+func appendFlightVarAuto(chain *[]PreflightConfig, varFlag, fileFlag, spec string) error {
+	if len(*chain) == 0 {
+		return fmt.Errorf("%s %q has no preceding %s", varFlag, spec, fileFlag)
+	}
+	name, sel, ok := parseVarSpec(spec)
+	if !ok {
+		return fmt.Errorf("%s value %q must be \"NAME:key\" or \"NAME:[source]key\" with a non-empty name and key", varFlag, spec)
+	}
+	source, key, err := ParseVarSelector(sel)
+	if err != nil {
+		return fmt.Errorf("%s value %q: %s", varFlag, spec, err)
+	}
+	last := &(*chain)[len(*chain)-1]
+	last.Vars = append(last.Vars, VarExtract{Name: name, Source: source, Key: key})
+	return nil
+}
+
+// ParseVarSelector splits "[source]key" into its source and key, or returns
+// VarSourceAuto for a bare key. The tag is a prefix because field names can end
+// in brackets (PHP's "data[_Token][key]") and contain colons (JSF's
+// "loginForm:token"); only the first "]" closes the tag.
+func ParseVarSelector(sel string) (source, key string, err error) {
+	if !strings.HasPrefix(sel, "[") {
+		return VarSourceAuto, sel, nil
+	}
+	end := strings.IndexByte(sel, ']')
+	if end < 0 {
+		return "", "", fmt.Errorf("unterminated source tag, want [%s]key", strings.Join(VarSources, "|"))
+	}
+	source, key = sel[1:end], sel[end+1:]
+	if err := ValidateVarSource(source, key); err != nil {
+		return "", "", err
+	}
+	return source, key, nil
+}
+
+// ValidateVarSource checks a source/key pair, whether it came from the CLI or a
+// config file.
+func ValidateVarSource(source, key string) error {
+	if !isVarSource(source) {
+		return fmt.Errorf("unknown source %q, want one of %s", source, strings.Join(VarSources, ", "))
+	}
+	if key == "" {
+		return fmt.Errorf("source %q needs a non-empty key", source)
+	}
+	return nil
 }
 
 // appendFlightVar attaches a "NAME:regex" extraction to the last entry in a
@@ -247,4 +308,16 @@ func bindField(fs *flag.FlagSet, name, usage, kind string, ptr interface{}) {
 	default:
 		panic("ffuf: unsupported flag field type for -" + name)
 	}
+}
+
+func isVarSource(source string) bool {
+	if source == VarSourceAuto {
+		return true
+	}
+	for _, s := range VarSources {
+		if s == source {
+			return true
+		}
+	}
+	return false
 }

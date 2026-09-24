@@ -35,6 +35,9 @@ type SimpleRunner struct {
 	config *ffuf.Config
 	client *http.Client
 	lanes  *lanePool
+	// autoPins maps a -preflight-var-auto *ffuf.VarExtract to the source its
+	// bare key first resolved to (see extractByName).
+	autoPins sync.Map
 }
 
 // preflightLane holds the variables extracted by a per-thread preflight chain.
@@ -489,30 +492,46 @@ func (r *SimpleRunner) runPreflightChain(chain []ffuf.PreflightConfig, inheritVa
 			return nil, fmt.Errorf("preflight: reading response body from %q failed: %s", pf.RequestFile, err)
 		}
 
-		for _, ve := range pf.Vars {
-			// Reuse the regex compiled once at config time; fall back to compiling
-			// here only when a VarExtract was built outside ConfigFromOptions (tests).
-			re := ve.Compiled
-			if re == nil {
-				var cerr error
-				re, cerr = regexp.Compile(ve.Regex)
-				if cerr != nil {
+		fr := &flightResponse{body: body, header: resp.Header}
+		for j := range pf.Vars {
+			// A pointer into the config's slice: extractByName keys its auto pins on it.
+			ve := &pf.Vars[j]
+			var val string
+			if ve.Source != "" {
+				v, xerr := r.extractByName(ve, fr)
+				if xerr != nil {
 					if ignore {
-						log.Printf("preflight ignored invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
+						log.Printf("preflight: var %s not extracted from %q: %s", ve.Name, pf.RequestFile, xerr)
 						continue
 					}
-					return nil, fmt.Errorf("preflight: invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
+					return nil, fmt.Errorf("preflight: var %s not extracted from response of %q: %s", ve.Name, pf.RequestFile, xerr)
 				}
-			}
-			matches := re.FindSubmatch(body)
-			if len(matches) < 2 {
-				if ignore {
-					log.Printf("preflight: regex %q did not match var %s in response from %q", ve.Regex, ve.Name, pf.RequestFile)
-					continue
+				val = v
+			} else {
+				// Reuse the regex compiled once at config time; fall back to compiling
+				// here only when a VarExtract was built outside ConfigFromOptions (tests).
+				re := ve.Compiled
+				if re == nil {
+					var cerr error
+					re, cerr = regexp.Compile(ve.Regex)
+					if cerr != nil {
+						if ignore {
+							log.Printf("preflight ignored invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
+							continue
+						}
+						return nil, fmt.Errorf("preflight: invalid regex %q for var %s: %s", ve.Regex, ve.Name, cerr)
+					}
 				}
-				return nil, fmt.Errorf("preflight: regex %q did not capture var %s from response of %q", ve.Regex, ve.Name, pf.RequestFile)
+				matches := re.FindSubmatch(body)
+				if len(matches) < 2 {
+					if ignore {
+						log.Printf("preflight: regex %q did not match var %s in response from %q", ve.Regex, ve.Name, pf.RequestFile)
+						continue
+					}
+					return nil, fmt.Errorf("preflight: regex %q did not capture var %s from response of %q", ve.Regex, ve.Name, pf.RequestFile)
+				}
+				val = string(matches[1])
 			}
-			val := string(matches[1])
 			// The captured value comes from the scanned target (untrusted). Reject
 			// control characters: they can't legally go into a URL/header and would
 			// otherwise corrupt or fail the outgoing request (defense in depth).
