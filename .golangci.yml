@@ -1,0 +1,34 @@
+version: "2"
+
+linters:
+  # v1's default set was errcheck, gosimple, govet, ineffassign, staticcheck,
+  # unused. v2 folds gosimple into staticcheck, so this is the same set.
+  default: standard
+
+  settings:
+    staticcheck:
+      # v2's staticcheck also absorbed stylecheck (ST*) and quickfix (QF*),
+      # neither of which v1 ran by default. Kept off so the toolchain bump does
+      # not smuggle in a lint-policy change.
+      checks:
+        - all
+        - -ST*
+        - -QF*
+
+  exclusions:
+    # v1 applied these by default (exclude-use-default: true). v2 makes them
+    # opt-in; this is the documented v1-equivalent set.
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
+issues:
+  # Report every finding. All three of these suppress by default, and the
+  # effect compounds silently: on this tree the default output says 32 when
+  # the real count is 87. A CI gate that prints a truncated number gives no
+  # sign it truncated, so the number reads as the total.
+  max-issues-per-linter: 0   # default 50
+  max-same-issues: 0         # default 3
+  uniq-by-line: false        # default true — hides extra issues on one line
