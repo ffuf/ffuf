@@ -137,6 +137,9 @@ func TestProgressOutputOmitsControlCharsWhenStderrIsNotATerminal(t *testing.T) {
 }
 
 func TestResultOutputOmitsColorResetWhenColorsAreDisabled(t *testing.T) {
+	if ANSI_CLEAR == "" {
+		t.Skip("this build emits no ANSI escapes, so there is no reset code to look for")
+	}
 	conf := &ffuf.Config{Colors: false}
 	outp := NewStdoutput(conf)
 	outp.stdoutIsTerminal = true // isolate this from the clear-line behavior above
@@ -153,6 +156,9 @@ func TestResultOutputOmitsColorResetWhenColorsAreDisabled(t *testing.T) {
 }
 
 func TestResultOutputKeepsColorResetWhenColorsAreEnabled(t *testing.T) {
+	if ANSI_CLEAR == "" {
+		t.Skip("this build emits no ANSI escapes, so there is no reset code to look for")
+	}
 	conf := &ffuf.Config{Colors: true}
 	outp := NewStdoutput(conf)
 	outp.stdoutIsTerminal = false // -c output is opt-in and shouldn't depend on terminal detection
