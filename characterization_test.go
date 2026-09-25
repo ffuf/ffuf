@@ -206,14 +206,36 @@ func matcherSnapshot(conf *ffuf.Config) string {
 }
 
 // captureStdout redirects os.Stdout for the duration of fn and returns what it wrote.
+// The read end is drained while fn runs, not after it returns: fn's output can be
+// larger than the pipe buffer, and a write that fills the buffer blocks until
+// something reads from it.
 func captureStdout(fn func()) string {
 	r, w, _ := os.Pipe()
 	old := os.Stdout
 	os.Stdout = w
+	captured := make(chan string, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		captured <- buf.String()
+	}()
 	fn()
 	_ = w.Close()
 	os.Stdout = old
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	return buf.String()
+	out := <-captured
+	_ = r.Close()
+	return out
+}
+
+// TestCaptureStdoutHandlesOutputLargerThanThePipeBuffer guards the regression that
+// kept the help golden test off the Windows matrix: captureStdout wrote all of fn's
+// output before reading any of it, so an output bigger than the pipe buffer blocked
+// forever. A megabyte is larger than that buffer on every platform CI runs on, so a
+// reintroduced regression shows up as the package hitting its test timeout, with the
+// blocked write named in the goroutine dump.
+func TestCaptureStdoutHandlesOutputLargerThanThePipeBuffer(t *testing.T) {
+	payload := strings.Repeat("ffuf", 1<<18) // 1 MiB
+	if got := captureStdout(func() { fmt.Print(payload) }); got != payload {
+		t.Errorf("captured %d bytes, want %d", len(got), len(payload))
+	}
 }
