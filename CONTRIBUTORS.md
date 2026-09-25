@@ -36,6 +36,7 @@
 * [Kiblyn11](https://github.com/Kiblyn11)
 * [l4yton](https://github.com/l4yton)
 * [lc](https://github.com/lc)
+* [mmadersbacher](https://github.com/mmadersbacher)
 * [mprencipe](https://github.com/mprencipe)
 * [munzzyy](https://github.com/munzzyy)
 * [nnwakelam](https://twitter.com/nnwakelam)
