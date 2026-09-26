@@ -1,0 +1,31 @@
+# Git
+.git
+.gitignore
+
+# Build & release configs
+.goreleaser.yml
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Docs, images, examples
+README.md
+CHANGELOG.md
+CONTRIBUTORS.md
+LICENSE
+_img
+ffufrc.example
+
+# Tests
+**/*_test.go
+**/testdata
+
+# IDE/editor files
+*.swp
+*.swo
+*.bak
+*.tmp
+.vscode
+.idea
+
