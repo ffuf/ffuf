@@ -32,6 +32,7 @@
 - v2.2.0
   - New
     - Added audit logging functionality
+    - Extend scraper funcionality.
   - Changed
     - Security: bound the decompressed response body size to prevent a gzip-bomb OOM (CVE-2026-73232)
     - Fix a bug in autocalibration strategy merging, when two files have the same strategy key
