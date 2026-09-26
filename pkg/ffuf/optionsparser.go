@@ -3,6 +3,7 @@ package ffuf
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/textproto"
@@ -755,8 +756,19 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 	r := bufio.NewReader(file)
 
 	s, err := r.ReadString('\n')
-	if err != nil {
+	// Only a read that produced nothing is fatal: a file whose request line has no
+	// trailing newline still hands back the line along with io.EOF.
+	if err != nil && s == "" {
+		if errors.Is(err, io.EOF) {
+			return fmt.Errorf("request file %q is empty", parseOpts.Input.Request)
+		}
 		return fmt.Errorf("could not read request: %s", err)
+	}
+	// A bare CR left inside the request line means the file uses CR-only line
+	// endings, so the entire file arrived as this one "line". Say that, rather than
+	// building a request out of the wreckage and scanning the wrong thing.
+	if strings.ContainsRune(strings.TrimRight(s, "\r\n"), '\r') {
+		return fmt.Errorf("request file %q uses CR-only line endings; save it with LF or CRLF", parseOpts.Input.Request)
 	}
 	parts := strings.Split(s, " ")
 	if len(parts) < 3 {
@@ -766,23 +778,22 @@ func parseRawRequest(parseOpts *ConfigOptions, conf *Config) error {
 	conf.Method = parts[0]
 
 	for {
-		line, err := r.ReadString('\n')
+		line, rerr := r.ReadString('\n')
 		line = strings.TrimSpace(line)
 
-		if err != nil || line == "" {
+		if line == "" {
 			break
 		}
 
-		p := strings.SplitN(line, ":", 2)
-		if len(p) != 2 {
-			continue
+		// Store the header before honoring rerr, so a final header with no trailing
+		// newline is kept instead of silently dropped.
+		if p := strings.SplitN(line, ":", 2); len(p) == 2 && !strings.EqualFold(p[0], "content-length") {
+			conf.Headers[strings.TrimSpace(p[0])] = strings.TrimSpace(p[1])
 		}
 
-		if strings.EqualFold(p[0], "content-length") {
-			continue
+		if rerr != nil {
+			break
 		}
-
-		conf.Headers[strings.TrimSpace(p[0])] = strings.TrimSpace(p[1])
 	}
 
 	// Handle case with the full http url in path. In that case,
