@@ -21,26 +21,30 @@ func TestAuditLogger(t *testing.T) {
 		t.Errorf("Audit was nil, expected non-nil")
 	}
 
-	defer audit.Close()
-
 	err = os.Chmod(filename, 000)
 	if err != nil {
 		t.Errorf("Error executing Chmod: %s", err)
 	}
 
-	audit, err = NewAuditLogger(filename)
+	reopened, err := NewAuditLogger(filename)
 
 	if err == nil {
 		t.Errorf("Error was nil, expected non-nil")
 	}
 
-	if audit != nil {
+	if reopened != nil {
 		t.Errorf("Audit was non-nil, expected nil")
 	}
 
 	err = os.Chmod(filename, 6550)
 	if err != nil {
 		t.Errorf("Error executing Chmod: %s", err)
+	}
+
+	// Close before removing rather than in a deferred call: Windows refuses to
+	// delete a file that is still open.
+	if audit != nil {
+		audit.Close()
 	}
 
 	err = os.Remove(filename)

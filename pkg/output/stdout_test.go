@@ -24,6 +24,8 @@ func captureStderr(t *testing.T, fn func()) string {
 	return captureStream(t, &os.Stderr, fn)
 }
 
+// captureStream drains the read end while fn runs. Reading only after fn returns
+// deadlocks once fn writes more than the pipe buffer holds.
 func captureStream(t *testing.T, stream **os.File, fn func()) string {
 	t.Helper()
 	orig := *stream
@@ -34,14 +36,26 @@ func captureStream(t *testing.T, stream **os.File, fn func()) string {
 	*stream = w
 	defer func() { *stream = orig }()
 
+	type capture struct {
+		out string
+		err error
+	}
+	done := make(chan capture, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, r)
+		done <- capture{buf.String(), err}
+	}()
+
 	fn()
 
 	w.Close()
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, r); err != nil {
-		t.Fatalf("failed to read captured output: %s", err)
+	c := <-done
+	r.Close()
+	if c.err != nil {
+		t.Fatalf("failed to read captured output: %s", c.err)
 	}
-	return buf.String()
+	return c.out
 }
 
 func TestResultOutputOmitsControlCharsWhenStdoutIsNotATerminal(t *testing.T) {
@@ -123,6 +137,9 @@ func TestProgressOutputOmitsControlCharsWhenStderrIsNotATerminal(t *testing.T) {
 }
 
 func TestResultOutputOmitsColorResetWhenColorsAreDisabled(t *testing.T) {
+	if ANSI_CLEAR == "" {
+		t.Skip("this build emits no ANSI escapes, so there is no reset code to look for")
+	}
 	conf := &ffuf.Config{Colors: false}
 	outp := NewStdoutput(conf)
 	outp.stdoutIsTerminal = true // isolate this from the clear-line behavior above
@@ -139,6 +156,9 @@ func TestResultOutputOmitsColorResetWhenColorsAreDisabled(t *testing.T) {
 }
 
 func TestResultOutputKeepsColorResetWhenColorsAreEnabled(t *testing.T) {
+	if ANSI_CLEAR == "" {
+		t.Skip("this build emits no ANSI escapes, so there is no reset code to look for")
+	}
 	conf := &ffuf.Config{Colors: true}
 	outp := NewStdoutput(conf)
 	outp.stdoutIsTerminal = false // -c output is opt-in and shouldn't depend on terminal detection
