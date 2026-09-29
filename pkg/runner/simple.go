@@ -139,16 +139,42 @@ func NewSimpleRunner(conf *ffuf.Config, replay bool) ffuf.RunnerProvider {
 func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (ffuf.Request, error) {
 	req := ffuf.CopyRequest(basereq)
 
-	for keyword, inputitem := range input {
-		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
+	// One replacer for every field. Keywords are ordered longest-first by byte
+	// length, then lexicographically, which is the same order varsReplacer uses.
+	// strings.Replacer gives earlier pairs higher priority and does not rescan
+	// inserted text, so FUZZ1 wins where it shares a position with FUZZ, and a
+	// payload that contains another keyword is inserted literally. The normal
+	// runner and the replay runner each prepare this template on their own, so
+	// the result has to be independent of map iteration order.
+	keywords := make([]string, 0, len(input))
+	for keyword := range input {
+		keywords = append(keywords, keyword)
+	}
+	sort.Slice(keywords, func(i, j int) bool {
+		if len(keywords[i]) != len(keywords[j]) {
+			return len(keywords[i]) > len(keywords[j])
+		}
+		return keywords[i] < keywords[j]
+	})
+	oldnew := make([]string, 0, len(keywords)*2)
+	for _, keyword := range keywords {
+		oldnew = append(oldnew, keyword, string(input[keyword]))
+	}
+	replacer := strings.NewReplacer(oldnew...)
+
+	req.Method = replacer.Replace(req.Method)
+	req.Url = replacer.Replace(req.Url)
+	req.Data = []byte(replacer.Replace(string(req.Data)))
+	// Canonicalize header names only after substitution, and only when there is
+	// a keyword to apply. Doing it inside the old per-keyword loop rewrote the
+	// name's case before later keywords were seen, so a lowercase keyword could
+	// miss the header it was meant to fill. An empty input never rewrote headers.
+	if len(keywords) > 0 {
 		headers := make(map[string]string, len(req.Headers))
-		for h, v := range req.Headers {
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
-			headers[CanonicalHeader] = strings.ReplaceAll(v, keyword, string(inputitem))
+		for name, value := range req.Headers {
+			headers[textproto.CanonicalMIMEHeaderKey(replacer.Replace(name))] = replacer.Replace(value)
 		}
 		req.Headers = headers
-		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
-		req.Data = []byte(strings.ReplaceAll(string(req.Data), keyword, string(inputitem)))
 	}
 
 	req.Input = input

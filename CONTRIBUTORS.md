@@ -39,6 +39,7 @@
 * [mmadersbacher](https://github.com/mmadersbacher)
 * [mprencipe](https://github.com/mprencipe)
 * [munzzyy](https://github.com/munzzyy)
+* [mvanhorn](https://github.com/mvanhorn)
 * [nnwakelam](https://twitter.com/nnwakelam)
 * [noraj](https://pwn.by/noraj)
 * [oh6hay](https://github.com/oh6hay)
