@@ -78,10 +78,15 @@ func NewJob(conf *ffuf.Config) *Job {
 	j.Config = conf
 	j.queue = newJobQueue()
 	j.Rate = NewRateThrottle(conf)
-	// Let the runner meter preflight/postflight requests against the same rate
-	// limiter as the main dispatch loop, so -rate/-p bound total outgoing volume
-	// rather than only the fuzzing requests.
-	conf.RateLimitFunc = func() { <-j.Rate.RateLimiter.C }
+	// Let retries and the runner's preflight/postflight requests meter against the
+	// same limiter as the main dispatch loop, so -rate bounds total outgoing volume
+	// rather than only initial fuzzing requests.
+	conf.RateLimitFunc = func() {
+		select {
+		case <-conf.Context.Done():
+		case <-j.Rate.RateLimiter.C:
+		}
+	}
 	return &j
 }
 
@@ -373,7 +378,7 @@ func (j *Job) startExecution(ctx jobContext) {
 			defer func() { <-threadlimiter }()
 			defer wg.Done()
 			threadStart := time.Now()
-			j.runTask(ctx, nextInput, nextPosition, false)
+			j.runTask(ctx, nextInput, nextPosition)
 			j.sleepIfNeeded()
 			threadEnd := time.Now()
 			j.Rate.Tick(threadStart, threadEnd)
@@ -452,40 +457,67 @@ func (j *Job) ffufHash(pos int) []byte {
 	return []byte(hashstring)
 }
 
-func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, retried bool) {
+func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int) {
 	basereq := ctx.basereq
-	req, err := j.Runner.Prepare(input, &basereq)
-	req.Timestamp = time.Now()
+	var req ffuf.Request
+	var resp ffuf.Response
+	var err error
 
-	req.Position = position
-	if err != nil {
-		j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
-		j.incError()
-		log.Printf("%s", err)
-		return
-	}
-
-	resp, err := j.Runner.Execute(&req)
-	if err != nil {
-		req.Error = err.Error()
-	}
-
-	// Audit the request after sending to the runner so we get any changes
-	if j.AuditLogger != nil {
-		e := j.AuditLogger.Write(&req)
-		if e != nil {
-			j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", e))
-		}
-	}
-
-	if err != nil {
-		if !retried {
-			// Retry once. The timeout messaging below runs only on the final
-			// failure, so a request that recovers on retry does not also print a
-			// spurious timeout notice.
-			j.runTask(ctx, input, position, true)
+	for attempt := 0; ; attempt++ {
+		req, err = j.Runner.Prepare(input, &basereq)
+		req.Timestamp = time.Now()
+		req.Position = position
+		if err != nil {
+			j.Output.Error(fmt.Sprintf("Encountered an error while preparing request: %s\n", err))
+			j.incError()
+			log.Printf("%s", err)
 			return
 		}
+
+		resp, err = j.Runner.Execute(&req)
+		if err != nil {
+			req.Error = err.Error()
+		}
+
+		// Audit every request attempt after sending it to the runner so we get
+		// any changes made during execution.
+		if j.AuditLogger != nil {
+			e := j.AuditLogger.Write(&req)
+			if e != nil {
+				j.Output.Error(fmt.Sprintf("Encountered error while writing request audit log: %s\n", e))
+			}
+		}
+
+		if err == nil {
+			break
+		}
+		if attempt >= j.Config.Retries || j.Config.Context.Err() != nil {
+			break
+		}
+
+		// Initial requests are metered by the dispatch loop and delayed after
+		// runTask returns. Apply both controls here because retries bypass that loop.
+		j.pauseCheckpoint()
+		j.sleepIfNeeded()
+		if j.Config.Context.Err() != nil {
+			break
+		}
+		if j.Config.RateLimitFunc != nil {
+			j.Config.RateLimitFunc()
+		}
+		// Cancellation or pause can happen while waiting for the rate token. Check
+		// both again before starting another request attempt.
+		if j.Config.Context.Err() != nil {
+			break
+		}
+		j.pauseCheckpoint()
+		if j.Config.Context.Err() != nil {
+			break
+		}
+		log.Printf("Retrying request after error: %s (retry %d/%d)", err, attempt+1, j.Config.Retries)
+	}
+
+	if err != nil {
 		j.incError()
 		log.Printf("%s", err)
 		if os.IsTimeout(err) {

@@ -1,9 +1,45 @@
 package ffuf
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
+
+func TestConfigFromOptions_Retries(t *testing.T) {
+	validOptions := func() *ConfigOptions {
+		opts := NewConfigOptions()
+		opts.HTTP.URL = "https://example.com/FUZZ"
+		opts.Input.Wordlists = []string{"/tmp/words.txt"}
+		return opts
+	}
+
+	opts := validOptions()
+	conf, err := ConfigFromOptions(opts, context.Background(), func() {})
+	if err != nil {
+		t.Fatalf("default retries: %v", err)
+	}
+	if conf.Retries != 1 {
+		t.Errorf("default retries = %d, want 1", conf.Retries)
+	}
+
+	opts = validOptions()
+	opts.HTTP.Retries = 0
+	conf, err = ConfigFromOptions(opts, context.Background(), func() {})
+	if err != nil {
+		t.Fatalf("zero retries: %v", err)
+	}
+	if conf.Retries != 0 {
+		t.Errorf("configured retries = %d, want 0", conf.Retries)
+	}
+
+	opts = validOptions()
+	opts.HTTP.Retries = -1
+	_, err = ConfigFromOptions(opts, context.Background(), func() {})
+	if err == nil || !strings.Contains(err.Error(), "-retries must be 0 or greater") {
+		t.Fatalf("negative retries error = %v, want validation error", err)
+	}
+}
 
 func TestTemplatePresent(t *testing.T) {
 	template := "§"

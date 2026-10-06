@@ -51,6 +51,7 @@ error: 1 errors occured.
   "replayproxyurl": "",
   "requestfile": "",
   "requestproto": "https",
+  "retries": 1,
   "scraperfile": "",
   "scrapers": "all",
   "sni": "",

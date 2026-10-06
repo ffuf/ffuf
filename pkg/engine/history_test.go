@@ -20,6 +20,7 @@ func TestConfigOptions_SerializationRoundTrip(t *testing.T) {
 	opts.HTTP.Method = "POST"
 	opts.HTTP.Data = "name=FUZZ"
 	opts.HTTP.Headers = []string{"X-Test: FUZZ"}
+	opts.HTTP.Retries = 3
 	opts.Input.Wordlists = []string{"/tmp/wl.txt"}
 	opts.General.Threads = 7
 	opts.General.Delay = "0.1-0.8"
@@ -59,6 +60,9 @@ func TestConfigOptions_SerializationRoundTrip(t *testing.T) {
 	}
 	if conf2.Threads != conf.Threads {
 		t.Errorf("threads changed across round-trip: %d -> %d", conf.Threads, conf2.Threads)
+	}
+	if conf2.Retries != conf.Retries {
+		t.Errorf("retries changed across round-trip: %d -> %d", conf.Retries, conf2.Retries)
 	}
 	if conf2.Delay.Min != conf.Delay.Min || conf2.Delay.Max != conf.Delay.Max {
 		t.Errorf("delay changed across round-trip: %+v -> %+v", conf.Delay, conf2.Delay)

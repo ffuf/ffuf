@@ -92,6 +92,7 @@ type Config struct {
 	ReplayProxyURL            string                `json:"replayproxyurl"`
 	RequestFile               string                `json:"requestfile"`
 	RequestProto              string                `json:"requestproto"`
+	Retries                   int                   `json:"retries"`
 	ScraperFile               string                `json:"scraperfile"`
 	Scrapers                  string                `json:"scrapers"`
 	SNI                       string                `json:"sni"`
@@ -112,8 +113,8 @@ type Config struct {
 	PreflightError            string                `json:"preflight_error"`
 	PreflightAnyHost          bool                  `json:"preflight_anyhost"`
 	// RateLimitFunc blocks until the shared rate limiter allows another request.
-	// The engine sets it so preflight/postflight requests (sent from the runner,
-	// outside the dispatch loop) also honor -rate and -p. Nil means unmetered.
+	// The engine sets it so retries and preflight/postflight requests (all sent
+	// outside the dispatch loop) also honor -rate. Nil means unmetered.
 	RateLimitFunc func() `json:"-" toml:"-"`
 	// Options retains the raw ConfigOptions this Config was built from, so the
 	// configuration can be re-serialized (FFUFHASH history and similar features)

@@ -112,8 +112,9 @@ func TestCharacterization_ConfigGolden(t *testing.T) {
 		{name: "config_ach_no_autoenable", toml: "[general]\nautocalibration = true\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
 		// Locks the -cc/-ck behavior: a config-file client cert/key survives (is not wiped by the flag default).
 		{name: "config_client_cert", toml: "[http]\nclientcert = \"/tmp/cert.pem\"\nclientkey = \"/tmp/key.pem\"\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
+		{name: "config_retries", toml: "[http]\nretries = 2\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt"}},
 		// Broad coverage of otherwise-unexercised flags through to Config.
-		{name: "many_flags", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-x", "http://127.0.0.1:8080", "-replay-proxy", "http://127.0.0.1:9090", "-sni", "example.com", "-timeout", "15", "-rate", "50", "-recursion", "-recursion-depth", "3", "-recursion-strategy", "greedy", "-of", "json", "-od", "/tmp/out", "-maxtime", "60", "-json", "-r", "-raw", "-http2", "-ic", "-D", "-sf"}},
+		{name: "many_flags", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-x", "http://127.0.0.1:8080", "-replay-proxy", "http://127.0.0.1:9090", "-retries", "3", "-sni", "example.com", "-timeout", "15", "-rate", "50", "-recursion", "-recursion-depth", "3", "-recursion-strategy", "greedy", "-of", "json", "-od", "/tmp/out", "-maxtime", "60", "-json", "-r", "-raw", "-http2", "-ic", "-D", "-sf"}},
 		// Exercises the raw-request parse path (parseRawRequest).
 		{name: "raw_request", args: []string{"-w", "/tmp/wl.txt"}, requestBody: "POST /submit HTTP/1.1\nHost: example.org\nContent-Type: application/json\n\n{\"q\":\"FUZZ\"}\n"},
 		{name: "precedence_cli_overrides_file", toml: "[general]\nthreads = 99\n", args: []string{"-u", "https://example.org/FUZZ", "-w", "/tmp/wl.txt", "-t", "5"}},

@@ -19,6 +19,7 @@
     recursion_depth = 0
     recursion_strategy = "default"
     replayproxyurl = "http://127.0.0.1:8080"
+    retries = 1
     timeout = 10
     url = "https://example.org/FUZZ"
 

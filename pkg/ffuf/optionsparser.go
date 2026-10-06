@@ -45,6 +45,7 @@ type HTTPOptions struct {
 	RecursionDepth    int      `json:"recursion_depth" ffuf:"recursion-depth" section:"http" usage:"Maximum recursion depth."`
 	RecursionStrategy string   `json:"recursion_strategy" ffuf:"recursion-strategy" section:"http" usage:"Recursion strategy: \"default\" for a redirect based, and \"greedy\" to recurse on all matches"`
 	ReplayProxyURL    string   `json:"replay_proxy_url" ffuf:"replay-proxy" section:"http" usage:"Replay matched requests using this proxy."`
+	Retries           int      `json:"retries" ffuf:"retries" section:"http" usage:"Number of ffuf-level retries after a request error."`
 	SNI               string   `json:"sni" ffuf:"sni" section:"http" usage:"Target TLS SNI, does not support FUZZ keyword"`
 	Timeout           int      `json:"timeout" ffuf:"timeout" section:"http" usage:"HTTP request timeout in seconds."`
 	URL               string   `json:"url" ffuf:"u" section:"http" usage:"Target URL"`
@@ -176,6 +177,7 @@ func NewConfigOptions() *ConfigOptions {
 	c.HTTP.RecursionDepth = 0
 	c.HTTP.RecursionStrategy = "default"
 	c.HTTP.ReplayProxyURL = ""
+	c.HTTP.Retries = 1
 	c.HTTP.Timeout = 10
 	c.HTTP.SNI = ""
 	c.HTTP.URL = ""
@@ -578,6 +580,7 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.Recursion = parseOpts.HTTP.Recursion
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
+	conf.Retries = parseOpts.HTTP.Retries
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
 	conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
@@ -592,6 +595,10 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.PreflightAnyHost = parseOpts.HTTP.PreflightAnyHost
 	conf.Preflights = parseOpts.HTTP.Preflights
 	conf.Postflights = parseOpts.HTTP.Postflights
+
+	if conf.Retries < 0 {
+		errs.Add(fmt.Errorf("-retries must be 0 or greater, got %d", conf.Retries))
+	}
 
 	switch parseOpts.HTTP.PreflightMode {
 	case "", "per-request":
