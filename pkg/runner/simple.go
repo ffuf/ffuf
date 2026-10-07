@@ -240,8 +240,8 @@ func (r *SimpleRunner) Execute(req *ffuf.Request) (resp ffuf.Response, err error
 
 	// Record the server-declared length first, so it is set before any early return
 	// below and the size filters still observe it.
-	if size, serr := strconv.Atoi(httpresp.Header.Get("Content-Length")); serr == nil {
-		resp.ContentLength = int64(size)
+	if size, serr := strconv.ParseInt(httpresp.Header.Get("Content-Length"), 10, 64); serr == nil {
+		resp.ContentLength = size
 		if size > MAX_DOWNLOAD_SIZE {
 			resp.Cancelled = true
 			return resp, nil

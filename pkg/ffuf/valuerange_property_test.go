@@ -85,3 +85,17 @@ func TestOptRange_NeverPanics(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+// Values wider than 32 bits must parse on every architecture: the range is
+// stored as int64, and parsing at the width of int rejects them on 32-bit
+// platforms.
+func TestValueRange_WideValues(t *testing.T) {
+	vr, err := ValueRangeFromString("5000000000")
+	if err != nil || vr.Min != 5000000000 || vr.Max != 5000000000 {
+		t.Errorf("5000000000: got (%d, %d, %v), want (5000000000, 5000000000, nil)", vr.Min, vr.Max, err)
+	}
+	vr, err = ValueRangeFromString("3000000000-5000000000")
+	if err != nil || vr.Min != 3000000000 || vr.Max != 5000000000 {
+		t.Errorf("3000000000-5000000000: got (%d, %d, %v), want (3000000000, 5000000000, nil)", vr.Min, vr.Max, err)
+	}
+}

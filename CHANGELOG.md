@@ -9,6 +9,8 @@
     - A config-file preflight/postflight var with neither a regex nor a source is now a config error instead of failing on every request
     - A value captured by `-preflight-var` can no longer change the scheme, host or port of a later preflight/postflight request. Those requests inherit the main configuration's headers, so a captured value picking the destination let a scanned target choose where the operator's credentials were sent. Destinations the operator writes in the flight file, including an absolute URL to a separate identity provider, are unaffected: the check only fires when substitution is what moved the request. Pass `-preflight-anyhost` to opt back in for discovery-driven flows, such as reading `token_endpoint` out of `/.well-known/openid-configuration`
     - `-preflight` and `-postflight` help text now states that these requests inherit the main configuration's headers, including `-H` auth headers and `-b` cookies
+    - Range and size values are parsed at 64 bits instead of at the width of int, so `-mc`/`-fc`/`-ms`/`-fs` values above 2^31-1 and `Content-Length` declarations above 2 GiB are no longer rejected on 32-bit platforms
+    - The preflight test server keeps its hit counter in the leading field of the struct, so the 64-bit atomics on it stay aligned and the four preflight tests no longer panic with "unaligned 64-bit atomic operation" on 32-bit platforms
 
 - v2.3.0
   - New

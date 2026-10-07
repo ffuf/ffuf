@@ -15,11 +15,11 @@ func ValueRangeFromString(instr string) (ValueRange, error) {
 	minmax := regexp.MustCompile(`^(\d+)-(\d+)$`).FindAllStringSubmatch(instr, -1)
 	if minmax != nil {
 		// yes
-		minval, err := strconv.ParseInt(minmax[0][1], 10, 0)
+		minval, err := strconv.ParseInt(minmax[0][1], 10, 64)
 		if err != nil {
 			return ValueRange{}, fmt.Errorf("Invalid value: %s", minmax[0][1])
 		}
-		maxval, err := strconv.ParseInt(minmax[0][2], 10, 0)
+		maxval, err := strconv.ParseInt(minmax[0][2], 10, 64)
 		if err != nil {
 			return ValueRange{}, fmt.Errorf("Invalid value: %s", minmax[0][2])
 		}
@@ -29,7 +29,7 @@ func ValueRangeFromString(instr string) (ValueRange, error) {
 		return ValueRange{minval, maxval}, nil
 	} else {
 		// no, a single value or something else
-		intval, err := strconv.ParseInt(instr, 10, 0)
+		intval, err := strconv.ParseInt(instr, 10, 64)
 		if err != nil {
 			return ValueRange{}, fmt.Errorf("Invalid value: %s", instr)
 		}

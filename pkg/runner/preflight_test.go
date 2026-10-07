@@ -93,8 +93,8 @@ func TestPreflightVarsSubstitutedIntoMainRequest(t *testing.T) {
 // amortization and freshness are observable) and records the X-Token header of
 // every main request at /main. It counts preflight hits.
 type preflightServer struct {
+	preflightHits int64 // must stay the first field: 64-bit atomics are only guaranteed to be aligned in the leading word on 32-bit architectures
 	srv           *httptest.Server
-	preflightHits int64
 	mu            sync.Mutex
 	mainTokens    []string
 }
