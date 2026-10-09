@@ -108,10 +108,13 @@ func (j *Job) CalibrateForHost(host string, baseinput map[string][]byte) error {
 				continue
 			}
 			responses = append(responses, resp)
-			err = j.calibrateFilters(responses, true)
-			if err != nil {
-				j.Output.Error(fmt.Sprintf("%s", err))
-			}
+		}
+		// Calibrate once per strategy, after every probe for it has been
+		// collected, so the responses are compared against each other. Calling
+		// this inside the loop passed a single response, which trivially
+		// matched itself on size and left the word and line checks unreachable.
+		if err := j.calibrateFilters(responses, true); err != nil {
+			j.Output.Error(fmt.Sprintf("%s", err))
 		}
 	}
 	j.Config.MatcherManager.SetCalibratedForHost(host, true)
