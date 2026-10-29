@@ -3,6 +3,7 @@
 * [adamtlangley](https://github.com/adamtlangley)
 * [adilsoybali](https://github.com/adilsoybali)
 * [AverageSecurityGuy](https://github.com/averagesecurityguy)
+* [bharathvemula](https://github.com/bharathvemula)
 * [bp0](https://github.com/bp0lr)
 * [bjhulst](https://github.com/bjhulst)
 * [bsysop](https://twitter.com/bsysop)
