@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
+	"golang.org/x/term"
 )
 
 const (
@@ -75,6 +76,36 @@ func (s *Stdoutput) stderrClear() string {
 		return TERMINAL_CLEAR_LINE
 	}
 	return ""
+}
+
+// terminalWidth returns the current width of the terminal attached to f, or 0
+// when f isn't a terminal or the size can't be determined.
+func terminalWidth(f *os.File) int {
+	if !isTerminal(f) {
+		return 0
+	}
+	width, _, err := term.GetSize(int(f.Fd()))
+	if err != nil || width <= 0 {
+		return 0
+	}
+	return width
+}
+
+// truncateProgressLine keeps progress output on a single terminal row. When a
+// progress line wraps, TERMINAL_CLEAR_LINE erases only the last physical row
+// and leaves fragments ("Err:: Progress: ...") behind on the rows above.
+func truncateProgressLine(line string, maxWidth int) string {
+	if maxWidth <= 0 {
+		return line
+	}
+	runes := []rune(line)
+	if len(runes) <= maxWidth {
+		return line
+	}
+	if maxWidth == 1 {
+		return string(runes[:1])
+	}
+	return string(runes[:maxWidth-1]) + "~"
 }
 
 // stdoutClear is the stdout equivalent of stderrClear, used when printing
@@ -263,7 +294,13 @@ func (s *Stdoutput) Progress(status ffuf.Progress) {
 	dur -= mins * time.Minute
 	secs := dur / time.Second
 
-	fmt.Fprintf(os.Stderr, "%s:: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", s.stderrClear(), status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	line := fmt.Sprintf(":: Progress: [%d/%d] :: Job [%d/%d] :: %d req/sec :: Duration: [%d:%02d:%02d] :: Errors: %d ::", status.ReqCount, status.ReqTotal, status.QueuePos, status.QueueTotal, reqRate, hours, mins, secs, status.ErrorCount)
+	// Keep the line one row wide so a narrow terminal never wraps it; a wrapped
+	// line cannot be fully redrawn by stderrClear().
+	if width := terminalWidth(os.Stderr); width > 1 {
+		line = truncateProgressLine(line, width-1)
+	}
+	fmt.Fprintf(os.Stderr, "%s%s", s.stderrClear(), line)
 }
 
 func (s *Stdoutput) Info(infostring string) {
