@@ -16,8 +16,8 @@
     proxyurl = "http://127.0.0.1:8080"
     raw = false
     recursion = false
-    recursion_depth = 0
-    recursion_strategy = "default"
+    recursiondepth = 0
+    recursionstrategy = "default"
     replayproxyurl = "http://127.0.0.1:8080"
     timeout = 10
     url = "https://example.org/FUZZ"
@@ -28,9 +28,11 @@
         "randomtest",
         "admin"
     ]
-    autocalibration_strategy = "basic"
-    autocalibration_keyword = "FUZZ"
-    autocalibration_perhost = false
+    autocalibrationstrategies = [
+        "basic"
+    ]
+    autocalibrationkeyword = "FUZZ"
+    autocalibrationperhost = false
     colors = false
     delay = ""
     maxtime = 0
@@ -67,7 +69,7 @@
     outputdirectory = "/tmp/rawoutputdir"
     outputfile = "output.json"
     outputformat = "json"
-    outputcreateemptyfile = false
+    outputskipemptyfile = false
 
 [filter]
     mode = "or"

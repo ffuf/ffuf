@@ -9,6 +9,7 @@
     - A config-file preflight/postflight var with neither a regex nor a source is now a config error instead of failing on every request
     - A value captured by `-preflight-var` can no longer change the scheme, host or port of a later preflight/postflight request. Those requests inherit the main configuration's headers, so a captured value picking the destination let a scanned target choose where the operator's credentials were sent. Destinations the operator writes in the flight file, including an absolute URL to a separate identity provider, are unaffected: the check only fires when substitution is what moved the request. Pass `-preflight-anyhost` to opt back in for discovery-driven flows, such as reading `token_endpoint` out of `/.well-known/openid-configuration`
     - `-preflight` and `-postflight` help text now states that these requests inherit the main configuration's headers, including `-H` auth headers and `-b` cookies
+    - Fix six `ffufrc.example` keys that the config parser silently ignored, e.g. `recursion_depth` is now `recursiondepth` and `autocalibration_strategy` is now the list `autocalibrationstrategies`
 
 - v2.3.0
   - New
