@@ -22,9 +22,11 @@ func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bo
 	w := csv.NewWriter(f)
 	defer w.Flush()
 
+	keywords := make([]string, 0, len(config.InputProviders))
 	for _, inputprovider := range config.InputProviders {
-		header = append(header, inputprovider.Keyword)
+		keywords = append(keywords, inputprovider.Keyword)
 	}
+	header = append(header, keywords...)
 	header = append(header, staticheaders...)
 
 	if err := w.Write(header); err != nil {
@@ -39,7 +41,7 @@ func writeCSV(filename string, config *ffuf.Config, res []ffuf.Result, encode bo
 			r.Input = inputs
 		}
 
-		err := w.Write(toCSV(r))
+		err := w.Write(toCSV(r, keywords))
 		if err != nil {
 			return err
 		}
@@ -51,16 +53,15 @@ func base64encode(in []byte) string {
 	return base64.StdEncoding.EncodeToString(in)
 }
 
-func toCSV(r ffuf.Result) []string {
+// toCSV converts a result into a CSV row. The input values are written in the
+// order of keywords, so that each value ends up under its own header column
+// regardless of the (random) iteration order of the r.Input map.
+func toCSV(r ffuf.Result, keywords []string) []string {
 	res := make([]string, 0)
-	ffufhash := ""
-	for k, v := range r.Input {
-		if k == "FFUFHASH" {
-			ffufhash = string(v)
-		} else {
-			res = append(res, string(v))
-		}
+	for _, keyword := range keywords {
+		res = append(res, string(r.Input[keyword]))
 	}
+	ffufhash := string(r.Input["FFUFHASH"])
 	res = append(res, r.Url)
 	res = append(res, r.RedirectLocation)
 	res = append(res, strconv.Itoa(r.Position))

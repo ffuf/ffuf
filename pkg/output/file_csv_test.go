@@ -24,7 +24,7 @@ func TestToCSV(t *testing.T) {
 		Host:             "host",
 	}
 
-	csv := toCSV(result)
+	csv := toCSV(result, []string{"x"})
 
 	if !reflect.DeepEqual(csv, []string{
 		"B",
