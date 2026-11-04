@@ -49,6 +49,10 @@ func NewStdoutput(conf *ffuf.Config) *Stdoutput {
 	for _, ip := range conf.InputProviders {
 		outp.fuzzkeywords = append(outp.fuzzkeywords, ip.Keyword)
 	}
+	// Result lines list their input parameters in fuzzkeywords order (see
+	// prepareInputsOneLine and resultMultiline), so keep the keywords sorted:
+	// iterating the input map directly would print the parameters in Go's
+	// randomized map order, changing between runs (#307).
 	sort.Strings(outp.fuzzkeywords)
 	return &outp
 }
@@ -517,6 +521,10 @@ func (s *Stdoutput) PrintResult(res ffuf.Result) {
 	}
 }
 
+// prepareInputsOneLine renders a result's input parameters as "KEY : value "
+// pairs for the single-line output modes. Parameters are always emitted in
+// s.fuzzkeywords order (sorted at construction), never in map iteration order,
+// so multi-wordlist output is identical on every run (#307).
 func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
 	if len(s.fuzzkeywords) > 1 {
@@ -571,8 +579,15 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	}
 	if len(res.ScraperData) > 0 {
 		reslines = fmt.Sprintf("%s%s| SCR |\n", reslines, s.stdoutClear())
-		for k, vslice := range res.ScraperData {
-			for _, v := range vslice {
+		// Emit scraper fields in sorted key order, like the input parameters
+		// above: map iteration order would change the output between runs (#307).
+		scraperKeys := make([]string, 0, len(res.ScraperData))
+		for k := range res.ScraperData {
+			scraperKeys = append(scraperKeys, k)
+		}
+		sort.Strings(scraperKeys)
+		for _, k := range scraperKeys {
+			for _, v := range res.ScraperData[k] {
 				reslines = fmt.Sprintf(res_str, reslines, s.stdoutClear(), k, v)
 			}
 		}
