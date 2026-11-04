@@ -251,6 +251,54 @@ func TestE2E_FFUFHashRecursion(t *testing.T) {
 	}
 }
 
+// TestE2E_SilentMultiWordlistParameterOrder (issue #307): with multiple
+// wordlists, every silent-mode result line must list its input parameters as
+// "KEY : value " pairs in a stable, sorted keyword order, identical on every
+// run. Ranging over the input map instead prints the parameters in Go's
+// randomized map order, flipping between HOST-first and PATH-first lines.
+func TestE2E_SilentMultiWordlistParameterOrder(t *testing.T) {
+	target := testtarget.New()
+	defer target.Close()
+
+	hosts := writeWordlist(t, []string{"alpha", "beta"})
+	paths := writeWordlist(t, []string{"200", "201"})
+
+	scan := func() []string {
+		out := runFfuf(t, nil,
+			"-u", target.URL+"/status/PATH",
+			"-w", hosts+":HOST", "-w", paths+":PATH",
+			"-H", "X-Host: HOST",
+			"-mc", "200,201", "-s", "-t", "1", "-noninteractive",
+		)
+		var lines []string
+		for _, line := range strings.Split(string(out), "\n") {
+			if strings.TrimSpace(line) != "" {
+				lines = append(lines, line)
+			}
+		}
+		return lines
+	}
+
+	// HOST and PATH, sorted. Every line must list them in exactly this order.
+	want := []string{
+		"HOST : alpha PATH : 200 ",
+		"HOST : alpha PATH : 201 ",
+		"HOST : beta PATH : 200 ",
+		"HOST : beta PATH : 201 ",
+	}
+	for run := 1; run <= 2; run++ {
+		lines := scan()
+		for _, line := range lines {
+			ho := strings.Index(line, "HOST : ")
+			pa := strings.Index(line, "PATH : ")
+			if ho < 0 || pa < 0 || ho > pa {
+				t.Errorf("run %d: result line does not list parameters in sorted keyword order: %q", run, line)
+			}
+		}
+		assertSet(t, lines, append([]string(nil), want...))
+	}
+}
+
 // TestE2E_FFUFHashRequestOptions: headers, method and body must survive the
 // serialize -> history file -> deserialize -> reconstruct round-trip. -search
 // dumps the raw request, so they appear verbatim.
