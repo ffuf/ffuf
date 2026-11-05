@@ -52,5 +52,6 @@
 * [sitiom](https://github.com/sitiom)
 * [Skyehopper](https://github.com/Skyehopper)
 * [SolomonSklash](https://github.com/SolomonSklash)
+* [thelastbackspace](https://github.com/thelastbackspace)
 * [TomNomNom](https://github.com/tomnomnom)
 * [xfgusta](https://github.com/xfgusta)

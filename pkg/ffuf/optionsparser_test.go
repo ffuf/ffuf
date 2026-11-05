@@ -178,3 +178,16 @@ func TestReplayProxyParsing(t *testing.T) {
 		t.Errorf("Expected proxy string with unsupported protocol to fail")
 	}
 }
+
+func TestAutoCalibrationKeywordParsing(t *testing.T) {
+	configOptions := NewConfigOptions()
+	configOptions.HTTP.URL = "http://127.0.0.1/DIR"
+	configOptions.Input.Wordlists = []string{"/dev/null:DIR"}
+	configOptions.General.AutoCalibration = true
+	configOptions.General.AutoCalibrationKeyword = "DIR"
+
+	conf, _ := ConfigFromOptions(configOptions, nil, nil)
+	if conf.AutoCalibrationKeyword != "DIR" {
+		t.Errorf("Expected -ack to set the autocalibration keyword to DIR, got %q", conf.AutoCalibrationKeyword)
+	}
+}
