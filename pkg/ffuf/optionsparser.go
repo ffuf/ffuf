@@ -579,6 +579,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 	conf.RecursionDepth = parseOpts.HTTP.RecursionDepth
 	conf.RecursionStrategy = parseOpts.HTTP.RecursionStrategy
 	conf.AutoCalibration = parseOpts.General.AutoCalibration
+	if parseOpts.General.AutoCalibrationKeyword != "" {
+		conf.AutoCalibrationKeyword = parseOpts.General.AutoCalibrationKeyword
+	}
 	conf.AutoCalibrationPerHost = parseOpts.General.AutoCalibrationPerHost
 	conf.AutoCalibrationStrategies = parseOpts.General.AutoCalibrationStrategies
 	conf.Threads = parseOpts.General.Threads
