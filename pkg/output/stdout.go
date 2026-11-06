@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode/utf8"
 	"time"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
@@ -580,8 +581,21 @@ func (s *Stdoutput) resultMultiline(res ffuf.Result) {
 	fmt.Printf("%s\n%s\n", res_hdr, reslines)
 }
 
+const normalResultInputWidth = 23
+
+// formatNormalResult keeps the metrics in the same column without hiding a
+// long fuzz input. Results are streamed, so the maximum input width is unknown.
+func formatNormalResult(input string, res ffuf.Result) string {
+	metrics := fmt.Sprintf("[Status: %3d, Size: %10d, Words: %8d, Lines: %8d, Duration: %6dms]",
+		res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds())
+	if utf8.RuneCountInString(input) > normalResultInputWidth {
+		return input + "\n" + strings.Repeat(" ", normalResultInputWidth+1) + metrics
+	}
+	return fmt.Sprintf("%-*s %s", normalResultInputWidth, input, metrics)
+}
+
 func (s *Stdoutput) resultNormal(res ffuf.Result) {
-	resnormal := fmt.Sprintf("%s%s%-23s [Status: %d, Size: %d, Words: %d, Lines: %d, Duration: %dms]%s", s.stdoutClear(), s.colorize(res.StatusCode), s.prepareInputsOneLine(res), res.StatusCode, res.ContentLength, res.ContentWords, res.ContentLines, res.Duration.Milliseconds(), s.ansiClear())
+	resnormal := fmt.Sprintf("%s%s%s%s", s.stdoutClear(), s.colorize(res.StatusCode), formatNormalResult(s.prepareInputsOneLine(res), res), s.ansiClear())
 	fmt.Println(resnormal)
 }
 

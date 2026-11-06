@@ -173,3 +173,49 @@ func TestResultOutputKeepsColorResetWhenColorsAreEnabled(t *testing.T) {
 		t.Errorf("result line printed with -c is missing its ANSI reset code: %q", out)
 	}
 }
+
+func TestFormatNormalResultAlignsMetricsWithoutTruncatingInput(t *testing.T) {
+	cases := []struct {
+		name  string
+		input string
+		res   ffuf.Result
+	}{
+		{"short input", "admin", ffuf.Result{StatusCode: 200, ContentLength: 42, ContentWords: 3, ContentLines: 1, Duration: 5 * time.Millisecond}},
+		{"wide numeric fields", "login", ffuf.Result{StatusCode: 404, ContentLength: 12345678, ContentWords: 123456, ContentLines: 12345, Duration: 1200 * time.Millisecond}},
+		{"long input remains complete", "really-long-path-which-exceeds-the-normal-column-width", ffuf.Result{StatusCode: 301, ContentLength: 128, ContentWords: 20, ContentLines: 7, Duration: 44 * time.Millisecond}},
+		{"unicode input", "küche", ffuf.Result{StatusCode: 200, ContentLength: 50, ContentWords: 5, ContentLines: 2, Duration: 4 * time.Millisecond}},
+	}
+	var metricsColumn map[string]int
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := formatNormalResult(tc.input, tc.res)
+			if !strings.Contains(got, tc.input) {
+				t.Fatalf("result lost input %q: %q", tc.input, got)
+			}
+			lines := strings.Split(got, "\n")
+			long := len([]rune(tc.input)) > normalResultInputWidth
+			if long && (len(lines) != 2 || lines[0] != tc.input) {
+				t.Fatalf("long input must be preserved on its own line: %q", got)
+			}
+			if !long && len(lines) != 1 {
+				t.Fatalf("unexpected extra line for short input: %q", got)
+			}
+			last := lines[len(lines)-1]
+			labels := []string{"[Status:", ", Size:", ", Words:", ", Lines:", ", Duration:"}
+			if metricsColumn == nil {
+				metricsColumn = make(map[string]int)
+				for _, label := range labels {
+					metricsColumn[label] = strings.Index(last, label)
+				}
+			}
+			for _, label := range labels {
+				if pos := strings.Index(last, label); pos != metricsColumn[label] {
+					t.Errorf("%s starts at column %d, want %d in %q", label, pos, metricsColumn[label], got)
+				}
+			}
+			if idx := strings.Index(last, "[Status:"); idx != normalResultInputWidth+1 {
+				t.Errorf("metrics start at column %d, want %d", idx, normalResultInputWidth+1)
+			}
+		})
+	}
+}
