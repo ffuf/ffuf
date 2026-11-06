@@ -72,3 +72,56 @@ func TestRecursionManager_DefaultQueuesDirectory(t *testing.T) {
 		t.Errorf("queued url = %q, want http://x/dir/FUZZ", job.Url)
 	}
 }
+
+func TestRecursionManager_DefaultUsesVirtualHostForDirectoryRedirect(t *testing.T) {
+	const baseURL = "http://127.0.0.1:8080/admin"
+	cases := []struct {
+		name   string
+		host   string
+		status int64
+		loc    string
+		queued bool
+	}{
+		{"original host", "", 301, "http://127.0.0.1:8080/admin/", true},
+		{"relative redirect", "site.example", 301, "/admin/", true},
+		{"absolute virtual host", "site.example", 301, "http://site.example/admin/", true},
+		{"virtual host with target port", "site.example", 302, "http://site.example:8080/admin/", true},
+		{"virtual host with explicit port", "site.example:9090", 301, "http://site.example:9090/admin/", true},
+		{"other hostname", "site.example", 301, "http://other.example/admin/", false},
+		{"other port", "site.example", 301, "http://site.example:9999/admin/", false},
+		{"other port on explicit host", "site.example:9090", 301, "http://site.example:8080/admin/", false},
+		{"other path", "site.example", 301, "http://site.example/other/", false},
+		{"other scheme", "site.example", 301, "https://site.example/admin/", false},
+		{"not a redirect", "site.example", 200, "http://site.example/admin/", false},
+		{"missing location", "site.example", 301, "", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			q := newJobQueue()
+			rm := newRecursionManager(&ffuf.Config{Method: "GET", RecursionDepth: 1}, q, NewNullOutput())
+			resp := ffuf.Response{
+				Request: &ffuf.Request{Url: baseURL, Host: tc.host},
+				StatusCode: tc.status,
+				Headers: map[string][]string{"Location": {tc.loc}},
+			}
+			rm.handleDefault(jobContext{depth: 0}, resp)
+			wantCount := 0
+			if tc.queued {
+				wantCount = 1
+			}
+			if got := q.total(); got != wantCount {
+				t.Fatalf("queue size = %d, want %d (Location %q)", got, wantCount, tc.loc)
+			}
+			if !tc.queued {
+				return
+			}
+			job, _ := q.advance()
+			if want := baseURL + "/FUZZ"; job.Url != want {
+				t.Errorf("queued URL = %q, want %q", job.Url, want)
+			}
+			if job.depth != 1 {
+				t.Errorf("queued depth = %d, want 1", job.depth)
+			}
+		})
+	}
+}
