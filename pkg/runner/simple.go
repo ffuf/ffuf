@@ -143,12 +143,24 @@ func (r *SimpleRunner) Prepare(input map[string][]byte, basereq *ffuf.Request) (
 		req.Method = strings.ReplaceAll(req.Method, keyword, string(inputitem))
 		headers := make(map[string]string, len(req.Headers))
 		for h, v := range req.Headers {
-			var CanonicalHeader string = textproto.CanonicalMIMEHeaderKey(strings.ReplaceAll(h, keyword, string(inputitem)))
-			headers[CanonicalHeader] = strings.ReplaceAll(v, keyword, string(inputitem))
+			// Keep header names unchanged apart from keyword substitution until
+			// all keywords have been processed. Canonicalizing "HEAD" to "Head"
+			// early prevents a later "HEAD" keyword from matching it.
+			headers[strings.ReplaceAll(h, keyword, string(inputitem))] = strings.ReplaceAll(v, keyword, string(inputitem))
 		}
 		req.Headers = headers
 		req.Url = strings.ReplaceAll(req.Url, keyword, string(inputitem))
 		req.Data = []byte(strings.ReplaceAll(string(req.Data), keyword, string(inputitem)))
+	}
+
+	// Canonicalize only after all header-name placeholders have been replaced.
+	// Preserve the original header map when no input keywords were supplied.
+	if len(input) > 0 {
+		headers := make(map[string]string, len(req.Headers))
+		for h, v := range req.Headers {
+			headers[textproto.CanonicalMIMEHeaderKey(h)] = v
+		}
+		req.Headers = headers
 	}
 
 	req.Input = input

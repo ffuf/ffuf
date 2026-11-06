@@ -336,3 +336,57 @@ func TestNewSimpleRunner_BoundsResponseHeaders(t *testing.T) {
 		t.Errorf("MaxResponseHeaderBytes = %d, larger than intended", transport.MaxResponseHeaderBytes)
 	}
 }
+
+
+// Header-name fuzzing must not depend on map iteration order. Before this fix,
+// replacing FUZZ or PAYLOAD first canonicalized the "HEAD" placeholder into
+// "Head", so the later HEAD substitution could no longer find the keyword.
+func TestPrepare_ReplacesHeaderNameKeywordsBeforeCanonicalization(t *testing.T) {
+	input := map[string][]byte{
+		"FUZZ":    []byte("admin"),
+		"HEAD":    []byte("X-Custom-Header"),
+		"PAYLOAD": []byte("test-value"),
+	}
+	base := ffuf.Request{
+		Method: "GET",
+		Url:    "http://127.0.0.1:5000/FUZZ",
+		Headers: map[string]string{
+			"HEAD":   "PAYLOAD",
+			"X-HEAD": "PAYLOAD",
+		},
+	}
+	runner := &SimpleRunner{}
+	for i := 0; i < 100; i++ {
+		got, err := runner.Prepare(input, &base)
+		if err != nil {
+			t.Fatalf("iteration %d: Prepare failed: %v", i, err)
+		}
+		if want := "test-value"; got.Headers["X-Custom-Header"] != want {
+			t.Fatalf("iteration %d: header value = %q, want %q (headers: %#v)", i, got.Headers["X-Custom-Header"], want, got.Headers)
+		}
+		if want := "test-value"; got.Headers["X-X-Custom-Header"] != want {
+			t.Fatalf("iteration %d: prefixed header value = %q, want %q (headers: %#v)", i, got.Headers["X-X-Custom-Header"], want, got.Headers)
+		}
+		if got.Url != "http://127.0.0.1:5000/admin" {
+			t.Fatalf("iteration %d: URL substitution lost: %q", i, got.Url)
+		}
+		if _, found := got.Headers["Head"]; found {
+			t.Fatalf("iteration %d: unsubstituted HEAD placeholder remains in headers: %#v", i, got.Headers)
+		}
+	}
+	if _, ok := base.Headers["HEAD"]; !ok {
+		t.Fatal("Prepare mutated the original request headers")
+	}
+}
+
+func TestPrepare_NoInputPreservesOriginalHeaderNames(t *testing.T) {
+	runner := &SimpleRunner{}
+	base := ffuf.Request{Headers: map[string]string{"X-MiXeD": "value"}}
+	got, err := runner.Prepare(nil, &base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Headers["X-MiXeD"] != "value" {
+		t.Fatalf("unexpected header normalization without any keywords: %#v", got.Headers)
+	}
+}
