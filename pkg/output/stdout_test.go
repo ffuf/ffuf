@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
@@ -205,15 +206,17 @@ func TestFormatNormalResultAlignsMetricsWithoutTruncatingInput(t *testing.T) {
 			if metricsColumn == nil {
 				metricsColumn = make(map[string]int)
 				for _, label := range labels {
-					metricsColumn[label] = strings.Index(last, label)
+					idx := strings.Index(last, label)
+					metricsColumn[label] = utf8.RuneCountInString(last[:idx])
 				}
 			}
 			for _, label := range labels {
-				if pos := strings.Index(last, label); pos != metricsColumn[label] {
+				idx := strings.Index(last, label)
+				if pos := utf8.RuneCountInString(last[:idx]); pos != metricsColumn[label] {
 					t.Errorf("%s starts at column %d, want %d in %q", label, pos, metricsColumn[label], got)
 				}
 			}
-			if idx := strings.Index(last, "[Status:"); idx != normalResultInputWidth+1 {
+			if idx := utf8.RuneCountInString(last[:strings.Index(last, "[Status:")]); idx != normalResultInputWidth+1 {
 				t.Errorf("metrics start at column %d, want %d", idx, normalResultInputWidth+1)
 			}
 		})
