@@ -551,17 +551,7 @@ func (j *Job) runTask(ctx jobContext, input map[string][]byte, position int, ret
 
 	if j.isMatch(resp) {
 		// Re-send request through replay-proxy if needed
-		if j.ReplayRunner != nil {
-			replayreq, err := j.ReplayRunner.Prepare(input, &basereq)
-			replayreq.Position = position
-			if err != nil {
-				j.Output.Error(fmt.Sprintf("Encountered an error while preparing replayproxy request: %s\n", err))
-				j.incError()
-				log.Printf("%s", err)
-			} else {
-				_, _ = j.ReplayRunner.Execute(&replayreq)
-			}
-		}
+		j.replayMatched(input, &basereq, position)
 		j.Output.Result(resp)
 
 		// Refresh the progress indicator as we printed something out
@@ -588,6 +578,29 @@ func (j *Job) handleScraperResult(resp *ffuf.Response, sres ffuf.ScraperResult) 
 			resp.ScraperData[sres.Name] = sres.Results
 		}
 	}
+}
+
+// replayMatched sends a matching request through the replay proxy, respecting
+// -p between the original request and its replay. The normal per-worker delay
+// still runs afterwards, before the worker is reused for another request.
+func (j *Job) replayMatched(input map[string][]byte, basereq *ffuf.Request, position int) {
+	if j.ReplayRunner == nil {
+		return
+	}
+	replayreq, err := j.ReplayRunner.Prepare(input, basereq)
+	replayreq.Position = position
+	if err != nil {
+		j.Output.Error(fmt.Sprintf("Encountered an error while preparing replayproxy request: %s\n", err))
+		j.incError()
+		log.Printf("%s", err)
+		return
+	}
+
+	// Previously the replay was sent immediately after a match, ignoring -p.
+	if j.Config.Delay.HasDelay {
+		j.sleepIfNeeded()
+	}
+	_, _ = j.ReplayRunner.Execute(&replayreq)
 }
 
 // CheckStop stops the job if stopping conditions are met
