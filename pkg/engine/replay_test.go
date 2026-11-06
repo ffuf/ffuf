@@ -10,11 +10,11 @@ import (
 )
 
 type timingReplayRunner struct {
-	prepared      bool
-	executed      int
-	executedAt    time.Time
-	lastPosition  int
-	prepareErr    error
+	prepared     bool
+	executed     int
+	executedAt   time.Time
+	lastPosition int
+	prepareErr   error
 }
 
 func (r *timingReplayRunner) Prepare(input map[string][]byte, base *ffuf.Request) (ffuf.Request, error) {
