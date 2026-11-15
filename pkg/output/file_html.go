@@ -120,7 +120,7 @@ const (
                     <td>{{ $result.ContentWords }}</td>
 					<td>{{ $result.ContentLines }}</td>
 					<td>{{ $result.ContentType }}</td>
-					<td>{{ $result.Duration }}</td>
+					<td data-order="{{ $result.Duration.Nanoseconds }}">{{ $result.Duration }}</td>
                     <td>{{ $result.ResultFile }}</td>
 					<td>{{ $result.ScraperData }}</td>
 					<td>{{ $result.FfufHash }}</td>
