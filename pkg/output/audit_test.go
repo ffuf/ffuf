@@ -2,56 +2,45 @@ package output
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ffuf/ffuf/v2/pkg/ffuf"
 )
 
 func TestAuditLogger(t *testing.T) {
-	file, _ := os.CreateTemp("", "prefix")
-	filename := file.Name()
-	file.Close()
+	filename := filepath.Join(t.TempDir(), "audit.log")
 	audit, err := NewAuditLogger(filename)
 
 	if err != nil {
-		t.Errorf("Error creating audit logger: %s", err)
+		t.Fatalf("Error creating audit logger: %s", err)
 	}
 
 	if audit == nil {
-		t.Errorf("Audit was nil, expected non-nil")
+		t.Fatal("Audit was nil, expected non-nil")
 	}
+	defer audit.Close()
+}
 
-	err = os.Chmod(filename, 000)
-	if err != nil {
-		t.Errorf("Error executing Chmod: %s", err)
+func TestAuditLoggerOpenError(t *testing.T) {
+	dir := t.TempDir()
+	// Unlike chmod-based permission checks, these paths fail even when run as
+	// root or on platforms that do not enforce POSIX file permissions.
+	for name, filename := range map[string]string{
+		"directory":      dir,
+		"missing parent": filepath.Join(dir, "missing", "audit.log"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			audit, err := NewAuditLogger(filename)
+			if audit != nil {
+				defer audit.Close()
+				t.Error("Audit was non-nil, expected nil")
+			}
+			if err == nil {
+				t.Error("Error was nil, expected non-nil")
+			}
+		})
 	}
-
-	reopened, err := NewAuditLogger(filename)
-
-	if err == nil {
-		t.Errorf("Error was nil, expected non-nil")
-	}
-
-	if reopened != nil {
-		t.Errorf("Audit was non-nil, expected nil")
-	}
-
-	err = os.Chmod(filename, 6550)
-	if err != nil {
-		t.Errorf("Error executing Chmod: %s", err)
-	}
-
-	// Close before removing rather than in a deferred call: Windows refuses to
-	// delete a file that is still open.
-	if audit != nil {
-		audit.Close()
-	}
-
-	err = os.Remove(filename)
-	if err != nil {
-		t.Errorf("Error executing Remove: %s", err)
-	}
-
 }
 
 func TestAuditLogWrite(t *testing.T) {
