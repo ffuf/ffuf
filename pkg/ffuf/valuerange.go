@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type ValueRange struct {
@@ -11,6 +12,8 @@ type ValueRange struct {
 }
 
 func ValueRangeFromString(instr string) (ValueRange, error) {
+	// Values are often written as "200, 301", on the command line and in config files.
+	instr = strings.TrimSpace(instr)
 	// is the value a range
 	minmax := regexp.MustCompile(`^(\d+)-(\d+)$`).FindAllStringSubmatch(instr, -1)
 	if minmax != nil {

@@ -15,6 +15,16 @@ func TestNewSizeFilter(t *testing.T) {
 	}
 }
 
+func TestNewSizeFilterSpaces(t *testing.T) {
+	f, err := NewSizeFilter("1, 2 ,3-4")
+	if err != nil {
+		t.Fatalf("Unexpected error for values separated by comma and space: %s", err)
+	}
+	if repr := f.Repr(); repr != "1,2,3-4" {
+		t.Errorf("Unexpected repr %q", repr)
+	}
+}
+
 func TestNewSizeFilterError(t *testing.T) {
 	_, err := NewSizeFilter("invalid")
 	if err == nil {

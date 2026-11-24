@@ -18,7 +18,7 @@ type StatusFilter struct {
 func NewStatusFilter(value string) (ffuf.FilterProvider, error) {
 	var intranges []ffuf.ValueRange
 	for _, sv := range strings.Split(value, ",") {
-		if sv == "all" {
+		if strings.TrimSpace(sv) == "all" {
 			intranges = append(intranges, ffuf.ValueRange{Min: AllStatuses, Max: AllStatuses})
 		} else {
 			vr, err := ffuf.ValueRangeFromString(sv)

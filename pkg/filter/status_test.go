@@ -15,6 +15,17 @@ func TestNewStatusFilter(t *testing.T) {
 	}
 }
 
+func TestNewStatusFilterSpaces(t *testing.T) {
+	// "-mc 200, 301" and config values like status = "200, 301" are common.
+	f, err := NewStatusFilter("200, 301 ,400-410, all")
+	if err != nil {
+		t.Fatalf("Unexpected error for values separated by comma and space: %s", err)
+	}
+	if repr := f.Repr(); repr != "200,301,400-410,all" {
+		t.Errorf("Unexpected repr %q", repr)
+	}
+}
+
 func TestNewStatusFilterError(t *testing.T) {
 	_, err := NewStatusFilter("invalid")
 	if err == nil {
